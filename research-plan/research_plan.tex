@@ -1,0 +1,240 @@
+\documentclass[12pt,a4paper,english,oneside]{article}
+
+% Valitse 'input encoding':
+%\usepackage[latin1]{inputenc} % merkistökoodaus, jos ISO-LATIN-1:tä.
+\usepackage[utf8]{inputenc}   % merkistökoodaus, jos käytetään UTF8:a
+% Valitse 'output/font encoding':
+%\usepackage[T1]{fontenc}      % korjaa ääkkösten tavutusta, bittikarttana
+\usepackage{ae,aecompl}       % ed. lis. vektorigrafiikkana bittikartan sijasta
+% Kieli- ja tavutuspaketit:
+\usepackage[english]{babel}
+% Muita paketteja:
+% \usepackage{amsmath}   % matematiikkaa
+\usepackage{url}       % \url{...}
+
+% Kappaleiden erottaminen ja sisennys
+\parskip 1ex
+\parindent 0pt
+\evensidemargin 0mm
+\oddsidemargin 0mm
+\textwidth 159.2mm
+\topmargin 0mm
+\headheight 0mm
+\headsep 0mm
+\textheight 246.2mm
+
+\pagestyle{plain}
+
+% ---------------------------------------------------------------------
+
+\begin{document}
+
+% Otsikkotiedot: muokkaa tähän omat tietosi
+
+\title{Research plan:\\[5mm]
+Hypermedia-Constrained Generative UI: A Deterministic Framework for Human-Agent Interaction
+% 
+}
+
+\author{Minghao Guo\\
+Aalto-yliopisto\\
+\url{minghao.guo@aalto.fi}}
+
+\date{\today}
+
+\maketitle
+
+% ---------------------------------------------------------------------
+
+% POISTA TÄMÄ:
+% This template is based on Vesa Hirvisalo's work to improve communication between you and your advisor.
+
+\vspace{10mm}
+
+% MUOKKAA TÄHÄN. Jos tarvitset tähän viitteitä, käytä
+% tässä dokumentissa numeroviitejärjestelmää komennolla \cite{kahva}.
+%
+% Paljon kandidaatintöitä ohjanneen Vesa Hirvisalon tarjoama 
+% sabluuna. Kursivoidut osat \emph{...} ovat kurssin henkilökunnan
+% lisäämiä. 
+
+\textbf{Name of the work:} Hypermedia-Constrained Generative UI: A Deterministic Framework for Human-Agent Interaction 
+
+\textbf{Creator of the work:} Minghao Guo
+
+\textbf{Supervisor:} Professor Petri Vuorimaa
+
+\textbf{Advisor:} University Teacher Juho Vepsäläinen
+
+\section{Abstract}
+
+% Describe your research topic briefly.
+
+The hypermedia approach for web development allows declaring affordances of a web application in a manner that enables generating dynamic graphical user interfaces beyond purely conversational text. This research investigates the current state of the art in Generative UI and Agentic Web paradigms. The primary objective is to prototype a hypermedia-driven approach where AI agents interpret web affordances to dynamically render custom interfaces, evaluating the resulting impact on human-agent interaction efficiency and system reliability.
+
+\section{Research objectives and viewpoints}
+
+% What do you want to find out?
+% What are the central questions?
+% What is your viewpoint?
+
+Current Large Language Models (LLMs) and agents primarily interact with users through purely conversational user interfaces (CUIs), which are highly inefficient for complex, state-dependent web tasks. 
+
+While Generative UI attempts to solve this by enabling agents to render dynamic graphical user interfaces (GUIs), a core gap remains: traditional web APIs are designed for human developers, not AI agents. Standard REST or GraphQL APIs provide raw data but fail to explicitly declare application state or functional affordances. 
+
+This research investigates how providing deterministic semantic constraints via hypermedia architectures can resolve these limitations and optimize human-agent interaction. The central research questions are:
+
+\begin{enumerate}
+    \item[] \textbf{RQ1:} What are the fundamental limitations of CUIs that necessitate Agentic UIs, and how do state-of-the-art Generative UI frameworks differ in terms of their benefits and drawbacks?
+    \item[] \textbf{RQ2:} How can a system architecture be designed to parse backend hypermedia constraints (application state and affordances) and deterministically map them to frontend components based on user intent?
+    \item[] \textbf{RQ3:} Measured via computational HCI models (e.g., Keystroke-Level Model), to what extent do hypermedia-generated GUIs reduce interaction complexity and operation step counts for complex web tasks compared to standard conversational interfaces?
+\end{enumerate}
+
+%\item How can agents better understand web content, and how can protocols like Model Context Protocol (MCP) or Agent-to-Agent (A2A) be used to declare web affordances instead of traditional APIs?
+%\item Does a hypermedia-based approach objectively improve an AI agent's comprehension of web applications, and what evaluation framework can measure this improvement?
+%\item[] RQ1: How does the introduction of Agentic UI optimize human-agent communication compared to current state-of-the-art conversational interfaces?
+%\item[] RQ2: How can dynamically generated UIs adhere to traditional HCI design principles, and is the integration of computational design methodologies necessary?
+
+\section{Research material}
+
+% What kind of material do you use for your research? Estimate the amount of available material given your research objectives.
+
+% This understanding is valuable as it helps you to estimate the amount of time you need to spend as each resource will require time to study. 
+% Occasionally the problem is that there are not enough clear paper sources so you might have to find adjacent sources or rely on secondary options.
+
+The research relies on recent academic literature at the intersection of Agentic AI and UX design, alongside emerging open-source frameworks. 
+
+Key literature includes:
+\begin{itemize}
+    \item Research on Agentic Web architectures \cite{yang2025agentic}.
+    \item Systematic reviews of AI in UX Design \cite{stige2023artificial}.
+    \item Computational and combinatorial optimization of GUIs \cite{oulasvirta2020combinatorial}.
+    \item Recent preprints on Generative UI and human-in-the-loop systems \cite{leviathan2025generative, mozannar2025magenticui}.
+\end{itemize}
+
+Practical resources and materials include concepts from \url{hypermedia.systems}, and open-source implementations such as the SafeRL-Lab Agentic Web repository and CopilotKit Generative UI framework.
+
+
+\section{Research methods}
+
+The research will be conducted in two main phases: Literature Review and Prototyping.
+
+\textbf{Literature Review:}
+Analyze the limitations of current conversational interfaces. Analyze current state-of-the-art Generative UI frameworks (e.g., Vercel AI SDK, CopilotKit).
+Define how hypermedia paradigms can provide semantic structures that agents can parse more efficiently than standard DOM or JSON REST APIs. 
+
+\textbf{Prototyping:}
+Develop a Server-Driven UI (SDUI) architecture. The backend will expose hypermedia APIs rich in semantics and affordances. A frontend LLM-driven agent will parse these affordances and dynamically render personalized React or Vue components. For example, a complex booking process will be transformed into a simplified, personalized control panel. Evaluate the prototype using objective, computational human-computer interaction (HCI) metrics. 
+
+% How are you going to gather your material or acquire it?
+% How are you going to treat the material?
+% How are you going to turn the material into a report?
+
+% Typically for a literature review you do the following steps:
+% (a) Choose where to look for research material
+% (b) Search for references
+% (c) Evaluate references
+% (d) Read references
+% (e) Organize information
+% (f) Reporting (i.e., push the information to your work)
+
+% You have to adjust the general process to your topic and your personal starting point as each author has their own research process (capturing notes, refining them, etc.).
+
+% Note that reporting is not only about writing something but the creation of synthesis of your notes into a whole that makes sense.
+
+\section{Challenges}
+
+% Typically each scientific work has its challenges and you should be aware of the potential problems beforehand.
+% Occasionally the problem is that the topic is too broad, sometimes there is not enough material although the opposite can be true.
+% You should take a note and see them as positive challenges, not only obstacles.
+
+\begin{itemize}
+    \item \textbf{Rapid technological iteration:} The field is moving extremely fast (most core papers are from 2025). The state of the art may shift during the research period.
+    \item \textbf{Evaluation metrics:} Establishing a concrete, objective method to prove that the hypermedia approach improves agent comprehension is difficult.
+    \item \textbf{Technical constraints of LLMs:} Parsing dense hypermedia representations requires significant context window capacity, and the latency of generating dynamic UI components may negatively impact the perceived system reliability. 
+    \item \textbf{Scoping the prototype:} There is a risk of reinventing existing systems (like \emph{magentic-ui}). The challenge is isolating the research value to the semantic/parsing layer and the evaluation framework.
+\end{itemize}
+
+\section{Resources}
+
+% Who is going to do the research, who will advise you, how much should you spend time, is anything else needed, is there an experimental portion (BSc's typically don't have)?
+
+The research requires standard computing hardware, access to modern LLM APIs (e.g., OpenAI, Anthropic) for frontend agent prototyping, and access to academic databases. The work is executed by Minghao Guo, advised by Juho Vepsäläinen.
+% I can use my own LLM subscription in experiment.
+
+\section{Schedule}
+
+% Create a schedule for your work and make it fit the schedule of the course.
+% Typically it takes roughly 800 hours (30 ECTS) to produce a MSc thesis (that is twenty full weeks of effort).
+
+%\begin{tabular}{|p{30mm}|p{120mm}|}
+%\hline
+%abcd   & qwerty qwerty \\ \hline
+%abcd   & qwerty qwerty \\ \hline
+%abcd   & qwerty qwerty \\ \hline
+%\end{tabular}
+
+\begin{itemize}
+    \item \textbf{Weeks 1-4:} Deep literature review; define the evaluation framework, computational HCI models (KLM), and system reliability metrics.
+    \item \textbf{Weeks 5-6:} Draft architecture for the SDUI and hypermedia API backend.
+    \item \textbf{Weeks 7-12:} Implement the backend API and the frontend LLM parsing agent. Build the dynamic rendering pipeline.
+    \item \textbf{Weeks 13-15:} Run evaluations comparing the prototype against standard Generative UI approaches. Calculate step count reductions and component error rates.
+    \item \textbf{Weeks 16-20:} Synthesis, writing the thesis, and final formatting.
+\end{itemize}
+
+\section{Presentation}
+
+% Draft a short table of contents with the main sections of the work.
+% Typically the structure is as follows:
+% (1) Introduction
+% (2) Background
+% (3) Inner chapters
+% (4) Discussion
+% (5) Conclusion
+
+% Adapt the basic structure to suit your research.
+
+% You might not need a table of contents early on, but if you can create one, it might be useful in the process.
+% Expect to adjust the structure as you go.
+
+\begin{enumerate}
+    \item \textbf{Introduction:} Motivation, problem statement, and scope.
+    \item \textbf{Background:} The gap between human-centric web APIs and AI agents, principles of Hypermedia, and SOTA in Generative UI.
+    \item \textbf{Declaring Web Affordances:} Theoretical framework for translating web interactions into agent-readable semantics (MCP, A2A).
+    \item \textbf{System Architecture \& Prototype:} Design and implementation of the semantic-parsing agent and SDUI rendering engine.
+    \item \textbf{Evaluation:} Analysis of system reliability (hallucination reduction) and computational interaction efficiency (KLM results).
+    \item \textbf{Discussion:} Implications for future HCI, limitations, and the role of computational design in Agentic UI.
+    \item \textbf{Conclusion.}
+\end{enumerate}
+
+%\section{Primary sources}
+
+% Assuming you have done early literature review, you can include your primary sources here but consider this optional.
+
+% https://www.overleaf.com/read/ygrnttzbzttj#b1c95e
+% https://github.com/CopilotKit/generative-ui
+% https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=9000519
+% https://dl.acm.org/doi/pdf/10.1145/1621607.1621630
+% https://www.emerald.com/itp/article-abstract/37/6/2324/1231169/Artificial-intelligence-AI-for-user-experience-UX?redirectedFrom=PDF !!!
+
+% ---------------------------------------------------------------------
+%
+% ÄLÄ MUUTA MITÄÄN TÄÄLTÄ LOPUSTA
+
+% Tässä on käytetty siis numeroviittausjärjestelmää. 
+% Toinen hyvin yleinen malli on nimi-vuosi-viittaus.
+
+% \bibliographystyle{plainnat}
+%\bibliographystyle{finplain}  % suomi
+\bibliographystyle{plain}    % englanti
+% Lisää mm. http://amath.colorado.edu/documentation/LaTeX/reference/faq/bibstyles.pdf
+
+% Muutetaan otsikko "Kirjallisuutta" -> "Lähteet"
+% \renewcommand{\refname}{Lähteet}  % article-tyyppisen
+
+% Määritä bib-tiedoston nimi tähän (eli lahteet.bib ilman bib)
+\bibliography{references/ai}
+
+% ---------------------------------------------------------------------
+
+\end{document}

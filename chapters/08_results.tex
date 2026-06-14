@@ -1,0 +1,30 @@
+
+\subsection{Evaluation Method}
+
+A/B testing?
+
+Rough idea:
+\begin{itemize}
+    \item Control Group: An agent operating via standard REST/GraphQL endpoints, executing data retrieval without explicit hypermedia constraints, attempting to guide the user via conversational text or unconstrained generated UI elements.
+    \item Experimental Group: An agent operating strictly within the affordances provided by the hypermedia backend, rendering Server-Driven UI (SDUI) components mapped directly to the current deterministic application state.
+\end{itemize}
+
+\todo{Draw a figure to show the testing part <= Before that make it sure that this works, need more thought}
+
+\subsection{Metrics we Concern}
+
+Measurement Variables:
+\begin{enumerate}
+    \item \textbf{KLM Execution Time:} Calculated interaction time based on required keystrokes, pointing, and cognitive preparation operations.
+    \item \textbf{Step Count Reduction:} Total number of required interactions to reach task completion. % How to define the interaction?
+    \todo{better do some HCI research reading before expanding this}
+\end{enumerate}
+
+\subsection{Experiment Results}
+
+\todo{Core part of this chapter, may divide into more sections
+
+- Screenshots or narative logs of the exp, give a direct feeling of how it works
+
+- Tables and Figures, Visualization of metrics
+}
