@@ -6,7 +6,7 @@
 
 \todo{Brief introduction of how browsing or information lookup method have been evolved}
 
-\todo{Limited talk about why we need give website semantic meanings, and how the history method is (briefly)}
+\todo{Limited talk about why we need to give websites machine-readable semantic meanings, and how earlier approaches tried to expose web structure to non-human clients. This section should introduce the motivation for moving from human-facing pages toward agent-readable application semantics.}
 % https://arxiv.org/html/2507.10644v1#bib.bib87 may be useful
 
 \subsection{Evolution of Agentic Web Interfaces}
@@ -15,9 +15,23 @@
 
 \cite{yang2025agentic} have a github to store many papers these years...
 
-\todo{From Conversational UIs to Graphical UIs and the current state of Generative UIs}
+\todo{From Conversational UIs to Graphical UIs and the current state of Generative UIs. The key point is not that chat is always bad, but that complex web tasks often require interaction surfaces richer than natural language.}
 
 \cite{mctear2017rise} has many historic papers regarding this point, while \cite{ning2025survey} is a newer review with recent papers
+
+\subsection{Generative UI and Agentic UI Frameworks}
+
+\todo{Compare current systems and frameworks by what information they use to generate UI: user intent, tool calls, shared state, component registries, events, or application affordances. Candidate systems include Magentic-UI, Vercel AI SDK Generative UI, CopilotKit, AG-UI, and MCP.}
+
+\todo{The comparison should identify whether each framework provides: (1) explicit application state, (2) explicit valid actions, (3) schemas for required input, (4) state transition semantics, and (5) constraints on generated UI actions.}
+
+\cite{mozannar2025magenticui} and \cite{leviathan2025generative} are likely central here.
+
+\subsection{HTML Hypermedia, State, and Affordances}
+
+\todo{Introduce HTML hypermedia as an architectural approach where application representations expose not only content, but also available transitions or affordances through links, forms, buttons, and possibly htmx-style attributes. The thesis should frame hypermedia as a runtime contract for valid application actions, not as a visual interface technique. Avoid a JSON-first framing, while acknowledging that non-HTML hypermedia formats can also exist.}
+
+\todo{Connect this to the prototype: the server owns the application state and returns HTML representations or fragments containing the current valid affordances; the agent uses those controls as a trusted source instead of guessing from arbitrary DOM, client-side JavaScript state, or weakly structured API data.}
 
 \subsection{Human-LLM interaction}
 
@@ -36,3 +50,11 @@
 \todo{Math method for evaluating the communication efficiency, like KLM or other metrics could be found to be used in this paper, and how to evaluate the hallucination rates}
 
 Antti's \cite{oulasvirta2020combinatorial} might be useful?
+
+\todo{This section should probably become secondary. The main evaluation is no longer general HCI efficiency, but action validity in state-aware agentic UI generation. Human-AI interaction literature can still motivate why the agent should communicate its available actions clearly to users.}
+
+\subsection{Research Gap}
+
+\todo{Synthesize the gap: existing web agents can operate over human-facing websites, and existing generative UI frameworks can render dynamic components, but there is still a representational gap between backend-owned application state and the actions an agentic UI should expose to the user.}
+
+\todo{State the thesis response: HTML hypermedia affordances can act as a trusted information layer that constrains agentic UI generation to currently valid actions.}

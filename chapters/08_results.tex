@@ -1,12 +1,12 @@
 
 \subsection{Evaluation Method}
 
-A/B testing?
+Ablation-style comparison?
 
 Rough idea:
 \begin{itemize}
-    \item Control Group: An agent operating via standard REST/GraphQL endpoints, executing data retrieval without explicit hypermedia constraints, attempting to guide the user via conversational text or unconstrained generated UI elements.
-    \item Experimental Group: An agent operating strictly within the affordances provided by the hypermedia backend, rendering Server-Driven UI (SDUI) components mapped directly to the current deterministic application state.
+    \item Baseline condition: An agent operating from a weakly structured textual state summary or conventional data API response, without explicit HTML hypermedia controls for the current valid actions.
+    \item Hypermedia-constrained condition: An agent operating strictly within the affordances provided by server-returned HTML hypermedia representations, rendering or selecting UI actions mapped to the current application state and valid controls.
 \end{itemize}
 
 \todo{Draw a figure to show the testing part <= Before that make it sure that this works, need more thought}
@@ -15,9 +15,10 @@ Rough idea:
 
 Measurement Variables:
 \begin{enumerate}
-    \item \textbf{KLM Execution Time:} Calculated interaction time based on required keystrokes, pointing, and cognitive preparation operations.
-    \item \textbf{Step Count Reduction:} Total number of required interactions to reach task completion. % How to define the interaction?
-    \todo{better do some HCI research reading before expanding this}
+    \item \textbf{Invalid Action Suggestion Count:} Number of actions suggested or rendered by the agent that are not valid in the current backend state.
+    \item \textbf{Action-Affordance Alignment:} Proportion of generated UI actions that correspond to affordances exposed in the current hypermedia representation.
+    \item \textbf{State Transition Correctness:} Whether executing a selected action leads to the expected next state and refreshed affordance set.
+    \item \textbf{Interaction Step Count (maybe):} Total number of user-agent interactions required to reach task completion.
 \end{enumerate}
 
 \subsection{Experiment Results}

@@ -13,18 +13,19 @@
 
 \subsubsection{Backend}
 
-\todo{Structuring application state and operational affordances into machine-readable formats}
+\todo{Define a simulated state-dependent backend that exposes the current application state and valid affordances through HTML hypermedia representations or fragments. The current candidate scenario is a study plan approval workflow. Candidate states include draft, missing requirements, conflict detected, ready to submit, submitted, changes requested, and approved.}
 
 \subsubsection{Agent}
 
 \begin{itemize}
-    \item Semantic Parsing \todo{with prompt+knowledge or third party toolchains, need more brainstorming}
-    \item UI constraints \todo{schemas, raw ones, check ag2ui}
+    \item Affordance interpretation \todo{how the agent reads controlled HTML hypermedia representations instead of inferring available actions from arbitrary page text, client-side JavaScript state, or generic API responses}
+    \item Intent-to-action mapping \todo{how the agent maps user intent to currently valid affordances and avoids unavailable actions}
+    \item UI constraints \todo{compare two implementation options: (1) the agent selects and explains existing server-rendered hypermedia controls; (2) the agent re-presents those controls through a constrained task-specific component registry. Check ag2ui only if it remains relevant.}
 \end{itemize}
 
 \subsubsection{Frontend}
 
-\todo{Execution logic for dynamically generating component trees based on agent instruction}
+\todo{Execution logic for rendering or swapping constrained HTML/UI fragments based on agent-selected affordances and required inputs, rather than unconstrained UI generation}
 
 \subsection{Prototype Implement}
 
@@ -34,11 +35,11 @@
 
 \subsubsection{Test Scenario Setup}
 
-\todo{A multi-step, state-heavy application...
+\todo{A simulated multi-step, state-heavy study plan approval workflow.
 
-- affordances in human language: how this website can be used with human
+- affordances in human language: how a student can revise, complete, submit, and respond to feedback on a study plan
 
-- potential method or UIs can be personalized for agent/user to better use with the demanding feature
+- potential generated UIs: requirement checklist, course selector, conflict resolver, exception request form, advisor feedback response panel, final submission summary
 
-- machines pov: what info can be retrived, are they useful?
+- machine perspective: what state and affordance information can be retrieved from HTML hypermedia controls, and how this constrains the agent's possible UI actions
 }

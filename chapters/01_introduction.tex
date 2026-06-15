@@ -3,8 +3,7 @@
 % 3. Bring up your research question(s)
 % 4. Describe the structure of the work + mention research method
 
-% Research question: Fill this up
-% Research methods: survey / literature review
+% Research methods: literature review, design science prototype, action-validity evaluation
 
 \todo{A paragraph filled with ancient web development and the modern LLM revolution, leads to topic}
 
@@ -13,8 +12,8 @@
 \todo{Find supporting materials for this and make each bullet a point}
 \begin{itemize}
     \item Cognitive load and inefficiency of pure conversational interfaces in complex, state-dependent web tasks.
-    \item Current Agentic/Generative UI systems rely on unstructured or human-centric APIs, leading to non-deterministic and unstable generation.
-    \item Utilizing hypermedia (state and affordances) as deterministic constraints for AI agents.
+    \item Current Agentic/Generative UI systems often have to infer available actions from unstructured context, human-facing pages, or weakly structured APIs.
+    \item Utilizing HTML hypermedia representations that expose state-dependent affordances as a trusted information layer for state-aware agentic UI generation.
 \end{itemize}
 
 %\cite{jarvi_algorithms_2009}
@@ -25,10 +24,16 @@
 
 \begin{enumerate}
     \item[] \textbf{RQ1:} What are the fundamental limitations of CUIs that necessitate Agentic UIs, and how do state-of-the-art Generative UI frameworks differ in terms of their benefits and drawbacks?
-    \item[] \textbf{RQ2:} How can a system architecture be designed to parse backend hypermedia constraints (application state and affordances) and deterministically map them to frontend components based on user intent?
-    \item[] \textbf{RQ3:} Measured via computational HCI models (e.g., Keystroke-Level Model), to what extent do hypermedia-generated GUIs reduce interaction complexity and operation step counts for complex web tasks compared to standard conversational interfaces?
+    
+    % \item[] \textbf{RQ2:} How can a system architecture be designed to parse backend hypermedia constraints (application state and affordances) and deterministically map them to frontend components based on user intent?
+    \item[] \textbf{RQ2:}  How can HTML hypermedia affordances, such as links, forms, actions, and element states, be extracted and represented as a trusted constraint layer for state-aware agentic UI generation?
+    
+
+    % \item[] \textbf{RQ3:} Measured via computational HCI models (e.g., Keystroke-Level Model), to what extent do hypermedia-generated GUIs reduce interaction complexity and operation step counts for complex web tasks compared to standard conversational interfaces?
+    \item[] \textbf{RQ3:} In a simulated state-dependent workflow, to what extent does an HTML hypermedia-constrained agentic UI reduce invalid action suggestions compared with an unconstrained or weakly structured baseline?
 \end{enumerate}
-\todo{Point out the contribution of this work and try to give a focus point towards reader}
+
+\todo{Point out the contribution of this work: a framework comparison, an HTML hypermedia-constrained architecture, and a prototype evaluation focused on action validity rather than general UI quality.}
 
 
 \subsection{Structure of the work}
@@ -36,5 +41,3 @@
 \todo{Describe the structure of the work and tie research questions to it. 
 
 Better do this at the final stage}
-
-
