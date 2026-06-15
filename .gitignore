@@ -1,0 +1,10 @@
+
+*.log
+*.aux
+*.out
+*.toc
+*.gz
+*.xmpdata
+
+pdfa.xmpi
+_main.pdf
