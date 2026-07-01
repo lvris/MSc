@@ -8,3 +8,10 @@
 
 pdfa.xmpi
 _main.pdf
+
+CLAUDE.md
+/.claude
+/papers
+
+node_modules/
+*.tsbuildinfo
