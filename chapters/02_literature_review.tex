@@ -1,60 +1,93 @@
-% Followed on the instruction, this chapter's aim is to provide enough prior info for my friend to understand the whole essay
-
 % May change title to Background or more specific meaning
 
-\subsection{Internet, Human and Machine}
+Software agents built on large language models can now operate the web on a person's behalf, and the interfaces through which people direct them are being redesigned around that fact. This chapter discusses how agents increasingly meet their users through generated interfaces. Existing frameworks for such interfaces are reviewed, the question of what grounds the actions they offer is raised, and HTML hypermedia is proposed as a solution.
 
-\todo{Brief introduction of how browsing or information lookup method have been evolved}
+\subsection{Internet, Human, and Machine}\label{sec:bg:internet}
 
-\todo{Limited talk about why we need to give websites machine-readable semantic meanings, and how earlier approaches tried to expose web structure to non-human clients. This section should introduce the motivation for moving from human-facing pages toward agent-readable application semantics.}
-% https://arxiv.org/html/2507.10644v1#bib.bib87 may be useful
+Web interaction evolved from pages authored for human reading toward pages that non-human clients also need to act on. The earliest such clients like web crawlers only read while later ones increasingly act: scripted automation at first, and most recently LLM-based agents that follow links, fill forms, and complete transactions on the user's behalf. \todo{cite: general web history / rise of non-human web clients}
 
-\subsection{Evolution of Agentic Web Interfaces}
+\todo{figure: human-facing web pages, machine-facing web pages... }
 
-\todo{Brief showcase of the agentic web is a thing, not to be very in details since not like the main topic of this paper}
+Because pages are written for humans, a machine client has no direct access to application meaning: it must recover what a page is, and what can currently be done with it, from artifacts intended for human perception --- markup structure, layout, and visible text. 
+This recovery is indirect and brittle, and the difficulty motivated a long line of work on giving the web machine-readable semantics, most prominently the Semantic Web programme and its lighter-weight descendants such as embedded structured annotations. \todo{cite: semantic web, schema.org, microdata, RDFa, JSON-LD, etc.}
+% https://arxiv.org/html/2507.10644v1#bib.bib87 may be useful for the semantic-web citation
+(Maybe: shall we extend a little bit to make a list?)
 
-\cite{yang2025agentic} have a github to store many papers these years...
+The semantic-web approach asked authors to maintain a second, machine-facing representation of their application in parallel with the human-facing page. Annotations that are not needed to render the page for people are exercised by nothing the author depends on, and so they are the first thing to fall out of date. \todo{cite: find supporting old papers}
 
-\todo{From Conversational UIs to Graphical UIs and the current state of Generative UIs. The key point is not that chat is always bad, but that complex web tasks often require interaction surfaces richer than natural language.}
+\subsection{From Conversational Agents to Generative UI}\label{sec:bg:genui}
 
-\cite{mctear2017rise} has many historic papers regarding this point, while \cite{ning2025survey} is a newer review with recent papers
+Large language models entered this picture from the opposite direction: rather than making pages more readable to machines, they made machines better readers of artifacts meant for humans. Their first and still dominant form is conversational. Chat interfaces in the ChatGPT style proved remarkably capable for open-ended language tasks, and they inherit a long lineage of conversational-interface research \cite{mctear2017rise}.
 
-\subsection{Generative UI and Agentic UI Frameworks}
+These models were then given the ability to act with scaffolding for planning, tool use, and memory, they can call tools, operate websites, and carry out multi-step tasks against external systems, and an ecosystem of such agents has grown around the web in particular \cite{yang2025agentic, ning2025survey, zhou2024webarena, gur2023realworld, song2025browsing}. This turned how a human should interact with a capable agent into a question.
 
-\todo{Compare current systems and frameworks by what information they use to generate UI: user intent, tool calls, shared state, component registries, events, or application affordances. Candidate systems include Magentic-UI, Vercel AI SDK Generative UI, CopilotKit, AG-UI, and MCP.}
-
-\todo{The comparison should identify whether each framework provides: (1) explicit application state, (2) explicit valid actions, (3) schemas for required input, (4) state transition semantics, and (5) constraints on generated UI actions.}
-
-\cite{mozannar2025magenticui} and \cite{leviathan2025generative} are likely central here.
-
-\subsection{HTML Hypermedia, State, and Affordances}
-
-\todo{Introduce HTML hypermedia as an architectural approach where application representations expose not only content, but also available transitions or affordances through links, forms, buttons, and possibly htmx-style attributes. The thesis should frame hypermedia as a runtime contract for valid application actions, not as a visual interface technique. Avoid a JSON-first framing, while acknowledging that non-HTML hypermedia formats can also exist.}
-
-\todo{Connect this to the prototype: the server owns the application state and returns HTML representations or fragments containing the current valid affordances; the agent uses those controls as a trusted source instead of guessing from arbitrary DOM, client-side JavaScript state, or weakly structured API data.}
-
-\subsection{Human-LLM interaction}
-
-\todo{How current study shows that human-agent interaction can be in different forms, modules like natural languages or other related topics}
-
-% \subsubsection{Conversational Interface} limitations etc.
-% \subsubsection{Safety} prompt injection-ish thing is interesting tho
-
+For these richer, structured, stateful tasks, pure conversation shows limits:
 \begin{enumerate}
-    \item \cite{gao2024taxonomya} is a perfect literature review about the topic ( 1.prompt w. reasoning; 2.interface IO; 3.rule/role 4.facilitator )
-    \item \cite{zhang2025exploring} is another review more about HCI side, covers many aspects of Human-AI Co-creation
-    \item \cite{amershi2019guidelines} seems to be the most important HCI instruction of Human-AI interaction
+    \item \textbf{Lossy communication:} natural language is a lossy, serial channel for what are really structured choices: selecting one of many flights, configuring a filter, or filling a constrained form is painful to conduct sentence by sentence.
+    \item \textbf{Hidden action space:} narrating actions hides the actual action space from the human, who cannot see what the agent could have done, verify what it actually did, or take over precisely \cite{zhang2025exploring}.
 \end{enumerate}
 
+Hence generative UI: instead of only talking, the agent renders task-specific interaction surfaces --- controls, forms, choices --- fitted to the current step of the task \cite{leviathan2025generative, aisdkGUI}. The industry is already moving this way: mainstream assistants increasingly wrap their responses in generated widgets and forms even outside web-operation tasks, which corroborates that pure text is insufficient as an interaction surface.
+\todo{cite: Gemini / GPT generative-UI product direction, maybe webpage} 
 
-\todo{Math method for evaluating the communication efficiency, like KLM or other metrics could be found to be used in this paper, and how to evaluate the hallucination rates}
+This thesis narrows to the demanding end of that: generated controls that correspond to real actions on an external, stateful application. Namely the correctness of the surface --- does this control exist, and is it valid now? The rest of this chapter is organized around that problem: a generated surface can present controls that are invalid, stale, or outright hallucinated relative to what the application can actually do at this moment. 
+\todo{cite: LLM hallucination}
 
-Antti's \cite{oulasvirta2020combinatorial} might be useful?
+\subsection{Generative UI and Agentic UI Frameworks}\label{sec:bg:frameworks}
 
-\todo{This section should probably become secondary. The main evaluation is no longer general HCI efficiency, but action validity in state-aware agentic UI generation. Human-AI interaction literature can still motivate why the agent should communicate its available actions clearly to users.}
+\todo{figure: human, agent, application data-flow pipeline (intent, action selection, execution, new state, rendering); locate each framework on it}
 
-\subsection{Research Gap}
+To compare existing systems... /todo{describe the figure}
 
-\todo{Synthesize the gap: existing web agents can operate over human-facing websites, and existing generative UI frameworks can render dynamic components, but there is still a representational gap between backend-owned application state and the actions an agentic UI should expose to the user.}
+Two concerns run through this loop and are worth separating, because existing systems tend to address only one of them. The rendering side concerns how agent output is drawn for the human. The action-source side concerns where the set of actions the agent may take, and may offer, comes from. The two are independent, and the rest of this section groups systems by the second.
 
-\todo{State the thesis response: HTML hypermedia affordances can act as a trusted information layer that constrains agentic UI generation to currently valid actions.}
+\paragraph{Rendering-side}
+
+AG-UI defines an event and transport protocol between agents and front ends \cite{aguiOverview}, Vercel's AI SDK maps model output to registered interface components \cite{aisdkGUI}, and CopilotKit embeds agent interaction into existing applications. \todo{cite: CopilotKit} These systems are complementary to this thesis: they answer how a generated surface is drawn, not what it may legitimately contain, and they could sit on top of the framework developed here.
+\todo{expand this}
+
+\paragraph{Source-side}
+
+The weakest grounding is inference from the live page. Browser and computer-use agents recover their action set from the DOM, the accessibility tree, or screenshots, and realistic web tasks remain difficult and brittle when the agent must guess in this way what a page affords \cite{zhou2024webarena, song2025browsing}. 
+% This is the indirect-recovery problem of Section~\ref{sec:bg:internet} replayed with a stronger model. 
+Magentic-UI is the generative-UI exemplar ... \cite{mozannar2025magenticui}.
+
+A stronger answer registers the actions on the client at build time: the developer declares a set of tools or components that the model may invoke, explicit and typed \cite{aisdkGUI}. This grounds the vocabulary but not the state. The registry is static and application-specific, and nothing prevents it from drifting away from what the backend currently allows.
+
+The strongest existing answer is a server-declared contract, and its current form is the Model Context Protocol (MCP). MCP deserves full credit on this axis: the contract is machine-readable, owned by the server rather than assumed by the client, gives every tool a typed input schema, and can update the tool list at runtime.
+\todo{cite: MCP}
+
+\todo{table: five-dimension framework comparison; rows: DOM-inference agents, build-time registries, MCP, hypermedia affordances (this thesis, forward reference to the Design chapter); cite each row's primary system}
+
+\subsection{HTML Hypermedia, State, and Affordances}\label{sec:bg:hypermedia}
+
+\subsubsection{REST and the hypermedia constraint}
+
+Hypermedia denotes representations that carry both content and the controls for moving to other application states \cite{hypermediaBook}. In HTML those controls are links, forms, and buttons, and in server-driven variants such as htmx, attributes that declare further exchanges with the server \cite{htmxlDocs}. Hypermedia formats aimed only at machines also exist, such as the JSON-based HAL and Siren, but HTML is the one that matters here, for a reason this section builds toward: it is the only widely deployed hypermedia format whose representations are at the same time a human interface.
+
+This is not a new idea but the original architecture of the web. Fielding's REST names the principle hypermedia as the engine of application state: transitions should be driven by controls that the server places in the current representation, not by out-of-band contracts the client holds separately. Read against Section~\ref{sec:bg:frameworks}, this identifies the pattern that MCP repeats. WSDL and OpenAPI were the out-of-band contracts of their eras; a tool catalog obtained at connection time is the same client-held description, separate from the representation the application actually serves.
+\todo{cite: REST, Hypermedia} 
+
+The controls in a representation can be read as its affordances: the state-dependent set of actions the application currently makes available \cite{gidey2025affordance}. The term is used here in the hypermedia community's sense \cite{hypermediaBook}. 
+
+\subsubsection{Consequences}
+
+The observation this thesis is built on follows. In a hypermedia application, the HTML the server returns is one artifact playing three roles at once: the interface the human sees, the action space an agent can parse, and the set of controls through which the application is actually operated. These three cannot drift apart, because they are not three things. An agent that takes those controls as its source of valid actions is not guessing from arbitrary DOM structure, and not trusting a separately maintained description; it is reading the same contract the human user is given. A separate contract such as MCP cannot offer this property, however well specified, because separateness is exactly what the property excludes.
+
+\begin{enumerate}
+    \item \textbf{No drift:} the affordance description is a byproduct of building the application, not a second artifact to maintain, so the incentive failure of Section~\ref{sec:bg:internet} does not arise.
+    \item \textbf{Native state-dependence:} the unit of description is the current state and its exits, not a catalog of everything the server could ever do.
+    \item \textbf{Graceful fallback:} when the agent fails, the human can operate the same page directly. Early evidence that machine-legible interfaces improve agent reliability is consistent with this picture \cite{schultze2025building}.
+\end{enumerate}
+
+\subsection{Grounded Human--Agent Interaction}\label{sec:bg:hai}
+
+% Reframe the affordance set as the outcome of a three-party interaction (human ⇄ agent ⇄ app): it bounds not just what the agent may *do* but what it may offer, ask, and refuse — offers are always executable, refusals are structural/explainable, required form-fields define exactly what to ask
+
+% Limitations, ... abunch of 
+
+\subsection{Research Gap}\label{sec:bg:gap}
+
+Web agents can operate human-facing sites, but they infer their actions from artifacts made for human perception, and the inference is brittle. Generative-UI frameworks can render dynamic surfaces, but they ground the actions those surfaces expose weakly: inferred from the page, fixed at build time, or delegated to a machine-only contract that runs parallel to the human interface and can drift from it. No existing framework binds a human-facing generated surface to a state-dependent, server-authoritative action set.
+
+This thesis responds by using HTML hypermedia affordances as that binding layer: the generated interface is constrained to the controls the server placed in the current representation, so every action it offers is currently valid. This is also the precise sense in which the title claims determinism. What is deterministic is the action space, not the agent: the set of offerable actions is a function of server state alone rather than of model sampling; every offered control exists and is executable at the moment it is shown; every refusal is structural. The agent's selection among valid actions remains stochastic, and no stronger claim is made. The following chapter defines this property precisely and builds the framework that realizes it. 

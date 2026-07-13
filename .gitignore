@@ -1,6 +1,7 @@
 
 *.log
 *.aux
+*.bbl
 *.out
 *.toc
 *.gz
@@ -11,6 +12,7 @@ _main.pdf
 
 CLAUDE.md
 /.claude
+/.vscode
 /papers
 
 node_modules/
