@@ -1,0 +1,112 @@
+The previous chapter ended with a gap: no existing systems binds a human-facing generated surface to an action set that is both state-dependent and owned by the server. This chapter defines that binding.
+
+\subsection{Overview}\label{sec:design:overview}
+
+The framework consists of one idea applied at two places. A user states an intent. The agent fetches the application's current representation and extracts from it the controls the server has placed there. Those controls, taken together, form a closed set --- the \emph{affordance set} of the current state. 
+
+Everything downstream is confined to that set: the agent may only execute actions drawn from it, and the interface presented to the user may only offer controls drawn from it. Because the set is derived from the representation the server chose to serve, and because a well-behaved server renders exactly the controls that are valid in the current state, an action outside the set is unavailable to both the agent and the interface.
+
+
+\subsection{The Affordance Set}\label{sec:design:formal}
+
+\todo{figure: server state $s \rightarrow$ representation $r(s) \rightarrow$ affordance set $A(s)$, then two branches executing and presenting}
+
+\subsubsection{Definitions}\label{sec:design:defs}
+
+Let $s$ denote the application state held by the server, and $r(s)$ the representation the server returns for that state. A \emph{parser} extracts from a representation the controls declared in its vocabulary; for HTML those are links, forms, and the attributes of server-driven extensions such as htmx \cite{htmxlDocs}. The \emph{affordance set} is the result:
+
+\[ 
+A(s) \;=\; \mathrm{parse}\bigl(r(s)\bigr).
+\] 
+
+Each element of $A(s)$ is a control reduced to what is needed to exercise it: a method, a target, an ordered list of declared input fields, and a human-readable label. A field carries its name, its type, whether it is required, any value fixed by the control, and, where the control declares them, its permitted values.
+% maybe delete, only use the table
+
+\todo{table: the affordance tuple --- each component, its HTML counterpart, and why it is needed to reconstruct a request.}
+
+$A$ is indexed by state: it describes what can be done \emph{now}, not what the application can ever do. 
+
+
+\subsubsection{The soundness}\label{sec:design:soundness}
+
+Every consumer of the affordance set works by selecting from it. It may select one element to execute, or a subset to present, but it does not author elements of its own. The consequence is trivial:
+
+\begin{quote}
+\emph{Soundness.} Anything a consumer executes or presents is an element of $A(s)$, and is therefore valid in $s$.
+\end{quote}
+
+An invalid action lies outside the space being selected from. This is the precise sense in which the title of this thesis claims determinism: what is deterministic is the action space, being a function of server state alone, not the agent's choice within it.
+
+
+These are not claimed...
+
+\begin{enumerate}
+    \item \textbf{Reachability is bounded by disclosure.} Actions the application supports but does not expose in its representation are unreachable through this construction. This is a genuine cost, and Chapter~\ref{sec:evaluation} measures it.
+    \item \textbf{Selection remains stochastic.} Which element of $A(s)$ gets chosen is a model decision with all the usual uncertainty. Only the set is guaranteed. Selecting and ordering what is relevant to the user's intent is the agent's job.
+\end{enumerate}
+
+\subsection{Constructing $A(s)$}
+
+\todo{need more test before writing}
+
+\todo{existing HTML parsers like ASTs}
+
+\subsubsection{The parser}\label{sec:design:parser}
+
+\subsubsection{Loss}\label{sec:design:parser-loss}
+
+
+
+\subsection{Contracts}\label{sec:design:contracts}
+
+Soundness holds only if both ends of the exchange behave. 
+
+\subsubsection{The site contract}\label{sec:design:site-contract}
+
+\begin{enumerate}
+    \item[\textbf{S1}] \textbf{Only valid controls are rendered.} The representation for $s$ contains a control if and only if the corresponding action is valid in $s$.
+    \item[\textbf{S2}] \textbf{Requests are reconstructible.} Every value a control submits appears as a declared field. No value is computed at request time by client-side script. %!! This is tough.
+    \item[\textbf{S3}] \textbf{The server guards its own state.} A request for an action invalid in the current state is refused.
+\end{enumerate}
+
+S1 is the substantive one and the framework's main adoption cost: it asks applications to treat their representation as an honest report of what is currently possible. Many applications already do this, since it is also what makes a page usable by a person; but many do not, and Chapter~\ref{sec:discussion} returns to what this means in practice.
+
+\todo{cite: find some examples}
+
+\subsubsection{The client contract}\label{sec:design:client-contract}
+
+% may move to implementation
+\begin{enumerate}
+    \item[\textbf{C1}] \textbf{No site knowledge.} The client holds no site-specific identifiers, urls, or business vocabulary. A control is identified only by what the representation declares about it.
+    %!! this actually leads to problem with many... like cookies or other things that needed to be passed, may discuss or what
+    \item[\textbf{C2}] \textbf{Vocabulary extensibility.} Supporting a further hypermedia format means adding a parser that produces the same affordance shape.
+\end{enumerate}
+
+\subsection{The Consumers of \texorpdfstring{$A(s)$}{A(s)}}\label{sec:design:consumers}
+
+\subsubsection{Execution}\label{sec:design:consumer-agent}
+
+At the execution boundary the agent does three things with the affordance set: it selects an element, supplies values for those declared fields it can derive from the user's intent, and issues the corresponding request. Values it cannot derive are not invented; they are asked of the user, which leads directly to the next section.
+
+\subsubsection{Presentation}\label{sec:design:consumer-ui}
+
+\paragraph{The action layer.} The controls offered to the user. This layer is bounded: $\mathrm{controls}(UI) \subseteq A(s)$. Each control can be rendered directly from an affordance, one generic renderer per declared field type, with no model in the rendering path and no task-specific component registry. 
+%!! or ... not quite sure about rendering
+
+\paragraph{The elicitation layer.} What the interface asks the user for. This layer is also grounded in $A(s)$, but through the fields of its elements. Which questions must be asked is determined by which required fields cannot be derived from the intent; how they are asked is determined by the declared field types; and what counts as an admissible answer is determined by the permitted values a control declares.
+
+\paragraph{The presentation layer.} Everything else: the data shown, the grouping, the wording, the explanation of what is offered and of what is structurally absent. This layer draws on the non-interactive content of $r(s)$ and on the agent's own language, and it is not bounded by anything in this framework. The division can be summarised as follows: \emph{the content is narrated by the agent; the controls are authorised by the server.}
+
+\todo{figure: one affordance $\rightarrow$ one rendered control, field by field (name / type / required / permitted values / fixed value $\rightarrow$ widget), showing that the rendering step needs no model.}
+
+\todo{table: field type $\rightarrow$ rendered control $\rightarrow$ what the user may change $\rightarrow$ what the control fixes.}
+
+\subsection{Composition and Scope}\label{sec:design:composition}
+
+Nothing above depends on there being only one application. If a surface draws on sources $1 \dots n$, each in its own state, the same reasoning gives
+\[ \mathrm{controls}(UI) \;\subseteq\; \bigcup_{i} A_i(s_i),
+\] so soundness is preserved under composition, provided each source supplies a state-dependent valid set.
+
+\todo{table: extend the framework comparison of Section~\ref{sec:bg:frameworks} with the two axes introduced here: (i) is the action set state-dependent? (ii) is it the same artifact as the human interface? Rows: DOM-inference agents, build-time registries, tool catalogs such as MCP, this framework. Reference the table from both chapters.}
+
+The framework applies to applications that satisfy the site contract, and it is therefore as much a proposal to application authors as a client architecture. Within such applications, reachability is bounded by what the server discloses; interface quality, dialogue design, and free-form information gathering fall outside the property; and composition across several sources is defined here but only exercised for a single source in what follows.

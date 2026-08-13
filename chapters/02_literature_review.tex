@@ -1,5 +1,7 @@
 % May change title to Background or more specific meaning
 
+% notes: (agentic web is trending → CUI is weak → we need generative UI → there is hallucination → needed grounding → frameworks different but no grounding → hypermedia is a good solution → affordances are the right abstraction → this thesis is about that)
+
 Software agents built on large language models can now operate the web on a person's behalf, and the interfaces through which people direct them are being redesigned around that fact. This chapter discusses how agents increasingly meet their users through generated interfaces. Existing frameworks for such interfaces are reviewed, the question of what grounds the actions they offer is raised, and HTML hypermedia is proposed as a solution.
 
 \subsection{Internet, Human, and Machine}\label{sec:bg:internet}
@@ -39,14 +41,16 @@ This thesis narrows to the demanding end of that: generated controls that corres
 
 To compare existing systems... /todo{describe the figure}
 
+\subsubsection{Rendering-side vs. Source-side}
+
 Two concerns run through this loop and are worth separating, because existing systems tend to address only one of them. The rendering side concerns how agent output is drawn for the human. The action-source side concerns where the set of actions the agent may take, and may offer, comes from. The two are independent, and the rest of this section groups systems by the second.
 
-\paragraph{Rendering-side}
+\subsubsection{Rendering Frameworks}
 
 AG-UI defines an event and transport protocol between agents and front ends \cite{aguiOverview}, Vercel's AI SDK maps model output to registered interface components \cite{aisdkGUI}, and CopilotKit embeds agent interaction into existing applications. \todo{cite: CopilotKit} These systems are complementary to this thesis: they answer how a generated surface is drawn, not what it may legitimately contain, and they could sit on top of the framework developed here.
 \todo{expand this}
 
-\paragraph{Source-side}
+\subsubsection{Action Grounding Approaches}
 
 The weakest grounding is inference from the live page. Browser and computer-use agents recover their action set from the DOM, the accessibility tree, or screenshots, and realistic web tasks remain difficult and brittle when the agent must guess in this way what a page affords \cite{zhou2024webarena, song2025browsing}. 
 % This is the indirect-recovery problem of Section~\ref{sec:bg:internet} replayed with a stronger model. 
@@ -80,11 +84,20 @@ The observation this thesis is built on follows. In a hypermedia application, th
     \item \textbf{Graceful fallback:} when the agent fails, the human can operate the same page directly. Early evidence that machine-legible interfaces improve agent reliability is consistent with this picture \cite{schultze2025building}.
 \end{enumerate}
 
-\subsection{Grounded Human--Agent Interaction}\label{sec:bg:hai}
+\subsection{Affordance-Driven Human--Agent Interaction}\label{sec:bg:hai}
 
-% Reframe the affordance set as the outcome of a three-party interaction (human ⇄ agent ⇄ app): it bounds not just what the agent may *do* but what it may offer, ask, and refuse — offers are always executable, refusals are structural/explainable, required form-fields define exactly what to ask
+Problems that generative UI have ...
 
-% Limitations, ... abunch of 
+To align the action space that the agent offers with what the human user expects. They sharing a same wordlist of valid actions, which is affordance. Namely what it may offer, ask, and refuse — offers are always executable, refusals are structural/explainable, required form-fields define exactly what to ask.
+
+\paragraph{Limitations of this thesis}
+
+\begin{enumerate}
+    \item Assume the exposed action space to what is currently valid
+    \item Only for hypermedia-driven apps
+    \item Unresolved intent ambiguity (label semantics, visual...)
+    \item Safety issues (prompt injection, malicious content, etc.)
+\end{enumerate}
 
 \subsection{Research Gap}\label{sec:bg:gap}
 

@@ -1,0 +1,81 @@
+This chapter describes the artifact built to make the framework of Chapter~\ref{sec:design} concrete and testable. It has two independently runnable parts: a fixed generic client and one or more hypermedia sites. 
+
+\todo{figure: architecture. User $\leftrightarrow$ client (discover / choose / render / replay) $\leftrightarrow$ site over HTTP.}
+
+\subsection{The Site Side}\label{sec:impl:site}
+
+The first site, \texttt{b1}, is a minimal but fully browsable restaurant-reservation application...
+
+\todo{Introduce b1,}
+
+\subsubsection{The state machine as the authority}\label{sec:impl:site:model}
+
+\todo{we have a state machine that can be used as ground truth. states: browsing, holding, details entered, confirmed, conflict, cancelled. Note the second role: it is the authoritative definition of validity, hence the annotation-free ground truth used in Chapter~\ref{sec:evaluation}.}
+
+\todo{table: the six states and the affordances exposed in each, highlighting the deliberately absent controls.}
+
+\todo{figure: state diagram, transitions labelled by the affordance that causes them.}
+
+\subsubsection{A representation layer that cannot disobey}\label{sec:impl:site:render}
+
+\todo{The renderer is  dumb: every interactive control it emits comes from the valid-affordance function and it has no other source.}
+
+\subsubsection{Vocabulary}\label{sec:impl:site:vocab}
+
+\todo{Core flow (browse, hold, enter details, confirm) carried by standard HTML: \texttt{<a href>} for navigation, \texttt{<form action method>} with named inputs for operations. htmx \citep{htmxlDocs} used only at the two boundaries native HTML cannot describe about itself --- honest verbs beyond GET/POST (release, cancel via \texttt{hx-delete}) and partial refresh (availability via \texttt{hx-get} with \texttt{hx-target}). Both readable from the returned HTML with no JavaScript executed.}
+
+
+\subsection{Discovery}\label{sec:impl:discovery}
+
+\subsubsection{The normalised affordance}\label{sec:impl:discovery:shape}
+
+\todo{One shape for every control, native or htmx: method, url as written, ordered declared fields, human-visible label, source vocabulary. A field records name, type, required, any prefilled or fixed value, and the enumerated options of a select. Identity for de-duplication includes each field's name and value: five ``hold this slot'' forms posting to the same url with different hidden slot values are five distinct affordances and would wrongly collapse if values were ignored.}
+
+\todo{figure or listing: one rendered control $\rightarrow$ its normalised tuple, paired with the Design figure so the reader sees representation $\rightarrow$ tuple $\rightarrow$ re-rendered control as one round trip.}
+
+\subsubsection{Vocabulary parsers}\label{sec:impl:discovery:parsers}
+
+\todo{Native parser: \texttt{<a href>} as GET navigation, \texttt{<form>} as operation, but only when the form has a real submit control, so an action-less form whose only button carries htmx attributes yields no phantom affordance. htmx parser: \texttt{hx-get/post/put/delete} give method and url; where a control declares that it includes the enclosing form, that form's inputs become its fields. Presentation-only attributes (\texttt{hx-target}, \texttt{hx-swap}) ignored, since the client always reads whole responses. }
+
+\subsubsection{Closure}\label{sec:impl:discovery:closure}
+
+\todo{Discovery parses once, runs both parsers, de-duplicates. The resulting list \emph{is} $A(s)$, complete before any consumer sees it}
+
+\subsection{Execution}\label{sec:impl:agent}
+
+\subsubsection{Choosing}\label{sec:impl:agent:choose}
+
+\todo{The only place nondeterminism lives: one interface handed the goal and the already-closed set, returning an index into it or a stop signal. Interchangeable backends --- manual, an OpenAI-compatible chat endpoint (by default a small local model via Ollama, temperature 0, strict JSON, one reprompt, fallback to manual), and a hosted frontier model. The prompt instructs the model to choose a single action and supply values only for fields derivable from the goal, never inventing personal data; missing required fields are asked of the user. Note this backend list is also the model ladder of Chapter~\ref{sec:evaluation}, which adds a random backend.}
+
+\subsubsection{Acting by replay}\label{sec:impl:agent:replay}
+
+\todo{construct exactly the request the control describes --- query parameters for GET, form-encoded body otherwise, fixed fields forced back to their declared value because they are determined by the control rather than chosen. The client never sends the header marking a partial request, so the site answers on its ordinary Post/Redirect/Get path and the redirect is followed; the client therefore always reads a complete next representation, with no fragments and no client-side runtime to interpret. ``Clicking the control'' is thus a pure function of method, url, fields and values.}
+
+\subsubsection{The loop}\label{sec:impl:agent:loop}
+
+\todo{Cold-start from an entry url; at each step read the representation, discover, choose, fill any required field the chooser could not supply, replay, read the next representation. No map of states or urls is carried; each state is learned only by fetching it. This out-of-band-free progressive discovery is what makes ``hypermedia-constrained'' literal.}
+
+\todo{figure: sequence diagram of one iteration --- GET, discover, choose, fill, replay, GET next.}
+
+\subsection{Presentation}\label{sec:impl:ui}
+
+%!!NOT YET BUILT. 
+\todo{The current artifact exposes the affordance set only through a command-line interface, which covers the execution boundary but leaves the rendering boundary of Section~\ref{sec:design:consumer-ui} unimplemented. Write this section once the renderer exists.}
+
+\todo{Planned content: (i) one generic renderer per declared field type, no model in the rendering path, so the surface is a function of the subset handed to it --- it cannot contain a control outside $A(s)$ nor ask for an input no affordance declares; (ii) what the agent contributes --- subset selection, ordering, prefilling from the goal, and explanation of both what is offered and what is structurally absent, never authoring a control; (iii) a human click and an agent step go through the same replay path, so the two operate one action set rather than two.}
+
+\todo{figure: screenshots of the generated surface for two different states, side by side, with the corresponding affordance set printed beside each.}
+
+\todo{Takeover and fallback: the human may act at any step, and if the agent fails the underlying site remains directly operable --- the graceful-fallback consequence of Section~\ref{sec:bg:hypermedia} realised.}
+
+\subsection{A Second Site}\label{sec:impl:b2}
+
+\todo{To be written once built. A second site in a different domain (the study-plan approval workflow of earlier drafts) shows that the same unchanged client operates a different application. Keep it short --- an existence claim, with evidence reported in Chapter~\ref{sec:evaluation}. State explicitly what had to change in the client, the intended answer being nothing.}
+
+\subsection{Technology Stack and Reproducibility}\label{sec:impl:stack}
+
+\todo{Node.js and TypeScript run directly with tsx, no build step, managed with pnpm. Sites use Express and template-literal HTML so affordances are visible in the source; the client uses platform fetch for replay and linkedom to parse responses. Shared toolchain at the top level, one TypeScript configuration for the workspace.}
+
+\todo{Reproducibility scripts: run the site, drive its flows over HTTP and assert the refusals, self-check the client engine against a running site, and drive the site end to end from a natural-language goal. Type-check and both self-checks pass; the full happy path has been driven unattended by a small local model.}
+
+\todo{Describe the structured log, the sole data source of Chapter~\ref{sec:evaluation}: per step, the task, condition, model, state, exposed affordance set, selected action, supplied values, resulting state. Fixing this schema is a prerequisite for the experiments.}

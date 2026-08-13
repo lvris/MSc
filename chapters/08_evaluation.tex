@@ -1,0 +1,98 @@
+
+\subsection{What Is Evaluated}\label{sec:eval:aim}
+
+\todo{table: the framing table. Rows precision / recall; columns unconstrained action sources / this framework; cells measured, measured, ``guaranteed, not measured'', measured. Small and early: it defines the chapter.}
+
+\todo{State the three questions, together answering RQ3.
+Q1 \emph{Magnitude}: how often does an action source without state-dependent affordances lead a system to offer actions invalid in the current state?
+Q2 \emph{Cost}: what share of legitimate user goals becomes unreachable when the action space is restricted to the controls the server rendered?
+Q3 \emph{Benefit}: to what extent does the constraint substitute for model capability?}
+
+\todo{Scope exclusions: interface aesthetics, completion time, user preference, and anything requiring human participants.}
+
+\subsection{Method}\label{sec:eval:method}
+
+\subsubsection{Ground truth}\label{sec:eval:method:truth}
+
+\todo{The site's valid-affordance function (Section~\ref{sec:impl:site:model}) is the authoritative definition of what is legal in a state, so every proposed action and every rendered control is labelled automatically by consulting the same function the site itself uses.}
+
+\subsubsection{Conditions}\label{sec:eval:method:conditions}
+
+\todo{Same client, same backend throughout; only the surface through which the application declares what can be done varies.
+H \emph{hypermedia} --- the server-rendered representation, whose controls are the currently valid set.
+J \emph{data only} --- the same backend as a plain JSON state resource (entity data and status, no action declarations); stands for a model placed over a conventional data API and asked to produce an interface.
+%{ "booking": { "status": "confirmed", "time": "19:00", "guests": 2 } }
+J+ \emph{static catalog} --- the same JSON state plus a complete, correctly typed catalog of every operation the application supports, unfiltered by state; stands for build-time tool registries and server-declared tool catalogs such as MCP.}
+% hold_slot(slot), enter_details(name, phone), confirm(), cancel(), change_slot(slot)
+
+\todo{J+ is a steelman. It gives the baseline an action vocabulary that is machine-readable, typed and server-authored, so the only thing it lacks relative to H is state-dependence.}
+
+\todo{Fairness controls: same model, prompt scaffolding, goal text and step budget across conditions, with all three prompts in an appendix. What necessarily differs is the shape of the action information, which is the intended manipulation.}
+
+\todo{table: the three conditions against state information, action information, state-dependent, same artifact as the human interface, and real-world analogue.}
+
+\todo{figure: experiment design --- one backend, three surfaces, one client, four chooser backends, one log schema.}
+
+
+\subsubsection{Task set}\label{sec:eval:method:tasks}
+
+\todo{Goals derived from the state machine rather than chosen by hand, so the task set cannot be suspected of having been selected to favour the framework; describe the derivation procedure.}
+
+\begin{enumerate}
+    \item T1 \emph{valid and exposed} --- legal in the current state and present in the representation; every condition can in principle succeed.
+    \item T2 \emph{valid but not exposed} --- legitimate in the domain but not offered in the current representation. H must fail, refusing something in fact possible, whereas an unconstrained condition may guess correctly. This class measures the cost admitted in Section~\ref{sec:design:soundness}.
+    \item T3 \emph{invalid in the current state} --- editing a confirmed booking, forcing a submission while in conflict. Desired behaviour is a correct and explained refusal; the failure mode is offering a control that does not exist.
+\end{enumerate}
+
+\todo{table: the task set --- identifier, class, goal text, starting state, target state, expected outcome under H. Full listing in an appendix if long.}
+
+\subsubsection{Models and repetition}\label{sec:eval:method:models}
+
+\todo{4 chooser backends spanning capability: a hosted frontier model, a mid-tier model, a small local model, and a degenerate backend selecting uniformly at random. Justify the random backend --- under H it still selects from a set of valid actions, so whatever it achieves is achieved by the constraint rather than the model, making it the cleanest single piece of evidence for Q3.}
+
+\subsubsection{Metrics}\label{sec:eval:method:metrics}
+
+\todo{Define each in terms of log fields, with its expected value under H.}
+
+\begin{enumerate}
+    \item invalid action rate
+    \item invalid control rate
+    \item task success
+    \item correct refusal rate
+    \item false refusal rate
+    \item steps to completion
+    \item offer consistency
+    \item unfounded elicitation rate
+    \item ...
+\end{enumerate}
+
+\todo{table: metric, definition, log fields, question served, expected value under H.}
+
+\subsection{Results}\label{sec:eval:results}
+
+\todo{Pending the experiments.}
+
+\subsubsection{A worked trace}\label{sec:eval:results:trace}
+
+\todo{Before any number, one narrated end-to-end run: the goal, the states traversed, the affordance set at each step, the action selected, the surface generated. Include one refusal trace from T3}
+
+\subsubsection{Q1: the size of the problem}\label{sec:eval:results:q1}
+
+
+\subsubsection{Q2: what the constraint costs}\label{sec:eval:results:q2}
+
+
+\subsubsection{Q3: constraint against capability}\label{sec:eval:results:q3}
+
+
+\subsubsection{Consistency}\label{sec:eval:results:consistency}
+
+
+\subsubsection{Cross-site generalisation}\label{sec:eval:results:b2}
+
+
+\subsection{Threats to Validity}\label{sec:eval:threats}
+
+\todo{To be written with the results}
+
+\todo{Closing paragraph: map results back to RQ3 and forward to Chapter~\ref{sec:discussion} for what they imply for application authors.}
