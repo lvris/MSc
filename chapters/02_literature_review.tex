@@ -19,6 +19,8 @@ The semantic-web approach asked authors to maintain a second, machine-facing rep
 
 \subsection{From Conversational Agents to Generative UI}\label{sec:bg:genui}
 
+\todo{结构调整：RQ1 不再问 CUI 的局限，这一节压短，只作动机；也可以并进上一节。}
+
 Large language models entered this picture from the opposite direction: rather than making pages more readable to machines, they made machines better readers of artifacts meant for humans. Their first and still dominant form is conversational. Chat interfaces in the ChatGPT style proved remarkably capable for open-ended language tasks, and they inherit a long lineage of conversational-interface research \cite{mctear2017rise}.
 
 These models were then given the ability to act with scaffolding for planning, tool use, and memory, they can call tools, operate websites, and carry out multi-step tasks against external systems, and an ecosystem of such agents has grown around the web in particular \cite{yang2025agentic, ning2025survey, zhou2024webarena, gur2023realworld, song2025browsing}. This turned how a human should interact with a capable agent into a question.
@@ -35,35 +37,9 @@ Hence generative UI: instead of only talking, the agent renders task-specific in
 This thesis narrows to the demanding end of that: generated controls that correspond to real actions on an external, stateful application. Namely the correctness of the surface --- does this control exist, and is it valid now? The rest of this chapter is organized around that problem: a generated surface can present controls that are invalid, stale, or outright hallucinated relative to what the application can actually do at this moment. 
 \todo{cite: LLM hallucination}
 
-\subsection{Generative UI and Agentic UI Frameworks}\label{sec:bg:frameworks}
-
-\todo{figure: human, agent, application data-flow pipeline (intent, action selection, execution, new state, rendering); locate each framework on it}
-
-To compare existing systems... /todo{describe the figure}
-
-\subsubsection{Rendering-side vs. Source-side}
-
-Two concerns run through this loop and are worth separating, because existing systems tend to address only one of them. The rendering side concerns how agent output is drawn for the human. The action-source side concerns where the set of actions the agent may take, and may offer, comes from. The two are independent, and the rest of this section groups systems by the second.
-
-\subsubsection{Rendering Frameworks}
-
-AG-UI defines an event and transport protocol between agents and front ends \cite{aguiOverview}, Vercel's AI SDK maps model output to registered interface components \cite{aisdkGUI}, and CopilotKit embeds agent interaction into existing applications. \todo{cite: CopilotKit} These systems are complementary to this thesis: they answer how a generated surface is drawn, not what it may legitimately contain, and they could sit on top of the framework developed here.
-\todo{expand this}
-
-\subsubsection{Action Grounding Approaches}
-
-The weakest grounding is inference from the live page. Browser and computer-use agents recover their action set from the DOM, the accessibility tree, or screenshots, and realistic web tasks remain difficult and brittle when the agent must guess in this way what a page affords \cite{zhou2024webarena, song2025browsing}. 
-% This is the indirect-recovery problem of Section~\ref{sec:bg:internet} replayed with a stronger model. 
-Magentic-UI is the generative-UI exemplar ... \cite{mozannar2025magenticui}.
-
-A stronger answer registers the actions on the client at build time: the developer declares a set of tools or components that the model may invoke, explicit and typed \cite{aisdkGUI}. This grounds the vocabulary but not the state. The registry is static and application-specific, and nothing prevents it from drifting away from what the backend currently allows.
-
-The strongest existing answer is a server-declared contract, and its current form is the Model Context Protocol (MCP). MCP deserves full credit on this axis: the contract is machine-readable, owned by the server rather than assumed by the client, gives every tool a typed input schema, and can update the tool list at runtime.
-\todo{cite: MCP}
-
-\todo{table: five-dimension framework comparison; rows: DOM-inference agents, build-time registries, MCP, hypermedia affordances (this thesis, forward reference to the Design chapter); cite each row's primary system}
-
 \subsection{HTML Hypermedia, State, and Affordances}\label{sec:bg:hypermedia}
+
+\todo{结构调整：这一节提前到系统比较之前，先给出比较要用的概念（状态、affordance、同一份 artifact）。下面「Read against Section~\ref{sec:bg:frameworks}, this identifies the pattern that MCP repeats」和 Consequences 里提到 MCP 的句子，现在变成了在 MCP 介绍之前提它：改成前向引用，或者把和 MCP 的对比挪到下一节。}
 
 \subsubsection{REST and the hypermedia constraint}
 
@@ -84,22 +60,45 @@ The observation this thesis is built on follows. In a hypermedia application, th
     \item \textbf{Graceful fallback:} when the agent fails, the human can operate the same page directly. Early evidence that machine-legible interfaces improve agent reliability is consistent with this picture \cite{schultze2025building}.
 \end{enumerate}
 
-\subsection{Affordance-Driven Human--Agent Interaction}\label{sec:bg:hai}
+\subsection{How Existing Systems Decide What Can Be Done}\label{sec:bg:frameworks}
 
-Problems that generative UI have ...
+\todo{结构调整：原「Generative UI and Agentic UI Frameworks」。这一节回答 RQ1：现有系统怎么决定 agent 能做什么、界面上放什么。按四档写，最后一张对比表，比较维度用上一节的概念。渲染那一侧挪到下一节。}
 
-To align the action space that the agent offers with what the human user expects. They sharing a same wordlist of valid actions, which is affordance. Namely what it may offer, ask, and refuse — offers are always executable, refusals are structural/explainable, required form-fields define exactly what to ask.
+\todo{figure: human, agent, application data-flow pipeline (intent, action selection, execution, new state, rendering); locate each framework on it}
 
-\paragraph{Limitations of this thesis}
+To compare existing systems... /todo{describe the figure}
 
-\begin{enumerate}
-    \item Assume the exposed action space to what is currently valid
-    \item Only for hypermedia-driven apps
-    \item Unresolved intent ambiguity (label semantics, visual...)
-    \item Safety issues (prompt injection, malicious content, etc.)
-\end{enumerate}
+\subsubsection{Rendering-side vs. Source-side}
+
+\todo{「the rest of this section groups systems by the second」：渲染一侧现在单独成下一节，这句要相应改。}
+
+Two concerns run through this loop and are worth separating, because existing systems tend to address only one of them. The rendering side concerns how agent output is drawn for the human. The action-source side concerns where the set of actions the agent may take, and may offer, comes from. The two are independent, and the rest of this section groups systems by the second.
+
+\subsubsection{Action Grounding Approaches}
+
+The weakest grounding is inference from the live page. Browser and computer-use agents recover their action set from the DOM, the accessibility tree, or screenshots, and realistic web tasks remain difficult and brittle when the agent must guess in this way what a page affords \cite{zhou2024webarena, song2025browsing}. 
+% This is the indirect-recovery problem of Section~\ref{sec:bg:internet} replayed with a stronger model. 
+Magentic-UI is the generative-UI exemplar ... \cite{mozannar2025magenticui}.
+
+A stronger answer registers the actions on the client at build time: the developer declares a set of tools or components that the model may invoke, explicit and typed \cite{aisdkGUI}. This grounds the vocabulary but not the state. The registry is static and application-specific, and nothing prevents it from drifting away from what the backend currently allows.
+
+The strongest existing answer is a server-declared contract, and its current form is the Model Context Protocol (MCP). MCP deserves full credit on this axis: the contract is machine-readable, owned by the server rather than assumed by the client, gives every tool a typed input schema, and can update the tool list at runtime.
+\todo{cite: MCP}
+
+\todo{第四档（新增）：agent 专用接口 agent-native interfaces —— ASIL、AXIS、Beyond Browsing (Song et al., ACL 2025)、CLI-Anything、OpenCLI、DynaSaur、UFO2、OS-Copilot；必读 Wang et al. 2026 (arXiv 2510.04607)。对 ASIL 的三条划界：(1) 动作集由 adapter 产出，不是应用自身产出（其 Table 6 自认四项需手工）；(2) 不是人用的界面，要可视化还得另做 GUI 同步；(3) 只测 task success，没有 validity 指标。见 memory / research-notes/related-work-survey.md。}
+
+\todo{table: five-dimension framework comparison; rows: DOM-inference agents, build-time registries, MCP, agent-native interfaces, hypermedia affordances (this thesis, forward reference to the Design chapter); cite each row's primary system}
+
+\subsection{Generative-UI Rendering Frameworks}\label{sec:bg:rendering}
+
+\todo{结构调整：原 2.3 里的 Rendering Frameworks 小节，单独成节。}
+
+AG-UI defines an event and transport protocol between agents and front ends \cite{aguiOverview}, Vercel's AI SDK maps model output to registered interface components \cite{aisdkGUI}, and CopilotKit embeds agent interaction into existing applications. \todo{cite: CopilotKit} These systems are complementary to this thesis: they answer how a generated surface is drawn, not what it may legitimately contain, and they could sit on top of the framework developed here.
+\todo{expand this}
 
 \subsection{Research Gap}\label{sec:bg:gap}
+
+\todo{第一句「they infer their actions from artifacts made for human perception」已被 ASIL 这一类工作否掉（agent 专用接口不靠推断）。gap 改成三点合在一起：动作集由应用自己产出（不是 adapter）、只含当前状态合法的、和人用的界面是同一份。}
 
 Web agents can operate human-facing sites, but they infer their actions from artifacts made for human perception, and the inference is brittle. Generative-UI frameworks can render dynamic surfaces, but they ground the actions those surfaces expose weakly: inferred from the page, fixed at build time, or delegated to a machine-only contract that runs parallel to the human interface and can drift from it. No existing framework binds a human-facing generated surface to a state-dependent, server-authoritative action set.
 

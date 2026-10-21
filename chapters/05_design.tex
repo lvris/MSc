@@ -7,6 +7,13 @@ The framework consists of one idea applied at two places. A user states an inten
 Everything downstream is confined to that set: the agent may only execute actions drawn from it, and the interface presented to the user may only offer controls drawn from it. Because the set is derived from the representation the server chose to serve, and because a well-behaved server renders exactly the controls that are valid in the current state, an action outside the set is unavailable to both the agent and the interface.
 
 
+\todo{从 02 原「Affordance-Driven Human--Agent Interaction」挪来，待融入 Overview：agent 和人共用同一套合法动作。}
+
+Problems that generative UI have ...
+
+To align the action space that the agent offers with what the human user expects. They sharing a same wordlist of valid actions, which is affordance. Namely what it may offer, ask, and refuse — offers are always executable, refusals are structural/explainable, required form-fields define exactly what to ask.
+
+
 \subsection{The Affordance Set}\label{sec:design:formal}
 
 \todo{figure: server state $s \rightarrow$ representation $r(s) \rightarrow$ affordance set $A(s)$, then two branches executing and presenting}

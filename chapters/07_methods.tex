@@ -7,7 +7,11 @@
 
 \todo{Scope exclusions: interface aesthetics, completion time, user preference, and anything requiring human participants.}
 
-\subsection{Ground truth}\label{sec:eval:method:truth}
+\subsection{Shared Setup}\label{sec:methods:setup}
+
+\todo{两个实验共用的部分：站点和 ground truth、条件、任务、模型。}
+
+\subsubsection{Ground truth}\label{sec:eval:method:truth}
 
 \todo{The site's valid-affordance function $A(s)$ (Section~\ref{sec:impl:site:model}) defines what is legal in each state. Every proposed action and every offered control is labelled against it automatically.}
 
@@ -15,7 +19,7 @@
 
 \todo{One sentence forward to threats: a fully defined $A(s)$ is the precondition for the dependent variable, which is why the site is synthetic.}
 
-\subsection{Conditions}\label{sec:eval:method:conditions}
+\subsubsection{Conditions}\label{sec:eval:method:conditions}
 
 \todo{Same client, same site, same prompt scaffold throughout. Only the way the action information reaches the model varies. Six conditions:
 P \emph{perception} --- the raw page, the model constructs its own request.
@@ -24,6 +28,8 @@ J+ \emph{catalogue with preconditions} --- J plus a prose note on when each oper
 X \emph{MCP, static} --- a real MCP server, tool list fixed.
 X+ \emph{MCP, filtered} --- the same server, tool list narrowed to the current state and \texttt{listChanged} emitted.
 H \emph{hypermedia} --- the controls rendered in the current page, selected by index.}
+
+\todo{MCP server 的描述放在这里（从 06 挪来）：stdio server，21 个 tool 由操作目录自动生成，保证 J+ 和 X 信息量相同；X+ 用同一个 server 打开按状态过滤，并真的发 \texttt{notifications/tools/list\_changed}。执行一律走同一条 HTTP 路径，不走 tools/call，但 tools/call 已实现并检查过与 HTTP 等价（M1）。}
 
 \todo{Two families, not one ladder: P and H read the same representation (P may deviate, H cannot); J, J+, X, X+ read a separate contract. Each neighbouring pair changes one thing: J+$\rightarrow$X only the protocol, X$\rightarrow$X+ only the state filtering.}
 
@@ -35,7 +41,7 @@ H \emph{hypermedia} --- the controls rendered in the current page, selected by i
 
 \todo{figure: experiment design --- one site, six surfaces, one client loop, five chooser backends, one log schema.}
 
-\subsection{Task set}\label{sec:eval:method:tasks}
+\subsubsection{Task set}\label{sec:eval:method:tasks}
 
 \todo{Tasks are derived from the state machine's reachability graph, not hand-picked. Each (start state, intent) pair falls into exactly one class by what the correct behaviour is. Paths through actions that give up the current booking are excluded, otherwise every goal is trivially reachable. 24 tasks: T1 10 / T2 8 / T3 6.}
 
@@ -47,13 +53,21 @@ H \emph{hypermedia} --- the controls rendered in the current page, selected by i
 
 \todo{table: the task set --- identifier, class, goal text, starting state. Full listing in an appendix.}
 
-\subsection{Models and repetition}\label{sec:eval:method:models}
+\subsubsection{Models and repetition}\label{sec:eval:method:models}
 
 \todo{Chooser backends: a uniform random chooser; qwen3.5 at 2b, 4b and 9b run locally; qwen3.8-27b hosted. [frontier model: pending decision]. Temperature 0, one run per task and condition, because greedy decoding makes repeats copy the same trajectory.}
 
 \todo{Why the random chooser: under H and X+ it can only pick from the offered set, so whatever it achieves is achieved by the constraint, not the model. It cannot run under P, which has no set to pick from; this is reported, not hidden.}
 
-\subsection{The generated-interface audit}\label{sec:eval:method:audit}
+\subsection{Experiment 1: Agent Episodes}\label{sec:methods:episodes}
+
+\todo{RQ3 (a)。每个（任务 $\times$ 条件 $\times$ 模型）跑一个 episode：从起始状态冷启动 → 读当前页面（所有条件都给同样的页面文字） → 按条件给出动作信息 → 模型选一个动作或停下 → 缺的必填字段用固定样例值补上，并记录这个值是谁给的（这在真实界面里就是要问用户的地方） → 发同一种 HTTP 请求 → 读下一个页面。}
+
+\todo{停止：模型说停（agent\_stop）、达到目标、20 步上限、同一状态下同一个被拒请求重复 8 次（stuck）、工具调用条件下两次都没给出工具调用也没说停（no\_tool\_call）、输出无法解析（chooser\_error）。}
+
+\todo{判定：T1 / T2 成功 = 执行了满足目标的动作（服务器接受，status < 400），且中途没有走放弃当前订位的弯路；T3 成功 = 停下，且没执行过任何改变状态的动作（GET 以外）。每一步是否合法由 ground truth 判定，和成功分开记。}
+
+\subsection{Experiment 2: Generated-Interface Audit}\label{sec:eval:method:audit}
 
 \todo{第二个实验（RQ3 (b)）。同样 24 个任务的起始状态和目标；每个（任务 $\times$ 条件 $\times$ 模型）只调用一次模型，不执行动作，t=0。模型输出一段给用户的话，加一组控件；每个控件引用一个操作，字段标为 fixed / prefill / ask。条件 P / J / J+ / X+ / H（X 不单独设：生成界面时不发生工具调用，X 拿到的信息和 J+ 相同）。H 下模型只选下标，字段由渲染器画，模型不碰。}
 
@@ -62,6 +76,8 @@ H \emph{hypermedia} --- the controls rendered in the current page, selected by i
 \todo{预测在跑之前写下（research-notes/genui-audit.md）。prompt 在 3 题试跑后改过一次：原写法让模型每屏只给 1 个控件，界面退化成「推荐下一步」，和 agent 实验测同一件事。见 Discussion 的 Limitations 一节（Section~\ref{sec:disc:threats}）。}
 
 \subsection{Metrics}\label{sec:eval:method:metrics}
+
+\todo{分两组写：实验一用下面的列表；实验二用审计的检查项（死控件、不存在的操作、按下去被拒、编造字段、漏掉必填、多问、编造个人信息、T1/T2 覆盖、T3 出现改状态的控件）。}
 
 \todo{Define each in terms of log fields. Mark which zeros are structural (cannot occur by construction) and which are measured.}
 

@@ -7,7 +7,9 @@
 
 \todo{A paragraph filled with ancient web development and the modern LLM revolution, leads to topic}
 
-\subsection{Why this topic}
+\subsection{Motivation}\label{sec:intro:motivation}
+
+\todo{用一个贯穿全文的例子开头（research-plan/main.md §2）：大桌要先付 80 欧定金，此时不能直接确认。拿着完整工具列表的 agent 会去调「确认」并被拒；把列表画成界面，人会看到一个按不动的「确认」；网站自己的页面只给「付定金 / 修改 / 放弃」。}
 
 \todo{Find supporting materials for this and make each bullet a point}
 \begin{itemize}
@@ -23,17 +25,29 @@
 \subsection{Research Questions}
 
 \begin{enumerate}
-    \item[] \textbf{RQ1:} What are the fundamental limitations of CUIs that necessitate Agentic UIs, and how do state-of-the-art Generative UI frameworks differ in terms of their benefits and drawbacks?
+    % \item[] \textbf{RQ1:} What are the fundamental limitations of CUIs that necessitate Agentic UIs, and how do state-of-the-art Generative UI frameworks differ in terms of their benefits and drawbacks?
+    \item[] \textbf{RQ1:} How do existing systems decide which actions an agent may take and which controls a generated interface shows, and what is missing?
     
     % \item[] \textbf{RQ2:} How can a system architecture be designed to parse backend hypermedia constraints (application state and affordances) and deterministically map them to frontend components based on user intent?
     \item[] \textbf{RQ2:}  How can HTML hypermedia affordances, such as links, forms, actions, and element states, be extracted and represented as a trusted constraint layer for state-aware agentic UI generation?
     
 
     % \item[] \textbf{RQ3:} Measured via computational HCI models (e.g., Keystroke-Level Model), to what extent do hypermedia-generated GUIs reduce interaction complexity and operation step counts for complex web tasks compared to standard conversational interfaces?
-    \item[] \textbf{RQ3:} In a simulated state-dependent workflow, to what extent does an HTML hypermedia-constrained agentic UI reduce invalid action suggestions compared with an unconstrained or weakly structured baseline?
+    % \item[] \textbf{RQ3:} In a simulated state-dependent workflow, to what extent does an HTML hypermedia-constrained agentic UI reduce invalid action suggestions compared with an unconstrained or weakly structured baseline?
+    \item[] \textbf{RQ3:} In a simulated booking site, when actions are limited to the controls on the current page, how often (a) does the agent try an action it cannot take, and (b) does the generated interface show a control the user cannot use, compared with other ways of giving the model its actions?
 \end{enumerate}
 
+\todo{RQ 措辞是草稿（research-plan/main.md 论文骨架 §1），之后再改。}
+
+\subsection{Contributions}\label{sec:intro:contrib}
+
 \todo{Point out the contribution of this work: a framework comparison, an HTML hypermedia-constrained architecture, and a prototype evaluation focused on action validity rather than general UI quality.}
+
+\todo{要点：(1) 按「动作从哪里来」比较现有系统，含 agent 专用接口这一档（RQ1）；(2) 设计：当前页面的控件集合 $A(s)$、site / client contract、三层（RQ2）；(3) 原型：通用客户端 + 订餐站点 + 不经模型的渲染器；(4) 评估：两个实验、六个条件（含真 MCP 基线）、从状态机推导的任务、独立裁判（RQ3）。}
+
+\subsection{Scope}\label{sec:intro:scope}
+
+\todo{不做什么：没有用户研究，不评价界面好不好用、美观或完成时间；只有一个合成站点（理由在 Discussion 的 Limitations）；只讨论 HTML hypermedia 的网站；不处理安全问题（prompt injection 等）。}
 
 
 \subsection{Structure of the work}

@@ -59,18 +59,15 @@ The first site, \texttt{b1}, is a minimal but fully browsable restaurant-reserva
 
 \subsection{Presentation}\label{sec:impl:ui}
 
-%!!NOT YET BUILT. 
-\todo{The current artifact exposes the affordance set only through a command-line interface, which covers the execution boundary but leaves the rendering boundary of Section~\ref{sec:design:consumer-ui} unimplemented. Write this section once the renderer exists.}
+\todo{已经做完（更新这一节）：渲染器是一个纯函数，把一组 affordance 变成控件，核心是一张「声明的字段类型 → 控件」查找表，未知类型退化成文本框并标出来。hidden 且带值的字段由控件固定，不让用户看到；其余字段标为预填 / 必须问 / 可选。检查 R1：渲染代码只依赖 affordance 的定义，不调用模型；R2：一个 affordance 对应一个控件，渲染两次结果相同；R3：字段不多不少。输出是零依赖的 HTML。}
+
+\todo{注意：下面 (ii) 说 agent 负责挑子集，和实现不一致——渲染器不做筛选（筛选是模型的决定，放进来就等于把模型放回渲染路径）。按实现改写。}
 
 \todo{Planned content: (i) one generic renderer per declared field type, no model in the rendering path, so the surface is a function of the subset handed to it --- it cannot contain a control outside $A(s)$ nor ask for an input no affordance declares; (ii) what the agent contributes --- subset selection, ordering, prefilling from the goal, and explanation of both what is offered and what is structurally absent, never authoring a control; (iii) a human click and an agent step go through the same replay path, so the two operate one action set rather than two.}
 
 \todo{figure: screenshots of the generated surface for two different states, side by side, with the corresponding affordance set printed beside each.}
 
 \todo{Takeover and fallback: the human may act at any step, and if the agent fails the underlying site remains directly operable --- the graceful-fallback consequence of Section~\ref{sec:bg:hypermedia} realised.}
-
-\subsection{A Second Site}\label{sec:impl:b2}
-
-\todo{To be written once built. A second site in a different domain (the study-plan approval workflow of earlier drafts) shows that the same unchanged client operates a different application. Keep it short --- an existence claim, with evidence reported in Chapter~\ref{sec:evaluation}. State explicitly what had to change in the client, the intended answer being nothing.}
 
 \subsection{Technology Stack and Reproducibility}\label{sec:impl:stack}
 
