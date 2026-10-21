@@ -1,4 +1,24 @@
-The idea of the conclusion is the opposite of the introduction.
-Here we literally bring the reader out of the topic, not in.
-A good way to write conclusion is to start by reminding the reader of your research question(s) and then state how your work addressed them.
-To finish your conclusion, consider open research questions (this can be a list for example).
+To return to the question of this thesis: when people and agents interact with a website, both need to know which operations the current state allows. The method proposed here takes these operations directly from the controls on the current page, instead of maintaining a separate interface. This keeps the design simple, keeps the agent and the user interface consistent with each other, and makes the interaction more reliable and efficient.
+
+\subsection{Research Questions}
+
+\paragraph{RQ1} Existing approaches usually either infer the possible actions by reading the page, or maintain a separate machine interface (Chapter~\ref{sec:background}). Neither can guarantee that the action set is correct and consistent with what the user sees. The method proposed here takes the possible operations from the controls on the current page. The action set therefore comes from the application itself, contains only what can be done now, and is the same as the interface the user sees.
+
+
+\paragraph{RQ2} For a site that meets the site contract (Section~\ref{sec:design:site-contract}), the links and forms on the current page are exactly the set of actions the current state allows, $A(s)$ (Chapter~\ref{sec:design}). A parser turns the page into a list of these controls (Chapter~\ref{sec:implementation}). The same list serves two consumers: the agent chooses from it, and a renderer draws the interface from it without a model call.
+
+\paragraph{RQ3} With a fixed list of operations, the agent often tries an operation the current state does not allow, however the list is written. Filtering the list by state removes most of these errors. Only choosing a control on the current page by its index removes all of them, for every model, and it does not lower task success (Section~\ref{sec:results:agent}). For the larger models, reading the page directly or using a filtered MCP server also avoids invalid actions. What the page adds is a result that does not depend on the model, and no second interface to maintain (Section~\ref{sec:disc:compare}).
+
+The generated interfaces show the same pattern. Built from a fixed list, they show controls the user cannot use. Built from our filtered server, they show none, but ask the user again for values the page already has. Built from the page, they show the right controls together with their values (Section~\ref{sec:results:interface}).
+
+\subsection{Future Work}
+
+Several questions remain open:
+\begin{itemize}
+    \item \textbf{Real sites.} Many sites show their controls only after JavaScript has run. It is open whether such sites should move toward the hypermedia principle, or whether the controls can be taken from the rendered page.
+    \item \textbf{Other sites and real users.} The approach was tested on one synthetic site and without users. A second site, and a user study of the generated interfaces, would test what this thesis could only argue.
+    \item \textbf{Asking before acting.} The HTTP method of a control could tell the agent when to ask the user first. How to ask often enough without asking at every step was not tested.
+    \item \textbf{Keeping a second interface in step.} The cost of keeping a separate interface consistent with the page was argued, not measured.
+\end{itemize}
+
+The constraint makes sure that an agent only does what can be done. It does not make sure that the agent does what the user needs. Under the constraint, the failures that remained were no longer about the state of the site, but about what the user meant (Section~\ref{sec:disc:possible}). Once the actions are valid, what matters most is still whether they serve the needs of the user.

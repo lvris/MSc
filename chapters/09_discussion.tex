@@ -1,18 +1,44 @@
-The idea of discussion is to bring up points that you noticed during research.
-As a chapter, this is the most freeform one.
-A good way to discuss the points is first to write up subtitles with clear statements and then expand on those.
-Discussion points can occasionally be also in a question format or refer to a larger context beyond the thesis to bring in ideas from other papers to consider.
-In case your work has limitations that you can observe, it can be a good idea to write a separate section considering those.
+As Chapter~\ref{sec:results} showed, H does well at its task: it keeps the agent to the actions the current state allows. This chapter first asks what H adds over the two conditions that come closest to it, P and X+. It then looks at how the agent fails and which failures H leaves, and ends with the limits of the study.
 
-\todo{讨论的小节：每节标题是一句明确的陈述。候选：(1) 同一份页面的价值不在合法性上（X+ 也是 0），在不用另外维护、值随控件送达、界面不多问；(2) 按状态过滤的 MCP 够不够；(3) 大模型读原始页面（P）也能不出错，那 H 的意义是保证而不是更准；(4) 约束挡不住破坏性的合法动作；(5) 观察：工具调用倾向于替用户编个人信息。}
+\subsection{Comparison with P and X+}\label{sec:disc:compare}
 
-\subsection{How the Agents Failed}\label{sec:results:failures}
+Two conditions come close to H. Under P and under X+ the larger models also make no invalid action. This section asks what H adds over each of them.
 
-\todo{从 Results 挪过来。参照 ASIL 5.6 的写法：把失败分成几类，每类给次数和一个例子。不新增结论，只说明前面的数字是怎么来的。}
+\subsubsection{Reading the Page Directly}\label{sec:disc:guarantee}
+
+Under P the agent reads the same page as H, but it does not get the list of controls that H takes from the page, and it writes each request itself. For the larger models this works as well as H: they make no invalid action (Section~\ref{sec:results:index}). One reason is our site. Its pages follow the hypermedia principle: what a page shows is what can be done, and every control is in the HTML the server returns. A capable model can read the valid actions straight off such a page, so for it the extra step of H, turning the page into a list to choose from, is less needed.
+
+Many real sites are not built this way. In a single-page application, the HTML the server returns holds little more than a script, and which controls exist is only known after the JavaScript has run. A model that reads such a page cannot see the actions, however capable it is. H reads the same page and would not see them either; this is why the site contract requires the controls to be in the page (Section~\ref{sec:design:site-contract}). The good result under P therefore depends on the page as much as on the model, and it is one reason we argue that pages should follow the hypermedia principle.
+
+\todo{cite: we need js so much...}
+
+The more important role of H is the guarantee. Under P the agent writes its request as free text, so nothing stops it from writing one the page does not offer. Whether it does depends on the model: the smallest model often does, and P is the only condition where models invent operations the site does not have (Section~\ref{sec:results:index}). Under H the agent answers with the index of a control, and no index points outside the page. We therefore do not claim that H is more accurate than reading the page. What H adds is that, by construction, the result no longer depends on the model being capable enough.
+
+\subsubsection{Filtering by State}\label{sec:disc:restate}
+
+The other strong alternative is X+. As the results showed, X+ can do nearly everything H does: for the larger models it also makes no invalid action (Section~\ref{sec:eval:results:c2}). It also works on sites that do not follow the hypermedia principle, where H has no page to read. Its only problem is the work. The server has to state again what the page already states, and keep it in step with the page.
+
+The differences that remain between X+ and H can each be closed on the server or client side, but each addition states again something the page already states:
+\begin{enumerate}
+    \item Stale tools. The agent names a tool, so it can name one that was already withdrawn (Section~\ref{sec:results:index}). A client can let the model answer with the position of a tool in the current list, as H does.
+    \item Values asked again. Our server publishes the allowed values of a parameter as an enum, but not a value the current state has already fixed (Section~\ref{sec:results:values}). JSON Schema can state such a value with \texttt{const} or \texttt{default}, so this comes from our server, not from MCP.
+    \item Invented fields. An interface drawn from the schema by a renderer, as under H, would show only the declared fields.
+\end{enumerate}
+A server with all of this describes the page a second time, and every change to the rules of the site has to be made in both places (Section~\ref{sec:eval:results:c4}).
+
+We did not measure this cost. Our server was written from the same rules as the site and stayed consistent with it throughout. That a separate server falls out of step in practice is an argument from the structure, not a result of this study.
+
+For the authors of applications, this suggests that if the pages already follow the hypermedia principle, nothing has to be added for agents; otherwise a filtered server such as X+ reaches the same result, at the cost of keeping it in step with the site. For the authors of agents, it suggests letting the model choose from the current list by position instead of writing a name, since only this removed invalid actions for every model.
+
+Filtering by state therefore gives the agent the same valid actions as the page. The difference lies not in what X+ can reach, but in what it costs: a second description that has to be written and kept up to date.
+
+\subsection{How the Agent Failed}\label{sec:disc:endings}
+
+H does not remove failure. It only limits failure to two things: the agent stops before it reaches the goal, or it takes a valid action that is wrong for the user.
 
 \begin{table}[ht]
 \centering
-\caption{How episodes ended, summed over the four models (96 episodes per condition). \emph{Detour}: reached the goal only after giving up the current booking first, scored as a failure.}
+\caption{How episodes ended, summed over the four models (96 episodes per condition). \emph{Detour}: reached the goal only after giving up the current booking first, scored as a failure. On T3 tasks the goal cannot be reached, so stopping without changing anything is the success, and \emph{Goal reached} means the agent ended with a different booking (T3-03), which is a failure.}
 \label{tab:eval:endings}
 \begin{tabular}{lrrrrrr}
 \hline
@@ -29,21 +55,27 @@ No tool call, no stop & -- & -- & -- & 1 & 1 & -- \\
 \end{tabular}
 \end{table}
 
-\todo{失败类别和例子：
-(1) \textbf{卡住}：只出现在静态列表（J 17、J+ 12、X 8）。模型反复提交同一个被拒的请求，例如 9b 在 T3-01 连续 8 次「加菜」。X+ 和 H 为 0：做不了的操作根本不在列表里。
-(2) \textbf{绕路}：X+ 有 7 次，H 1 次。模型先放弃当前的订位（放桌、重新开始），再从头做到目标，例如 9b 在 T1-09「改时间」时先放桌、再占新桌、再改时间。按规则判为失败。原因暂不确定，不下结论。
-(3) \textbf{破坏性的合法动作}：T3-02 取消已确认的订位（见 Section~\ref{sec:disc:possible}）。
-(4) \textbf{值放错地方}：2b 把电话号码填进卡号字段；X / X+ 替用户编姓名和卡号（表 \ref{tab:eval:fabricated}）。
-(5) \textbf{输出读不了}：只有 2b（P 4 次、J+ 8 次），格式问题，和条件本身无关。
-(6) 「没调用工具也没说停」（AgentBoard 的另一类无效动作）在 X / X+ 下各只有 1 次，可以忽略。}
+Table~\ref{tab:eval:endings} shows how the episodes ended. The conditions do not only fail at different rates, they fail in different ways. Under the fixed lists the agent can get stuck: the site refuses a request, and the agent sends the same request again. We end the episode when the same request has been refused eight times from the same state. In a typical case, qwen3.5:9b under J is asked on T3-01 to add a dish to the pre-order, which is not open yet, and it calls the operation that adds a dish eight times in a row. The list it works from still contains the operation, so it tries again. Under X+ and H an operation that cannot be used now is not on the list, so there is nothing to repeat.
 
-\subsection{Tool Calls Tend to Fill In Personal Data}\label{sec:disc:fabricated}
+Under H the failures are of the two kinds named above. Most are stops: 27 of the 31 failed episodes, 15 of them from qwen3.5:2b, which often stops before taking any action (Section~\ref{sec:results:paired}). A stop by itself changes nothing, so it costs the user the task but not the booking. The rest are valid but wrong actions, which Section~\ref{sec:disc:possible} looks at. Under X and X+ the models also fill in values the user never gave, which Section~\ref{sec:disc:fabricated} looks at. Output that cannot be read and answers with neither a tool call nor a stop are rare; Section~\ref{sec:disc:threats} discusses a possible cause of the first.
 
-\todo{标题暂定（候选 (5)），只作观察，不作结论（main.md §4）。从 Results 挪过来。}
+\subsubsection{Valid but Wrong Actions}\label{sec:disc:possible}
+
+The constraint keeps the agent away from actions the current state does not allow. It cannot keep the agent away from an allowed action that is wrong for the user. Under the fixed lists the agent failed because it did not know the state. Under H the page gives the state, and what is left is not knowing what the user meant.
+
+The T3 tasks show this (Table~\ref{tab:eval:t3}). In T3-02 the user asks to forget a ``half-finished'' booking that is in fact confirmed. Under H, qwen3.5:4b, qwen3.5:9b and qwen3.8-27b cancel it: the user was wrong about the state, and the agent followed the user instead of the page. In T3-03 another guest has taken the table, and H offers no control that confirms the booking. The same three models hold a new table and pay the deposit on it, and end with a booking at a time the user did not choose. This happens in 16 of the 24 runs of T3-03 across the four models and six conditions. Every step in these runs is valid. The generated interfaces show the same: under H, T3 screens also contain working controls that would change the booking (Table~\ref{tab:eval:audit}).
+
+One response is to ask the user before an action that changes the booking. The page already marks such actions: every control states its HTTP method, and only GET leaves the state unchanged. Asking before every other action would mean asking at almost every step. Asking only before DELETE would catch the cancellation in T3-02, but not the new table in T3-03. Magentic-UI asks for approval in a similar way, before actions its developers mark as irreversible \cite{mozannar2025magenticui}. In a hypermedia application, a first version of such a mark is already in the page.
+
+Neither rule tells the agent what the user meant. The constraint makes sure that the agent only does what can be done. What matters most is still whether it does what the user needs.
+
+\subsubsection{Personal Data in Tool Calls}\label{sec:disc:fabricated}
+
+The last point is an observation. Every condition got the same instruction: leave the name, phone and card empty, because the user will be asked for them. Under X and X+ the models often filled these fields anyway, with values found neither in the goal nor on the page (Table~\ref{tab:eval:fabricated}). Apart from qwen3.5:2b under P, every such value comes from these two conditions, the two where the model acts through native tool calls.
 
 \begin{table}[ht]
 \centering
-\caption{Observation, not a claim: personal fields (name, phone, card) that the agent filled with a value found in neither the goal nor the page, out of all personal fields it submitted, in the episode runs. Every condition got the same instruction to leave such fields for the user.}
+\caption{Observation: personal fields (name, phone, card) that the agent filled with a value found in neither the goal nor the page, out of all personal fields it submitted, in the episode runs. Every condition got the same instruction to leave such fields for the user.}
 \label{tab:eval:fabricated}
 \begin{tabular}{lrrrrrr}
 \hline
@@ -57,36 +89,20 @@ qwen3.8-27b & -- & 0/15 & 0/13 & 1/11 & 0/4 & 0/32 \\
 \end{tabular}
 \end{table}
 
-\todo{要点：编造集中在 X / X+，也就是原生工具调用的两个条件。一个可能的原因：工具调用要求一次给出符合 schema 的完整参数，模型没有办法表达「这一项我不知道，要问用户」；日志里有模型把「请提供姓名」直接写进 name 字段的例子。27b 几乎不编，所以这一点可能随模型能力消失。MCP 自带的 elicitation 没有测。}
+One possible reason is the form of a tool call. It asks for all required arguments at once, in a shape the schema accepts, and gives the model no way to say that a value is unknown and should come from the user. Some models tried to say this anyway, inside the value: qwen3.5:9b under X sent the name ``[Please provide your name]''.
 
-\subsection{The Constraint Decides What Is Possible, Not What Is Right}\label{sec:disc:possible}
+We draw no conclusion from this. qwen3.8-27b almost never fills in such values, so the effect may disappear with more capable models. MCP also lets a server ask the user for a value directly, a feature called elicitation, which might remove the problem. We did not test it.
 
-\todo{候选 (4)。下面几段从 Results 原 T3 一节挪过来，已是英文，位置和标题待定。}
-
-The constraint keeps the agent away from actions the current state does not allow. It cannot keep the agent away from an allowed action that is wrong for the user. The T3 tasks show this (Table~\ref{tab:eval:t3}).
-
-In T3-02 the user says ``Forget this half-finished booking, we never completed it'', but the booking is in fact confirmed. Under H, qwen3.5:4b, qwen3.5:9b and qwen3.8-27b press the control that cancels the booking, and then stop. The control was on the page, and cancelling a confirmed booking is allowed. The user was wrong about the state, and the agent followed the user instead of the page.
-
-In T3-03 another guest has taken the table, and the user asks to confirm the booking. As in Section~\ref{sec:eval:results:trace}, H offers no control that confirms it. But qwen3.5:9b and qwen3.8-27b hold a new table and pay the deposit on it, and qwen3.5:4b does the same after a detour. They end with a confirmed booking, but not the one the user asked for, at a time the user did not choose. Every step was valid. The same happens in 16 of the 24 runs of T3-03 across the four models and six conditions.
-
-The generated interfaces show the same thing. Under H, half of the T3 screens of both models contain a working control that would change the booking (Table~\ref{tab:eval:audit}).
-
-The constraint decides which actions are possible, not which are right for the user. Telling a valid but wrong action apart from the right one needs to know what the user meant.
-
-\todo{(1) H 下"改过状态再停"的明细：2b T3-06 enter\_details；4b T3-01（enter / edit / discard\_draft）、T3-02 cancel\_booking；9b、27b 都是 T3-02 cancel\_booking。H 下"没停"：9b、27b T3-03（hold\_slot $\rightarrow$ pay\_deposit），4b T3-03（中间丢过一次草稿），27b T3-06 在 enter\_details / edit\_details 之间来回直到步数上限。
-(2) T3-03 以 goal\_satisfied 结束（换桌再付定金）：P 1、J 2、J+ 3、X 3、X+ 4、H 3，共 16 / 24（不含 random）。已定按失败算：用户没同意换时间。
-(3) 还缺：可能的应对（改变状态前向用户确认、站点给破坏性操作加确认步骤），以及和相关工作的联系。}
+\todo{cite: MCP elicitation}
 
 \subsection{Limitations and Threats to Validity}\label{sec:disc:threats}
 
-\todo{从原 08 章 Threats 挪过来，和 main.md §4「不主张」合在一起写。要点：(1) 合成站点：因变量 invalid action rate 需要一个完全定义、权威的 $A(s)$，真实网站没有这个函数，所以站点必须是合成的（辩护，不是道歉）。(2) 只有一个站点：通用性在 Design 用 site contract 论证，没用实验测。(3) 每格 n = 24，成功率波动大，只作次要结果。(4) 任务推导规则 R1--R4 是看推导输出补的，但只依据目标话术的语义，没看模型在新题上的结果。(5) 审计 prompt 在 3 题试跑后改过一次。(6) 没有用户研究：不主张界面好用。(7) T3 局限：约束挡不住破坏性的合法动作（见 Section~\ref{sec:disc:possible}）。(8) 不主张：H 比 P 更准（27b 在 P 下也是 0）；控件自带值是优势（MCP 加 enum 后追平）。
-(9) 本地模型的上下文：Ollama 默认 4096 个 token。审计里 4b / 2b 大量调用在思考中被截断，所以审计只用 9b 和 27b；9b 有 3 个界面被截断，用 16384 重跑补上。episode 实验受影响很小（1413 个有记录的步骤里 3 个碰到上限），但 2b 的 12 次「输出读不了」可能部分来自同一原因。}
-
-\todo{从 02 挪来的原列表，和上面的要点合并：}
-
-\begin{enumerate}
-    \item Assume the exposed action space to what is currently valid
-    \item Only for hypermedia-driven apps
-    \item Unresolved intent ambiguity (label semantics, visual...)
-    \item Safety issues (prompt injection, malicious content, etc.)
-\end{enumerate}
+The study has the following limits.
+\begin{itemize}
+    \item \textbf{A synthetic site.} The invalid action rate needs a complete and authoritative set of valid actions for every state, and a real site does not provide one. The site therefore had to be synthetic. This is what makes the measure exact.
+    \item \textbf{One site.} All results come from one booking site. That the approach carries over to other sites rests on the site contract (Section~\ref{sec:design:site-contract}). The contract is also a precondition: a site whose pages do not contain their controls is outside its scope.
+    \item \textbf{Small cells.} Each cell has 24 tasks, so success rates vary a lot. We therefore treat success only as a secondary result.
+    \item \textbf{The interface audit.} The audit uses only qwen3.5:9b and qwen3.8-27b. Under the default context of 4096 tokens of our local runtime, most calls of the two smaller models were cut off while the model was still thinking, and so were three interfaces of qwen3.5:9b under H. The same limit may explain part of the unreadable outputs of qwen3.5:2b in the episodes. The audit prompt was changed once, after a pilot on three tasks, because it led the model to show only one control per screen. The change was the same for all conditions, and the pilot is not counted.
+    \item \textbf{Our X+ server.} It publishes the allowed values of a parameter, but not the values the state has already fixed. The values asked again are therefore measured against this server, not against MCP in general (Section~\ref{sec:disc:restate}).
+\end{itemize}
+Two further limits were discussed above: H is not more accurate than reading the page (Section~\ref{sec:disc:guarantee}), and the constraint does not keep the agent from valid but wrong actions (Section~\ref{sec:disc:possible}).

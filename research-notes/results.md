@@ -175,3 +175,36 @@ T3：J / J+ 下没停的 25 次里 16 次 stuck、5 次换桌（T3-03）、4 次
 `pnpm exp:elicitation -- --states 997`（默认只扫 200 个状态，要加 `--states 997`）：
 2541 个 (state, action) 对，两边都声明 1443 个字段。H：fixed 332（23.0%）、prefilled 510（35.3%）、undeclared 601（41.6%），自带值合计 58.4%。J：全部 1443 个 undeclared。死控件 J 18396 / 20937（87.9%），H 0 / 2865。
 注意：这个对比是 H 对 J（静态目录），不是 H 对 X+。
+
+# Discussion 章核对记录（2026-10-21）
+
+## 编造个人信息（tab:eval:fabricated）
+
+`pnpm exp:ui-view` 的 B 节重跑，和表一致，四个模型都有数据（main.md §4 写的「只有 9b」已过时）。
+- 编造合计：X / X+ 51 次（2b 28、4b 10、9b 12、27b 1）；P 4 次（只有 2b）；J、J+、H 都是 0。
+- 「来自目标或页面」不算编造：27b 在 H 下有 20 个字段属于这一类。
+- 把提示语写进字段的例子，日志里有：9b X `name="[Please provide your name]"`、`phone="[Please provide your phone number]"`；4b X+ `card="please provide your preferred card for the €80 deposit"`；另有 `card="[Card not provided - please specify which card to use]"`。
+
+## 7.1 失败分类（tab:eval:endings）
+
+对着 logs/*.jsonl 重算（576 个 episode，不含 random，无重复），表中每格一致。
+- 「Goal reached」含 T3 的 goal_satisfied（T3-03 换桌）：P 1、J 2、J+ 3、X 3、X+ 4、H 2；「Agent stopped」含 T3 的干净停下（成功）：P 16、J 9、J+ 9、X 10、X+ 10、H 15。已在表注说明。
+- H 下失败 31 个：agent_stop 27（2b 15，其中 11 个 0 步就停）、T3 goal_satisfied 2（9b、27b T3-03）、绕路 1（4b T3-03）、步数上限 1（27b T3-06 enter / edit 来回）。H 下停前改过状态的：T3-02 cancel_booking（4b、9b、27b）、4b T3-01、2b T3-06，以及 T2-08 release_hold（2b、4b、9b）。
+- 卡住例子：9b J T3-01，8 步全是 add_dish，起始状态 preorder none。
+- 绕路例子：9b X+ T1-09，release_hold → hold_slot → change_slot；第 1 步时 change_slot 已在 validIds 里。
+- 电话进卡号：2b X pay_deposit card="+1-555-0123"。
+- 读不了：2b P 4（T1-09、T1-06、T2-03、T2-08）、2b J+ 8。no_tool_call：9b X T3-01、2b X+ T1-10。
+
+## 7.2.1 合法但不对（从 09 的 todo 移出）
+
+- H 下「改过状态再停」：2b T3-06 enter_details；4b T3-01（enter / edit / discard_draft）、T3-02 cancel_booking；9b、27b 都是 T3-02 cancel_booking。H 下「没停」：9b、27b T3-03（hold_slot → pay_deposit），4b T3-03（中间丢过一次草稿，记为绕路），27b T3-06 在 enter_details / edit_details 之间来回直到步数上限。
+- T3-03 以 goal_satisfied 结束（换桌再付定金）：P 1、J 2、J+ 3、X 3、X+ 4、H 2 + 4b 绕路 1，共 16 / 24（不含 random）。按失败算：用户没同意换时间。
+- HTTP 方法（b1/catalogue.ts）：GET 5、POST 11、DELETE 5。cancel_booking 是 DELETE；hold_slot、pay_deposit 是 POST。
+- Magentic-UI action guard（arXiv 2507.22358 §6.4）：开发者给每个动作设 irreversibility 启发式（always / never / maybe），always 要用户批准，maybe 交给 LLM judge 判断。
+
+## 7.3 Limitations（核对，2026-10-21）
+
+- 审计 prompt 修订：genui-audit.md 第 14 行，27b 试跑 3 题 × 5 条件后改 system prompt（原写法每屏只给 1 个控件），各条件同一改动，试跑日志在 exp/audit-logs/smoke/，不计入结果，预测未改。
+- 9b H 的 3 个审计界面（T2-02、T2-05、T2-06）：主日志 audit-logs/qwen3.5_9b.jsonl 里 ui = null（completion 约 7500，两次尝试被截断）。rerun-9b-H.jsonl 的 T2-02 成功，但没并进主日志；rerun-9b-H-2.jsonl 的 T2-05、T2-06 都超时（2026-10-21 15:21 第二次重跑，每个重试 12 次后放弃）。旧 todo 写「用 16384 重跑补上」与日志不符。
+- episode 截断：旧 todo 写「1413 个步骤里 3 个碰到上限」。1413 对得上，但 3 个核不了：episode 日志里的 token 是多次重试的合计（a/choose.ts），超过 4096 的步骤有 85 个，不能当作截断。正文没写这个数字。
+- 2b 的 12 次 chooser_error 都是「找不到带 method / index 字段的 JSON」，是否因截断，日志里看不出来。
