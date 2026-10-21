@@ -214,6 +214,11 @@
 \usepackage{todonotes}
 \setuptodonotes{inline}
 
+%% DRAFT ONLY: lets the Chinese notes in \todo{} compile under pdflatex.
+%% Remove this line and the \begin{CJK} / \end{CJK} pair around \input{_toc}
+%% once all notes are rewritten in English.
+\usepackage{CJKutf8}
+
 % Rewrite \autoref
 \addto\extrasenglish{
   \def\sectionautorefname{Section}
@@ -352,6 +357,8 @@
 %%
 \cleardoublepage
 
+\begin{CJK}{UTF8}{gbsn}% DRAFT ONLY, see the CJKutf8 note in the preamble
 \input{_toc}
+\end{CJK}
 
 \end{document}

@@ -1,0 +1,146 @@
+\todo{中英混写的骨架。表格里是真数字（任务集 v3，2026-10-21）。\textbf{(我)} 标的是论点句，你来写；其余 \texttt{todo} 是事实要点，组织成文字时可删可并。}
+
+\subsection{A worked trace}\label{sec:eval:results:trace}
+
+\todo{一条完整的 run（建议 T1-01：大桌确认 → 只能付定金），放在所有数字之前：goal → 每一步的 state → 当前 affordance set → 选了什么 → 生成的界面。再加一条 T3 拒绝（建议 T3-03：桌被抢后"确认"，H 下界面没有确认按钮）。具体用哪条 run 待选。}
+
+\subsection{C1: a fixed action list leads the agent to invalid actions}\label{sec:eval:results:c1}
+
+\todo{\textbf{(我)} 论点句：给 agent 一份不随状态变化的操作列表，它经常选到当前做不了的操作。}
+
+\begin{table}[ht]
+\centering
+\caption{Invalid action rate (\%), per decision. $n = 24$ tasks per cell. Zeros under X+ and H for random and under H for all models are structural, not measured.}
+\label{tab:eval:invalid}
+\begin{tabular}{lrrrrrr}
+\hline
+Model & P & J & J+ & X & X+ & H \\
+\hline
+random & -- & 91.2 & 89.8 & 89.0 & 0 & 0 \\
+qwen3.5:2b & 48.9 & 44.4 & 33.3 & 71.1 & 3.5 & 0 \\
+qwen3.5:4b & 0 & 72.4 & 72.1 & 52.9 & 0 & 0 \\
+qwen3.5:9b & 15.6 & 82.1 & 72.0 & 65.9 & 0 & 0 \\
+qwen3.8-27b & 0 & 53.2 & 31.8 & 31.6 & 0 & 0 \\
+\hline
+\end{tabular}
+\end{table}
+
+\todo{事实要点：
+(1) J / J+ / X 在所有模型下都在 31--82\%，random 约 90\%。
+(2) J $\rightarrow$ J+（加了前置条件说明）：27b 降得多（53 $\rightarrow$ 32），9b / 4b 几乎不降。说明写成 prose 的规则，模型不一定会用。
+(3) J+ $\rightarrow$ X（只换协议）：9b 72 $\rightarrow$ 66，27b 32 $\rightarrow$ 32。协议有一点影响，但不是主要原因。
+(4) J / J+ / X 的越界\emph{全部}是"真实操作、状态不允许"（wrong state），没有一次是编造不存在的操作。错的是时机，不是名字。
+(5) 越界最多的地方正好是设计的陷阱：G1 大桌直接确认、G2 24 小时内直接取消。}
+
+\subsection{C2: filtering by state removes most errors; choosing from the page removes all}\label{sec:eval:results:c2}
+
+\todo{\textbf{(我)} 论点句：按状态过滤工具表能消掉大部分错误；但只有让 agent 从页面控件里挑（返回下标），才是结构上保证为 0。}
+
+\todo{事实要点（同一张表 \ref{tab:eval:invalid} 的 X+ / H 列）：
+(1) X $\rightarrow$ X+ 只差状态过滤：9b 65.9 $\rightarrow$ 0，2b 71.1 $\rightarrow$ 3.5。这是协议之外、状态依赖本身的作用。
+(2) X+ 下 2b 的 4 次越界\emph{全是} stale tool：调用了前几步见过、状态变了以后已经撤下的工具。X+ 的 agent 生成的是工具名（字符串），可以是任何字符串；H 的 agent 返回下标，越界的下标根本表达不出来。过滤决定"给了什么"，选择方式决定"能说出什么"。
+(3) H 的 0 不随模型能力变；X+ 的 0 随能力变（27b / 9b / 4b 为 0，2b 不为 0）。
+(4) random 只能从给定集合里挑：H 下成功率 37.5\%，J 下 16.7\%（表 \ref{tab:eval:success}）。这部分成功来自约束，不来自模型。
+(5) P（读原始页面自己构造请求）：27b、4b 为 0，2b 48.9\%。大模型读页面也能不出错，所以不主张"H 比 P 更准"，只主张 H 是结构性的。}
+
+\begin{table}[ht]
+\centering
+\caption{Task success (\%). $n = 24$ per cell (T1 10 / T2 8 / T3 6). A T3 task succeeds only if the agent stops without having changed anything.}
+\label{tab:eval:success}
+\begin{tabular}{lrrrrrr}
+\hline
+Model & P & J & J+ & X & X+ & H \\
+\hline
+random & -- & 16.7 & 25.0 & 12.5 & 33.3 & 37.5 \\
+qwen3.5:2b & 62.5 & 29.2 & 12.5 & 66.7 & 62.5 & 37.5 \\
+qwen3.5:4b & 75.0 & 58.3 & 66.7 & 70.8 & 58.3 & 75.0 \\
+qwen3.5:9b & 70.8 & 54.2 & 54.2 & 58.3 & 70.8 & 79.2 \\
+qwen3.8-27b & 66.7 & 70.8 & 70.8 & 66.7 & 70.8 & 79.2 \\
+\hline
+\end{tabular}
+\end{table}
+
+\todo{成功率只作次要结果：每格 24 题，差一题就是 4 个百分点。可以说的：H 在 4b / 9b / 27b 上最高或并列最高；限制在页面控件上，没有让目标变得做不到（回答旧 Q2 "约束的代价"）。}
+
+\subsection{C3: generated interfaces without filtering show controls the user cannot use}\label{sec:eval:results:c3}
+
+\todo{\textbf{(我)} 论点句：让模型生成给人看的界面时，没按状态过滤的方式会把按不动的按钮摆给用户；按状态过滤的 MCP 不会摆死按钮，但会多问用户已经给过的信息，或替用户编字段。}
+
+\todo{先给不用模型的上界：把整个操作目录画成界面，997 个状态里 87.9\% 的控件是死的（H 为 0 / 2865）。再给模型生成的界面（审计）。}
+
+\begin{table}[ht]
+\centering
+\caption{Generated-interface audit, qwen3.8-27b, 24 tasks per condition. \textit{Placeholder: 9b / 4b / 2b still running.} H zeros in the per-control columns are structural.}
+\label{tab:eval:audit}
+\begin{tabular}{lrrrrrr}
+\hline
+Cond & Controls/UI & Dead & UIs with dead & Asked again & Invented fields & T3 acts \\
+\hline
+P & 0.96 & 0\% & 0\% & 0 & 0 & 33.3\% \\
+J & 1.21 & 13.8\% & 12.5\% & 6 & 0 & 66.7\% \\
+J+ & 1.08 & 15.4\% & 16.7\% & 6 & 0 & 66.7\% \\
+X+ & 1.17 & 0\% & 0\% & 6 & 2 & 66.7\% \\
+H & 1.21 & 0\% & 0\% & 0 & 0 & 50.0\% \\
+\hline
+\end{tabular}
+\end{table}
+
+\todo{事实要点（27b，等其他模型补齐）：
+(1) J / J+ 的死控件 14--15\%，远低于上界 87.9\%：模型会自己筛，但筛不干净。9b 中间结果 J 47.5\%。
+(2) 死控件都落在设计的陷阱上：24 小时内"直接取消"（G2）、点菜单没开就"加菜"、等定金时"改时间"。是不知道当前状态，不是随机错误。
+(3) "Asked again"：J / J+ / X+ 都让用户重新填日期和人数（页面上已经选过），H 为 0，因为 H 的控件本身带着这两个值。
+(4) X+ 有 2 个编造字段（控件没声明的参数），H 下结构上不可能。
+(5) 强模型每屏大约只给 1 个控件；prompt 在试跑后改过一次（见 Threats）。
+(6) 图：同一个渲染器吃 H 和吃 J 的两张截图（\texttt{exp/figures/*-surfaces.html}），把 87.9\% 变成看得见的东西。}
+
+\subsection{C4: using the page needs no second interface and costs least}\label{sec:eval:results:c4}
+
+\todo{\textbf{(我)} 论点句：直接用页面不需要另外维护一份接口，token 成本也最低。}
+
+\begin{table}[ht]
+\centering
+\caption{Tokens per condition, summed over 24 episodes (thousands).}
+\label{tab:eval:tokens}
+\begin{tabular}{lrrrrrr}
+\hline
+Model & P & J & J+ & X & X+ & H \\
+\hline
+qwen3.5:2b & 188 & 30 & 14 & 282 & 115 & 12 \\
+qwen3.5:4b & 23 & 145 & 240 & 242 & 47 & 31 \\
+qwen3.5:9b & 31 & 170 & 258 & 201 & 27 & 27 \\
+qwen3.8-27b & 18 & 115 & 78 & 117 & 21 & 31 \\
+\hline
+\end{tabular}
+\end{table}
+
+\todo{事实要点：
+(1) H 和 X+ 最便宜，J / J+ / X 贵 5--10 倍：没过滤的列表大，而且出错后要多走很多步。
+(2) X+ 和 H 成本差不多，但 X+ 需要站点另外写一个 MCP server 并保证它和页面一致；H 不需要，渲染界面这一步也不调用模型（R1 检查）。
+(3) 2b 的 P 和 X 很贵：小模型在这两种条件下卡住、走满步数。}
+
+\subsection{Limitation shown by T3: valid but destructive actions}\label{sec:eval:results:t3}
+
+\todo{\textbf{(我)} 论点句：约束能挡住非法动作，挡不住破坏性的合法动作。}
+
+\begin{table}[ht]
+\centering
+\caption{T3 outcomes (6 tasks): stopped without changing anything / stopped after changing state / did not stop.}
+\label{tab:eval:t3}
+\begin{tabular}{lcccccc}
+\hline
+Model & P & J & J+ & X & X+ & H \\
+\hline
+qwen3.5:2b & 4/2/0 & 5/1/0 & 2/0/4 & 3/0/3 & 1/2/3 & 5/1/0 \\
+qwen3.5:4b & 4/2/0 & 1/0/5 & 3/1/2 & 2/1/3 & 1/3/2 & 3/2/1 \\
+qwen3.5:9b & 4/1/1 & 1/0/5 & 1/0/5 & 2/1/3 & 4/1/1 & 4/1/1 \\
+qwen3.8-27b & 4/2/0 & 2/1/3 & 3/2/1 & 3/3/0 & 4/1/1 & 3/1/2 \\
+\hline
+\end{tabular}
+\end{table}
+
+\todo{事实要点：
+(1) H 下每个模型都有 1--2 题是"改过状态再停"，主要是 T3-02：用户说"放弃这个没完成的预订"，但订位其实已经确认，agent 把它取消了。审计里也一样：T3 界面上 H 有 50\% 摆出了能改状态的控件。
+(2) J / J+ 多是"没停"：一直试做不了的操作直到卡住。
+(3) 这一节直接接 09 Discussion 的限制部分。}
+
+\todo{Closing paragraph: map results back to RQ3 and forward to Chapter~\ref{sec:discussion} for what they imply for application authors.}

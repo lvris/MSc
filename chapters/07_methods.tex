@@ -1,45 +1,78 @@
-\subsection{System Architecture}
 
-\subsubsection{Conceptual}
+\subsection{What Is Evaluated}\label{sec:eval:aim}
 
-\begin{itemize}
-    \item Data Flows
-    \item Users POV
-    \todo{how I interact with the system? (human-agent)}
-    \item Agents POV
-    \todo{what resources/mcps/tools I have, what are my objectives, how can I align values (agent-web)}
-\end{itemize}
+\todo{table: the framing table. Rows precision / recall; columns unconstrained action sources / this framework; cells measured, measured, ``guaranteed, not measured'', measured. Small and early: it defines the chapter.}
 
+\todo{本章回答 RQ3 用的两个实验共用的设置。RQ3 (a)：agent 会不会去做当前做不了的操作（episode 实验，结果见 C1、C2、C4）。RQ3 (b)：生成给人看的界面会不会摆出用不了的控件、多问用户已经给过的信息（界面审计，结果见 C3）。旧的 Q1--Q3 不再用：Q3（random chooser）并进 C2，Q2（约束的代价）由 T2 / T3 的成功率回答。}
 
-\subsubsection{Backend}
+\todo{Scope exclusions: interface aesthetics, completion time, user preference, and anything requiring human participants.}
 
-\todo{Define a simulated state-dependent backend that exposes the current application state and valid affordances through HTML hypermedia representations or fragments. The current candidate scenario is a study plan approval workflow. Candidate states include draft, missing requirements, conflict detected, ready to submit, submitted, changes requested, and approved.}
+\subsection{Ground truth}\label{sec:eval:method:truth}
 
-\subsubsection{Agent}
+\todo{The site's valid-affordance function $A(s)$ (Section~\ref{sec:impl:site:model}) defines what is legal in each state. Every proposed action and every offered control is labelled against it automatically.}
 
-\begin{itemize}
-    \item Affordance interpretation \todo{how the agent reads controlled HTML hypermedia representations instead of inferring available actions from arbitrary page text, client-side JavaScript state, or generic API responses}
-    \item Intent-to-action mapping \todo{how the agent maps user intent to currently valid affordances and avoids unavailable actions}
-    \item UI constraints \todo{compare two implementation options: (1) the agent selects and explains existing server-rendered hypermedia controls; (2) the agent re-presents those controls through a constrained task-specific component registry. Check ag2ui only if it remains relevant.}
-\end{itemize}
+\todo{Why this is not circular: an independent behavioural judge that never reads $A(s)$. An action counts as available in $s$ iff some parameter assignment is not refused by the server. Result: 997 states $\times$ 21 operations = 20\,937 cells, 100\% agreement. Two negative controls (guard removed, refusal injected) are caught. Same idea as the fail-closed validator in ASIL.}
 
-\subsubsection{Frontend}
+\todo{One sentence forward to threats: a fully defined $A(s)$ is the precondition for the dependent variable, which is why the site is synthetic.}
 
-\todo{Execution logic for rendering or swapping constrained HTML/UI fragments based on agent-selected affordances and required inputs, rather than unconstrained UI generation}
+\subsection{Conditions}\label{sec:eval:method:conditions}
 
-\subsection{Prototype Implement}
+\todo{Same client, same site, same prompt scaffold throughout. Only the way the action information reaches the model varies. Six conditions:
+P \emph{perception} --- the raw page, the model constructs its own request.
+J \emph{catalogue} --- a static list of all 21 operations.
+J+ \emph{catalogue with preconditions} --- J plus a prose note on when each operation is allowed.
+X \emph{MCP, static} --- a real MCP server, tool list fixed.
+X+ \emph{MCP, filtered} --- the same server, tool list narrowed to the current state and \texttt{listChanged} emitted.
+H \emph{hypermedia} --- the controls rendered in the current page, selected by index.}
 
-\subsubsection{Tech Stack}
+\todo{Two families, not one ladder: P and H read the same representation (P may deviate, H cannot); J, J+, X, X+ read a separate contract. Each neighbouring pair changes one thing: J+$\rightarrow$X only the protocol, X$\rightarrow$X+ only the state filtering.}
 
-\todo{Specifications for the implementation, Few or no mention of actual codes, but more on what specs like frameworks/APIS...}
+\todo{Baselines are steelmanned: enums for static domains in J/J+/X, state-dependent domains in X+, preconditions in J+, a real MCP server with native tool calls rather than a list pasted into the prompt. Why both X and X+: X is MCP as typically deployed, X+ is the best the specification allows.}
 
-\subsubsection{Test Scenario Setup}
+\todo{Fairness controls: every condition sees the same page text; execution always goes through the same HTTP path, so judging and logging are identical; same goal text, step budget (20) and retry policy. Prompts in an appendix.}
 
-\todo{A simulated multi-step, state-heavy study plan approval workflow.
+\todo{table: conditions $\times$ (declared action set / filtered by state / real tool protocol / same artifact as the human interface / real-world analogue).}
 
-- affordances in human language: how a student can revise, complete, submit, and respond to feedback on a study plan
+\todo{figure: experiment design --- one site, six surfaces, one client loop, five chooser backends, one log schema.}
 
-- potential generated UIs: requirement checklist, course selector, conflict resolver, exception request form, advisor feedback response panel, final submission summary
+\subsection{Task set}\label{sec:eval:method:tasks}
 
-- machine perspective: what state and affordance information can be retrieved from HTML hypermedia controls, and how this constrains the agent's possible UI actions
-}
+\todo{Tasks are derived from the state machine's reachability graph, not hand-picked. Each (start state, intent) pair falls into exactly one class by what the correct behaviour is. Paths through actions that give up the current booking are excluded, otherwise every goal is trivially reachable. 24 tasks: T1 10 / T2 8 / T3 6.}
+
+\begin{enumerate}
+    \item T1 \emph{exposed} --- an action satisfying the intent is valid in the current state. Correct behaviour: do it.
+    \item T2 \emph{elsewhere} --- not valid here, but valid in a state reachable without giving up the booking. Correct behaviour: get there first, then act.
+    \item T3 \emph{impossible} --- not valid in any such reachable state. Correct behaviour: say so and act on nothing.
+\end{enumerate}
+
+\todo{table: the task set --- identifier, class, goal text, starting state. Full listing in an appendix.}
+
+\subsection{Models and repetition}\label{sec:eval:method:models}
+
+\todo{Chooser backends: a uniform random chooser; qwen3.5 at 2b, 4b and 9b run locally; qwen3.8-27b hosted. [frontier model: pending decision]. Temperature 0, one run per task and condition, because greedy decoding makes repeats copy the same trajectory.}
+
+\todo{Why the random chooser: under H and X+ it can only pick from the offered set, so whatever it achieves is achieved by the constraint, not the model. It cannot run under P, which has no set to pick from; this is reported, not hidden.}
+
+\subsection{The generated-interface audit}\label{sec:eval:method:audit}
+
+\todo{第二个实验（RQ3 (b)）。同样 24 个任务的起始状态和目标；每个（任务 $\times$ 条件 $\times$ 模型）只调用一次模型，不执行动作，t=0。模型输出一段给用户的话，加一组控件；每个控件引用一个操作，字段标为 fixed / prefill / ask。条件 P / J / J+ / X+ / H（X 不单独设：生成界面时不发生工具调用，X 拿到的信息和 J+ 相同）。H 下模型只选下标，字段由渲染器画，模型不碰。}
+
+\todo{逐控件检查：死控件（不在当前合法集合）、不存在的操作、按下去被拒、编造字段、漏掉必填字段、多问（当前状态已确定的值）、编造个人信息；每个界面：T1 / T2 是否给了推进目标的控件，T3 是否出现能改变状态的控件。H 下前几项结构上为 0。}
+
+\todo{预测在跑之前写下（research-notes/genui-audit.md）。prompt 在 3 题试跑后改过一次：原写法让模型每屏只给 1 个控件，界面退化成「推荐下一步」，和 agent 实验测同一件事。见 Discussion 的 Limitations 一节（Section~\ref{sec:disc:threats}）。}
+
+\subsection{Metrics}\label{sec:eval:method:metrics}
+
+\todo{Define each in terms of log fields. Mark which zeros are structural (cannot occur by construction) and which are measured.}
+
+\begin{enumerate}
+    \item invalid action rate --- per decision, following AgentBoard; plus the same rate over distinct (state, request) attempts
+    \item invalid breakdown --- off-catalogue (named operation does not exist) / wrong state / stale tool (offered earlier, withdrawn since; X and X+ only)
+    \item correct abstention on T3
+    \item task success --- secondary, small $n$
+    \item steps and tokens per episode
+    \item dead-control rate --- over the whole state space, no model involved
+    \item value provenance --- fixed by the control / prefilled / supplied by the model / left for the user
+\end{enumerate}
+
+\todo{table: metric, definition, log fields, which claim it serves.}

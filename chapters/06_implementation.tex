@@ -10,7 +10,7 @@ The first site, \texttt{b1}, is a minimal but fully browsable restaurant-reserva
 
 \subsubsection{The state machine as the authority}\label{sec:impl:site:model}
 
-\todo{we have a state machine that can be used as ground truth. states: browsing, holding, details entered, confirmed, conflict, cancelled. Note the second role: it is the authoritative definition of validity, hence the annotation-free ground truth used in Chapter~\ref{sec:evaluation}.}
+\todo{we have a state machine that can be used as ground truth. states: browsing, holding, details entered, confirmed, conflict, cancelled. Note the second role: it is the authoritative definition of validity, hence the annotation-free ground truth used in Chapter~\ref{sec:methods}.}
 
 \todo{table: the six states and the affordances exposed in each, highlighting the deliberately absent controls.}
 
@@ -45,7 +45,7 @@ The first site, \texttt{b1}, is a minimal but fully browsable restaurant-reserva
 
 \subsubsection{Choosing}\label{sec:impl:agent:choose}
 
-\todo{The only place nondeterminism lives: one interface handed the goal and the already-closed set, returning an index into it or a stop signal. Interchangeable backends --- manual, an OpenAI-compatible chat endpoint (by default a small local model via Ollama, temperature 0, strict JSON, one reprompt, fallback to manual), and a hosted frontier model. The prompt instructs the model to choose a single action and supply values only for fields derivable from the goal, never inventing personal data; missing required fields are asked of the user. Note this backend list is also the model ladder of Chapter~\ref{sec:evaluation}, which adds a random backend.}
+\todo{The only place nondeterminism lives: one interface handed the goal and the already-closed set, returning an index into it or a stop signal. Interchangeable backends --- manual, an OpenAI-compatible chat endpoint (by default a small local model via Ollama, temperature 0, strict JSON, one reprompt, fallback to manual), and a hosted frontier model. The prompt instructs the model to choose a single action and supply values only for fields derivable from the goal, never inventing personal data; missing required fields are asked of the user. Note this backend list is also the model ladder of Chapter~\ref{sec:methods}, which adds a random backend.}
 
 \subsubsection{Acting by replay}\label{sec:impl:agent:replay}
 
@@ -78,4 +78,4 @@ The first site, \texttt{b1}, is a minimal but fully browsable restaurant-reserva
 
 \todo{Reproducibility scripts: run the site, drive its flows over HTTP and assert the refusals, self-check the client engine against a running site, and drive the site end to end from a natural-language goal. Type-check and both self-checks pass; the full happy path has been driven unattended by a small local model.}
 
-\todo{Describe the structured log, the sole data source of Chapter~\ref{sec:evaluation}: per step, the task, condition, model, state, exposed affordance set, selected action, supplied values, resulting state. Fixing this schema is a prerequisite for the experiments.}
+\todo{Describe the structured log, the sole data source of Chapter~\ref{sec:results}: per step, the task, condition, model, state, exposed affordance set, selected action, supplied values, resulting state. Fixing this schema is a prerequisite for the experiments.}
