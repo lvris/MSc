@@ -6,9 +6,81 @@ In case your work has limitations that you can observe, it can be a good idea to
 
 \todo{讨论的小节：每节标题是一句明确的陈述。候选：(1) 同一份页面的价值不在合法性上（X+ 也是 0），在不用另外维护、值随控件送达、界面不多问；(2) 按状态过滤的 MCP 够不够；(3) 大模型读原始页面（P）也能不出错，那 H 的意义是保证而不是更准；(4) 约束挡不住破坏性的合法动作；(5) 观察：工具调用倾向于替用户编个人信息。}
 
+\subsection{How the Agents Failed}\label{sec:results:failures}
+
+\todo{从 Results 挪过来。参照 ASIL 5.6 的写法：把失败分成几类，每类给次数和一个例子。不新增结论，只说明前面的数字是怎么来的。}
+
+\begin{table}[ht]
+\centering
+\caption{How episodes ended, summed over the four models (96 episodes per condition). \emph{Detour}: reached the goal only after giving up the current booking first, scored as a failure.}
+\label{tab:eval:endings}
+\begin{tabular}{lrrrrrr}
+\hline
+Ending & P & J & J+ & X & X+ & H \\
+\hline
+Goal reached & 51 & 44 & 43 & 56 & 57 & 52 \\
+Agent stopped & 41 & 34 & 32 & 28 & 29 & 42 \\
+Stuck (same refused request 8 times) & 0 & 17 & 12 & 8 & 0 & 0 \\
+Detour & 0 & 1 & 1 & 1 & 7 & 1 \\
+Step limit & 0 & 0 & 0 & 2 & 2 & 1 \\
+Output not readable & 4 & 0 & 8 & 0 & 0 & 0 \\
+No tool call, no stop & -- & -- & -- & 1 & 1 & -- \\
+\hline
+\end{tabular}
+\end{table}
+
+\todo{失败类别和例子：
+(1) \textbf{卡住}：只出现在静态列表（J 17、J+ 12、X 8）。模型反复提交同一个被拒的请求，例如 9b 在 T3-01 连续 8 次「加菜」。X+ 和 H 为 0：做不了的操作根本不在列表里。
+(2) \textbf{绕路}：X+ 有 7 次，H 1 次。模型先放弃当前的订位（放桌、重新开始），再从头做到目标，例如 9b 在 T1-09「改时间」时先放桌、再占新桌、再改时间。按规则判为失败。原因暂不确定，不下结论。
+(3) \textbf{破坏性的合法动作}：T3-02 取消已确认的订位（见 Section~\ref{sec:disc:possible}）。
+(4) \textbf{值放错地方}：2b 把电话号码填进卡号字段；X / X+ 替用户编姓名和卡号（表 \ref{tab:eval:fabricated}）。
+(5) \textbf{输出读不了}：只有 2b（P 4 次、J+ 8 次），格式问题，和条件本身无关。
+(6) 「没调用工具也没说停」（AgentBoard 的另一类无效动作）在 X / X+ 下各只有 1 次，可以忽略。}
+
+\subsection{Tool Calls Tend to Fill In Personal Data}\label{sec:disc:fabricated}
+
+\todo{标题暂定（候选 (5)），只作观察，不作结论（main.md §4）。从 Results 挪过来。}
+
+\begin{table}[ht]
+\centering
+\caption{Observation, not a claim: personal fields (name, phone, card) that the agent filled with a value found in neither the goal nor the page, out of all personal fields it submitted, in the episode runs. Every condition got the same instruction to leave such fields for the user.}
+\label{tab:eval:fabricated}
+\begin{tabular}{lrrrrrr}
+\hline
+Model & P & J & J+ & X & X+ & H \\
+\hline
+qwen3.5:2b & 4/11 & -- & -- & 7/13 & 21/35 & 0/5 \\
+qwen3.5:4b & 0/5 & 0/7 & 0/15 & 4/16 & 6/15 & 0/15 \\
+qwen3.5:9b & 0/4 & 0/6 & 0/10 & 7/9 & 5/7 & 0/7 \\
+qwen3.8-27b & -- & 0/15 & 0/13 & 1/11 & 0/4 & 0/32 \\
+\hline
+\end{tabular}
+\end{table}
+
+\todo{要点：编造集中在 X / X+，也就是原生工具调用的两个条件。一个可能的原因：工具调用要求一次给出符合 schema 的完整参数，模型没有办法表达「这一项我不知道，要问用户」；日志里有模型把「请提供姓名」直接写进 name 字段的例子。27b 几乎不编，所以这一点可能随模型能力消失。MCP 自带的 elicitation 没有测。}
+
+\subsection{The Constraint Decides What Is Possible, Not What Is Right}\label{sec:disc:possible}
+
+\todo{候选 (4)。下面几段从 Results 原 T3 一节挪过来，已是英文，位置和标题待定。}
+
+The constraint keeps the agent away from actions the current state does not allow. It cannot keep the agent away from an allowed action that is wrong for the user. The T3 tasks show this (Table~\ref{tab:eval:t3}).
+
+In T3-02 the user says ``Forget this half-finished booking, we never completed it'', but the booking is in fact confirmed. Under H, qwen3.5:4b, qwen3.5:9b and qwen3.8-27b press the control that cancels the booking, and then stop. The control was on the page, and cancelling a confirmed booking is allowed. The user was wrong about the state, and the agent followed the user instead of the page.
+
+In T3-03 another guest has taken the table, and the user asks to confirm the booking. As in Section~\ref{sec:eval:results:trace}, H offers no control that confirms it. But qwen3.5:9b and qwen3.8-27b hold a new table and pay the deposit on it, and qwen3.5:4b does the same after a detour. They end with a confirmed booking, but not the one the user asked for, at a time the user did not choose. Every step was valid. The same happens in 16 of the 24 runs of T3-03 across the four models and six conditions.
+
+The generated interfaces show the same thing. Under H, half of the T3 screens of both models contain a working control that would change the booking (Table~\ref{tab:eval:audit}).
+
+The constraint decides which actions are possible, not which are right for the user. Telling a valid but wrong action apart from the right one needs to know what the user meant.
+
+\todo{(1) H 下"改过状态再停"的明细：2b T3-06 enter\_details；4b T3-01（enter / edit / discard\_draft）、T3-02 cancel\_booking；9b、27b 都是 T3-02 cancel\_booking。H 下"没停"：9b、27b T3-03（hold\_slot $\rightarrow$ pay\_deposit），4b T3-03（中间丢过一次草稿），27b T3-06 在 enter\_details / edit\_details 之间来回直到步数上限。
+(2) T3-03 以 goal\_satisfied 结束（换桌再付定金）：P 1、J 2、J+ 3、X 3、X+ 4、H 3，共 16 / 24（不含 random）。已定按失败算：用户没同意换时间。
+(3) 还缺：可能的应对（改变状态前向用户确认、站点给破坏性操作加确认步骤），以及和相关工作的联系。}
+
 \subsection{Limitations and Threats to Validity}\label{sec:disc:threats}
 
-\todo{从原 08 章 Threats 挪过来，和 main.md §4「不主张」合在一起写。要点：(1) 合成站点：因变量 invalid action rate 需要一个完全定义、权威的 $A(s)$，真实网站没有这个函数，所以站点必须是合成的（辩护，不是道歉）。(2) 只有一个站点：通用性在 Design 用 site contract 论证，没用实验测。(3) 每格 n = 24，成功率波动大，只作次要结果。(4) 任务推导规则 R1--R4 是看推导输出补的，但只依据目标话术的语义，没看模型在新题上的结果。(5) 审计 prompt 在 3 题试跑后改过一次。(6) 没有用户研究：不主张界面好用。(7) T3 局限：约束挡不住破坏性的合法动作（见 Results T3 一节）。(8) 不主张：H 比 P 更准（27b 在 P 下也是 0）；控件自带值是优势（MCP 加 enum 后追平）。}
+\todo{从原 08 章 Threats 挪过来，和 main.md §4「不主张」合在一起写。要点：(1) 合成站点：因变量 invalid action rate 需要一个完全定义、权威的 $A(s)$，真实网站没有这个函数，所以站点必须是合成的（辩护，不是道歉）。(2) 只有一个站点：通用性在 Design 用 site contract 论证，没用实验测。(3) 每格 n = 24，成功率波动大，只作次要结果。(4) 任务推导规则 R1--R4 是看推导输出补的，但只依据目标话术的语义，没看模型在新题上的结果。(5) 审计 prompt 在 3 题试跑后改过一次。(6) 没有用户研究：不主张界面好用。(7) T3 局限：约束挡不住破坏性的合法动作（见 Section~\ref{sec:disc:possible}）。(8) 不主张：H 比 P 更准（27b 在 P 下也是 0）；控件自带值是优势（MCP 加 enum 后追平）。
+(9) 本地模型的上下文：Ollama 默认 4096 个 token。审计里 4b / 2b 大量调用在思考中被截断，所以审计只用 9b 和 27b；9b 有 3 个界面被截断，用 16384 重跑补上。episode 实验受影响很小（1413 个有记录的步骤里 3 个碰到上限），但 2b 的 12 次「输出读不了」可能部分来自同一原因。}
 
 \todo{从 02 挪来的原列表，和上面的要点合并：}
 

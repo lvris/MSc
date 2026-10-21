@@ -1,16 +1,29 @@
-\todo{中英混写的骨架。表格里是真数字（任务集 v3，2026-10-21）。\textbf{(我)} 标的是论点句，你来写；其余 \texttt{todo} 是事实要点，组织成文字时可删可并。}
+\subsection{An Example Run}\label{sec:eval:results:trace}
 
-\subsection{A worked trace}\label{sec:eval:results:trace}
+Before the numbers, we follow one task under two conditions. Task T1-01 starts with a booking for a party of eight that waits for a deposit. The goal text is ``Go ahead and confirm the booking.'' For a large party the site does not allow a plain confirmation. Paying the deposit is what confirms the booking (gate G1). In this state three operations are valid: \texttt{pay\_deposit}, \texttt{edit\_details} and \texttt{discard\_draft}.
 
-\todo{一条完整的 run（建议 T1-01：大桌确认 → 只能付定金），放在所有数字之前：goal → 每一步的 state → 当前 affordance set → 选了什么 → 生成的界面。再加一条 T3 拒绝（建议 T3-03：桌被抢后"确认"，H 下界面没有确认按钮）。具体用哪条 run 待选。}
+\begin{enumerate}
+    \item Under J, qwen3.5:9b sees all 21 operations. It first asks for the confirmation page, then calls \texttt{confirm\_booking}. The server refuses both. On the third step it calls \texttt{pay\_deposit}, which succeeds. Two of its three decisions are invalid.
+    \item Under H, the same model sees the three controls of the current page, one of them ``Pay €80 deposit'', and returns that control's index. The task is done in one step, with no invalid decision.
+\end{enumerate}
 
-\subsection{C1: a fixed action list leads the agent to invalid actions}\label{sec:eval:results:c1}
+Both runs succeed. What differs is the path: under J the model finds out the state from the server's refusals; under H the state is already in what it is offered. The rest of this chapter counts this difference over all tasks and models.
 
-\todo{\textbf{(我)} 论点句：给 agent 一份不随状态变化的操作列表，它经常选到当前做不了的操作。}
+\todo{figure: deposit-pending-surfaces.html}
+
+\todo{"gate G1" ref in implements... 5 gates}
+
+\subsection{Invalid Actions by the Agent}\label{sec:results:agent}
+
+This section answers RQ3 (a): does the agent try operations that the current state does not allow? As a reminder, the six conditions differ only in how the agent learns its actions (Section~\ref{sec:eval:method:conditions}). Table~\ref{tab:eval:invalid} gives the invalid action rate for every model and condition, and Table~\ref{tab:eval:invalid-kind} sorts the invalid actions by kind.
+
+\subsubsection{Fixed action lists}\label{sec:eval:results:c1}
+
+J, J+ and X give the agent the same kind of guide in three forms: a short list of operations (J), the list with a note on when each operation is allowed (J+), and the list as a standard MCP server (X). In all three the list does not change with the state, so the agent has to work out from the rules which operations it can use now. However the guide is written, the agent often gets this wrong and calls an operation that the current state does not allow: under J, J+ and X the invalid rate lies between 31.6\% and 82.1\% for every model (Table~\ref{tab:eval:invalid}).
 
 \begin{table}[ht]
 \centering
-\caption{Invalid action rate (\%), per decision. $n = 24$ tasks per cell. Zeros under X+ and H for random and under H for all models are structural, not measured.}
+\caption{Invalid action rate (\%), per decision. $n = 24$ tasks per cell.}
 \label{tab:eval:invalid}
 \begin{tabular}{lrrrrrr}
 \hline
@@ -25,27 +38,56 @@ qwen3.8-27b & 0 & 53.2 & 31.8 & 31.6 & 0 & 0 \\
 \end{tabular}
 \end{table}
 
-\todo{事实要点：
-(1) J / J+ / X 在所有模型下都在 31--82\%，random 约 90\%。
-(2) J $\rightarrow$ J+（加了前置条件说明）：27b 降得多（53 $\rightarrow$ 32），9b / 4b 几乎不降。说明写成 prose 的规则，模型不一定会用。
-(3) J+ $\rightarrow$ X（只换协议）：9b 72 $\rightarrow$ 66，27b 32 $\rightarrow$ 32。协议有一点影响，但不是主要原因。
-(4) J / J+ / X 的越界\emph{全部}是"真实操作、状态不允许"（wrong state），没有一次是编造不存在的操作。错的是时机，不是名字。
-(5) 越界最多的地方正好是设计的陷阱：G1 大桌直接确认、G2 24 小时内直接取消。}
+\begin{table}[ht]
+\centering
+\small
+\caption{Invalid actions by kind, summed over the four models (random excluded); definitions in Section~\ref{sec:eval:method:metrics}. \emph{Distinct}: the invalid rate (\%) with each distinct (state, request) attempt counted once, range over the four models.}
+\label{tab:eval:invalid-kind}
+\begin{tabular}{lrrrrl}
+\hline
+Cond & Invalid & Invented & Wrong state & of which stale & Distinct (\%) \\
+\hline
+P & 28 & 20 & 8 & -- & 0--41.5 \\
+J & 222 & 0 & 222 & -- & 37.5--53.2 \\
+J+ & 176 & 0 & 176 & -- & 25.0--47.3 \\
+X & 208 & 0 & 208 & -- & 29.7--47.8 \\
+X+ & 4 & 0 & 4 & 4 & 0--3.5 \\
+H & 0 & 0 & 0 & -- & 0 \\
+\hline
+\end{tabular}
+\end{table}
 
-\subsection{C2: filtering by state removes most errors; choosing from the page removes all}\label{sec:eval:results:c2}
+A better guide does not fix this. The note in J+ helps qwen3.8-27b most (53.2\% to 31.8\%), qwen3.5:9b less (82.1\% to 72.0\%) and qwen3.5:4b not at all, and the MCP server in X moves the rate up for some models and down for others. None of the errors names an operation that the site does not have (Table~\ref{tab:eval:invalid-kind}). All of them are real operations called in a state that does not allow them: the model knows the names, but not which ones are open now. Most of them (45\%) are pre-order operations called before the pre-order is open. Counting each repeated request only once makes the rates smaller but keeps the order of the conditions. qwen3.5:2b ends most episodes under J and J+ by stopping, usually at once, so its rates there rest on few decisions.
 
-\todo{\textbf{(我)} 论点句：按状态过滤工具表能消掉大部分错误；但只有让 agent 从页面控件里挑（返回下标），才是结构上保证为 0。}
+A more detailed guide or a standard protocol does not remove this kind of error, because the step it fails on, working out the current state from the rules, is still left to the agent.
 
-\todo{事实要点（同一张表 \ref{tab:eval:invalid} 的 X+ / H 列）：
-(1) X $\rightarrow$ X+ 只差状态过滤：9b 65.9 $\rightarrow$ 0，2b 71.1 $\rightarrow$ 3.5。这是协议之外、状态依赖本身的作用。
-(2) X+ 下 2b 的 4 次越界\emph{全是} stale tool：调用了前几步见过、状态变了以后已经撤下的工具。X+ 的 agent 生成的是工具名（字符串），可以是任何字符串；H 的 agent 返回下标，越界的下标根本表达不出来。过滤决定"给了什么"，选择方式决定"能说出什么"。
-(3) H 的 0 不随模型能力变；X+ 的 0 随能力变（27b / 9b / 4b 为 0，2b 不为 0）。
-(4) random 只能从给定集合里挑：H 下成功率 37.5\%，J 下 16.7\%（表 \ref{tab:eval:success}）。这部分成功来自约束，不来自模型。
-(5) P（读原始页面自己构造请求）：27b、4b 为 0，2b 48.9\%。大模型读页面也能不出错，所以不主张"H 比 P 更准"，只主张 H 是结构性的。}
+\FloatBarrier
+
+\subsubsection{Filtering by state}\label{sec:eval:results:c2}
+
+If the problem is that the agent has to work out the current state, the obvious fix is to do that step for it and offer only the operations the current state allows. This removes most of the errors. But only one thing removes them by construction: letting the agent answer with the index of a control in the offered list, as under H, instead of naming an operation.
+
+X+ is the same MCP server as X, with the tool list filtered by state, so from X to X+ only the filtering changes. The invalid rate drops to 0 for the three larger models and to 3.5\% for qwen3.5:2b. Most of the errors under the fixed lists therefore come from the state, not from the protocol. Filtering removes most of them, but not all.
+
+\subsubsection{Choosing from the offered list}\label{sec:results:index}
+
+The four errors left under X+ are all stale tools: qwen3.5:2b named a tool that the list had offered a few steps earlier and then withdrawn. Under X+ the agent answers with a tool name, which is free text, so it can still name a tool that is no longer on the list. Under H it answers with the index of a control on the current page, and no index points outside that list. Filtering decides what the agent is offered; answering by index decides what it can choose. The 0 under H therefore holds for every model, while the 0 under X+ holds only for the larger ones.
+
+P reads the same page as H but lets the agent write the request itself. Here the result depends on the model: qwen3.5:4b and qwen3.8-27b make no invalid action, qwen3.5:2b is at 48.9\%. P is also the only condition with invented operations. We therefore do not claim that H is more accurate than P, only that its 0 does not depend on the model.
+
+\FloatBarrier
+
+\subsection{Task Success}\label{sec:results:success}
+
+Section~\ref{sec:results:index} showed that under H the agent never picks an invalid action. One may ask what this costs: keeping the agent to the controls on the current page might make some goals harder to reach. Task success shows that it does not. Success is only a secondary result here, because each cell has 24 tasks and one task moves the rate by about four points.
+
+\subsubsection{Paired comparison}\label{sec:results:paired}
+
+Because the cells are small, we compare the conditions task by task as well as by rate (Table~\ref{tab:eval:paired}). For qwen3.5:4b, qwen3.5:9b and qwen3.8-27b, H has the highest or joint highest success of all conditions (Table~\ref{tab:eval:success}). Against the fixed lists the difference is clear: summed over the four models, 17 tasks succeed only under H and 3 only under J, and against J+ the count is 20 to 4 ($p < 0.01$ for both).
 
 \begin{table}[ht]
 \centering
-\caption{Task success (\%). $n = 24$ per cell (T1 10 / T2 8 / T3 6). A T3 task succeeds only if the agent stops without having changed anything.}
+\caption{Task success (\%). $n = 24$ per cell (T1 10 / T2 8 / T3 6).}
 \label{tab:eval:success}
 \begin{tabular}{lrrrrrr}
 \hline
@@ -60,71 +102,42 @@ qwen3.8-27b & 66.7 & 70.8 & 70.8 & 66.7 & 70.8 & 79.2 \\
 \end{tabular}
 \end{table}
 
-\todo{成功率只作次要结果：每格 24 题，差一题就是 4 个百分点。可以说的：H 在 4b / 9b / 27b 上最高或并列最高；限制在页面控件上，没有让目标变得做不到（回答旧 Q2 "约束的代价"）。}
-
-\subsection{C3: generated interfaces without filtering show controls the user cannot use}\label{sec:eval:results:c3}
-
-\todo{\textbf{(我)} 论点句：让模型生成给人看的界面时，没按状态过滤的方式会把按不动的按钮摆给用户；按状态过滤的 MCP 不会摆死按钮，但会多问用户已经给过的信息，或替用户编字段。}
-
-\todo{先给不用模型的上界：把整个操作目录画成界面，997 个状态里 87.9\% 的控件是死的（H 为 0 / 2865）。再给模型生成的界面（审计）。}
-
 \begin{table}[ht]
 \centering
-\caption{Generated-interface audit, qwen3.8-27b, 24 tasks per condition. \textit{Placeholder: 9b / 4b / 2b still running.} H zeros in the per-control columns are structural.}
-\label{tab:eval:audit}
-\begin{tabular}{lrrrrrr}
+\caption{Paired comparison against H, task by task: the number of tasks that only H succeeded on, and that only the other condition succeeded on. Tasks where both or neither succeeded are not counted. The two-sided sign test asks how likely such a split is if H and the other condition were equally good.}
+\label{tab:eval:paired}
+\begin{tabular}{lccccc}
 \hline
-Cond & Controls/UI & Dead & UIs with dead & Asked again & Invented fields & T3 acts \\
+Model & vs P & vs J & vs J+ & vs X & vs X+ \\
 \hline
-P & 0.96 & 0\% & 0\% & 0 & 0 & 33.3\% \\
-J & 1.21 & 13.8\% & 12.5\% & 6 & 0 & 66.7\% \\
-J+ & 1.08 & 15.4\% & 16.7\% & 6 & 0 & 66.7\% \\
-X+ & 1.17 & 0\% & 0\% & 6 & 2 & 66.7\% \\
-H & 1.21 & 0\% & 0\% & 0 & 0 & 50.0\% \\
+qwen3.5:2b & 2 -- 8 & 4 -- 2 & 7 -- 1 & 3 -- 10 & 5 -- 11 \\
+qwen3.5:4b & 1 -- 1 & 4 -- 0 & 3 -- 1 & 3 -- 2 & 4 -- 0 \\
+qwen3.5:9b & 2 -- 0 & 6 -- 0 & 7 -- 1 & 7 -- 2 & 3 -- 1 \\
+qwen3.8-27b & 4 -- 1 & 3 -- 1 & 3 -- 1 & 4 -- 1 & 4 -- 2 \\
+\hline
+All four & 9 -- 10 & 17 -- 3 & 20 -- 4 & 17 -- 15 & 16 -- 14 \\
+Sign test $p$ & 1.00 & 0.003 & 0.002 & 0.86 & 0.86 \\
 \hline
 \end{tabular}
 \end{table}
 
-\todo{事实要点（27b，等其他模型补齐）：
-(1) J / J+ 的死控件 14--15\%，远低于上界 87.9\%：模型会自己筛，但筛不干净。9b 中间结果 J 47.5\%。
-(2) 死控件都落在设计的陷阱上：24 小时内"直接取消"（G2）、点菜单没开就"加菜"、等定金时"改时间"。是不知道当前状态，不是随机错误。
-(3) "Asked again"：J / J+ / X+ 都让用户重新填日期和人数（页面上已经选过），H 为 0，因为 H 的控件本身带着这两个值。
-(4) X+ 有 2 个编造字段（控件没声明的参数），H 下结构上不可能。
-(5) 强模型每屏大约只给 1 个控件；prompt 在试跑后改过一次（见 Threats）。
-(6) 图：同一个渲染器吃 H 和吃 J 的两张截图（\texttt{exp/figures/*-surfaces.html}），把 87.9\% 变成看得见的东西。}
+Against X, X+ and P the totals are level, and this comes almost entirely from qwen3.5:2b. Under H this model ends 20 of its 24 episodes by stopping, mostly before any action, so it loses 10 tasks to X and 11 to X+. Without it, H against X is 14 to 5, against X+ 11 to 3, and against P 7 to 2. These counts point the same way but, with so few tasks that differ, fall just short of significance ($p = 0.06$ against X and X+, $p = 0.18$ against P). We therefore claim only that limiting the agent to the controls on the page does not lower success, and for the three larger models it tends to help.
 
-\subsection{C4: using the page needs no second interface and costs least}\label{sec:eval:results:c4}
+\FloatBarrier
 
-\todo{\textbf{(我)} 论点句：直接用页面不需要另外维护一份接口，token 成本也最低。}
+\subsubsection{Multi-step tasks}\label{sec:results:multistep}
 
-\begin{table}[ht]
-\centering
-\caption{Tokens per condition, summed over 24 episodes (thousands).}
-\label{tab:eval:tokens}
-\begin{tabular}{lrrrrrr}
-\hline
-Model & P & J & J+ & X & X+ & H \\
-\hline
-qwen3.5:2b & 188 & 30 & 14 & 282 & 115 & 12 \\
-qwen3.5:4b & 23 & 145 & 240 & 242 & 47 & 31 \\
-qwen3.5:9b & 31 & 170 & 258 & 201 & 27 & 27 \\
-qwen3.8-27b & 18 & 115 & 78 & 117 & 21 & 31 \\
-\hline
-\end{tabular}
-\end{table}
+The difference between the conditions is largest on T2 tasks, where the agent first has to reach another state before it can act. qwen3.8-27b succeeds on 7 of the 8 T2 tasks under H and on 3 under X+.
 
-\todo{事实要点：
-(1) H 和 X+ 最便宜，J / J+ / X 贵 5--10 倍：没过滤的列表大，而且出错后要多走很多步。
-(2) X+ 和 H 成本差不多，但 X+ 需要站点另外写一个 MCP server 并保证它和页面一致；H 不需要，渲染界面这一步也不调用模型（R1 检查）。
-(3) 2b 的 P 和 X 很贵：小模型在这两种条件下卡住、走满步数。}
+The random chooser separates what the constraint does from what the model does. With no model at all, its success rises from 16.7\% under J to 37.5\% under H. Nearly all of this comes from T1 tasks, where one valid action is enough: on T2 it succeeds on at most 2 of 8 tasks in any condition. The constraint keeps the agent on valid actions, but a goal that needs several steps still needs a model.
 
-\subsection{Limitation shown by T3: valid but destructive actions}\label{sec:eval:results:t3}
+\subsubsection{Unreachable goals}\label{sec:results:unreachable}
 
-\todo{\textbf{(我)} 论点句：约束能挡住非法动作，挡不住破坏性的合法动作。}
+On T3 tasks the goal cannot be reached, and the agent should stop without changing anything (Table~\ref{tab:eval:t3}). No condition does this reliably. Summed over the four models, H stops cleanly in 15 of 24 runs, P in 16, and J, J+, X and X+ in 9 or 10. Under the fixed lists the agent mostly does not stop and keeps calling refused operations. Under H every failure is a sequence of valid actions, such as cancelling a booking the user believed was unfinished. A valid action can still be the wrong one; we discuss this in Section~\ref{sec:disc:possible}.
 
 \begin{table}[ht]
 \centering
-\caption{T3 outcomes (6 tasks): stopped without changing anything / stopped after changing state / did not stop.}
+\caption{T3 outcomes (6 tasks): stopped without changing anything / stopped after changing state / did not stop. Not stopping includes going on to a different booking, as in T3-03.}
 \label{tab:eval:t3}
 \begin{tabular}{lcccccc}
 \hline
@@ -138,9 +151,122 @@ qwen3.8-27b & 4/2/0 & 2/1/3 & 3/2/1 & 3/3/0 & 4/1/1 & 3/1/2 \\
 \end{tabular}
 \end{table}
 
-\todo{事实要点：
-(1) H 下每个模型都有 1--2 题是"改过状态再停"，主要是 T3-02：用户说"放弃这个没完成的预订"，但订位其实已经确认，agent 把它取消了。审计里也一样：T3 界面上 H 有 50\% 摆出了能改状态的控件。
-(2) J / J+ 多是"没停"：一直试做不了的操作直到卡住。
-(3) 这一节直接接 09 Discussion 的限制部分。}
+\FloatBarrier
 
-\todo{Closing paragraph: map results back to RQ3 and forward to Chapter~\ref{sec:discussion} for what they imply for application authors.}
+\subsection{Controls Shown to the User}\label{sec:results:interface}
+
+This section answers RQ3 (b): when the model builds the interface the user sees, does it show controls the user cannot use? The data come from the interface audit (Section~\ref{sec:eval:method:audit}), run with qwen3.5:9b and qwen3.8-27b.
+
+Section~\ref{sec:results:agent} showed that an agent working from an unfiltered list often picks an operation the current state does not allow. On the interface side the same problem reaches the user. When the model builds the screen from an unfiltered list, it shows operations that cannot be used now, and the user sees dead controls (buttons and forms that do nothing when used). Filtering by state removes the dead controls, but under X+ the interface still asks the user again for values the page already has, and adds fields the operation does not have. H does neither, because each control on the page carries its own values.
+
+\subsubsection{Dead controls}\label{sec:results:dead}
+
+Without a model, the size of the problem is easy to state. If the full list of operations is drawn as an interface, 87.9\% of its controls are dead, counted over all 997 reachable states; under H the share is 0 by construction. A model does better than this, because it leaves out some of the operations that do not fit. It does not leave out all of them. Under J and J+, 13.8\% and 15.4\% of the controls qwen3.8-27b shows are dead, and 47.5\% and 39.4\% of those qwen3.5:9b shows. Under J, half of the qwen3.5:9b screens contain at least one dead control. The dead controls fall in the same places as the invalid actions of the agent: adding a dish before the pre-order is open, cancelling a booking inside the 24-hour window, confirming a large party without the deposit. The model does not know the current state, and the interface shows it.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Generated-interface audit, 24 tasks per condition. \emph{Dead}: share of controls whose operation the current state does not allow. \emph{Re-asked}: fields the user is asked to fill although the page's own control already carries the value. \emph{Invented}: fields the operation does not declare. \emph{T3 acts}: share of T3 screens with a working control that changes the booking.}
+\label{tab:eval:audit}
+\begin{tabular}{llrrrrrr}
+\hline
+Model & Cond & Ctl/UI & Dead & UIs w/ dead & Re-asked & Invented & T3 acts \\
+\hline
+qwen3.5:9b & P & 1.13 & 3.7\% & 4.2\% & 1 & 1 & 33.3\% \\
+ & J & 1.67 & 47.5\% & 50.0\% & 6 & 1 & 33.3\% \\
+ & J+ & 1.38 & 39.4\% & 45.8\% & 5 & 0 & 66.7\% \\
+ & X+ & 1.38 & 0\% & 0\% & 6 & 5 & 33.3\% \\
+ & H & 1.04 & 0\% & 0\% & 0 & 0 & 50.0\% \\
+\hline
+qwen3.8-27b & P & 0.96 & 0\% & 0\% & 0 & 0 & 33.3\% \\
+ & J & 1.21 & 13.8\% & 12.5\% & 6 & 0 & 66.7\% \\
+ & J+ & 1.08 & 15.4\% & 16.7\% & 6 & 0 & 66.7\% \\
+ & X+ & 1.17 & 0\% & 0\% & 6 & 2 & 66.7\% \\
+ & H & 1.21 & 0\% & 0\% & 0 & 0 & 50.0\% \\
+\hline
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+
+\subsubsection{Values that come with the control}\label{sec:results:values}
+
+Under X+ and H no control is dead. The two still differ in what the user is asked to fill in. Under J, J+ and X+ both models ask the user again for the date and the party size, which the user has already chosen on the page (5 to 6 fields per condition and model). Under H this never happens, because a control on the page carries such values with it. Over all 997 states, 58\% of the fields of the page's controls already have a value, either fixed by the control (23\%) or prefilled (35\%). The fixed list declares the same 1\,443 fields but carries a value for none of them. Our X+ server adds the allowed values of a parameter, but not the value the current state has already fixed. A server could add these too, but it would have to repeat in its schema what the page already states. What H leaves to the user is the name, phone, card and reason, which only the user knows.
+
+X+ also adds fields that the operation does not declare: two for qwen3.8-27b, five for qwen3.5:9b, for example a card number, expiry date and CVV where the deposit operation takes a single card field. Under H the renderer draws exactly the declared fields, so the model cannot add any.
+
+Filtering gives the interface the right controls. Only the page gives it the right controls together with their values.
+
+\todo{(1) 9b 的 H 还缺 3 个界面, 表 \ref{tab:eval:audit} 的 9b
+(2) exp/figures/*-surfaces.html}
+
+\FloatBarrier
+
+\subsection{Cost}\label{sec:eval:results:c4}
+
+The last question is what H costs. Using the page directly needs no second interface to maintain, and its token cost is low: about the same as the filtered MCP server, and several times lower than the fixed lists.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Cost per condition: tokens summed(thousands) / mean steps per episode.}
+\label{tab:eval:tokens}
+\begin{tabular}{lcccccc}
+\hline
+Model & P & J & J+ & X & X+ & H \\
+\hline
+random & -- & -- / 18.4 & -- / 17.6 & -- / 17.8 & -- / 10.0 & -- / 8.5 \\
+qwen3.5:2b & 188 / 2.0 & 30 / 0.4 & 14 / 0.3 & 282 / 5.0 & 115 / 4.8 & 12 / 0.5 \\
+qwen3.5:4b & 23 / 1.0 & 145 / 4.4 & 240 / 4.3 & 242 / 4.3 & 47 / 2.1 & 31 / 1.6 \\
+qwen3.5:9b & 31 / 1.3 & 170 / 5.1 & 258 / 4.9 & 201 / 3.5 & 27 / 1.3 & 27 / 1.7 \\
+qwen3.8-27b & 18 / 0.8 & 115 / 3.2 & 78 / 1.8 & 117 / 1.6 & 21 / 0.9 & 31 / 2.1 \\
+\hline
+\end{tabular}
+\end{table}
+
+The first cost is the work on the site side. Under H the agent reads the page the site already serves to people, so nothing extra has to be written. X+ reaches the same invalid rate for the larger models, but only because the site runs a separate MCP server that filters its tools by state. That server has to be kept consistent with the page: every rule the page applies has to be written again in the server, and when one changes, the other has to change too. The same holds for the interface: under H the renderer turns the page's controls into an interface without a model call (Section~\ref{sec:impl:ui}); the model only picks which controls to show.
+
+The second cost is tokens (Table~\ref{tab:eval:tokens}). H and X+ use the fewest. The fixed lists J, J+ and X use about five to ten times as many as H for qwen3.5:4b and qwen3.5:9b, and two to four times as many for qwen3.8-27b. Two things add up. Each step's prompt is larger, because a fixed list describes all 21 operations: about 300 to 400 prompt tokens per step under H, 600 under X+ and 2\,000 under X. And the agent takes more steps, because every refused call costs a step: qwen3.5:9b takes 5.1 steps per episode under J and 1.7 under H.
+
+Few steps do not always mean an efficient agent. qwen3.5:2b takes few steps under J, J+ and H because it mostly stops at once (Section~\ref{sec:results:success}). It is expensive under P because it writes long outputs when it builds requests from the raw page, about 3\,000 completion tokens per step, and under X because it gets stuck and repeats refused calls.
+
+\todo{出终稿前用 \texttt{report.ts} 重出表 \ref{tab:eval:tokens}：有 3 格步数和日志重算差 0.1。}
+
+\FloatBarrier
+
+\subsection{Summary}\label{sec:results:summary}
+
+Table~\ref{tab:eval:summary} puts the results side by side for the three ways of giving the agent its actions: a fixed list, a list filtered by state, and the controls on the page.
+
+\begin{table}[ht]
+\centering
+\small
+\caption{Summary of the results. Ranges are over the models. $^{*}$ structural: holds by construction, for any model. $^{\dagger}$ the interface audit has no X condition, so the fixed-list cells there are J and J+.}
+\label{tab:eval:summary}
+\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{0.27\textwidth}XXX}
+\hline
+& Fixed list (J, J+, X) & Filtered list (X+) & Page controls (H) \\
+\hline
+\multicolumn{4}{l}{\emph{RQ3 (a): the agent}} \\
+Invalid actions & 31.6--82.1\% & 0 for the larger models; 3.5\% (stale tools) for qwen3.5:2b & 0$^{*}$ \\
+Success, paired against H & H ahead of J and J+ (17--3, 20--4, $p < 0.01$); level with X (17--15) & level (16--14) & -- \\
+Unreachable goals, clean stops & 9--10 of 24 & 10 of 24 & 15 of 24 \\
+\hline
+\multicolumn{4}{l}{\emph{RQ3 (b): the interface}} \\
+Dead controls$^{\dagger}$ & 13.8--47.5\% & 0 & 0$^{*}$ \\
+Values asked again$^{\dagger}$ & 5--6 per model & 6 per model & 0$^{*}$ \\
+Invented fields$^{\dagger}$ & 0--1 & 2--5 & 0$^{*}$ \\
+\hline
+\multicolumn{4}{l}{\emph{Cost}} \\
+Tokens & 2--10 times H & about the same as H & lowest or near \\
+Second interface to maintain & yes & yes, and kept in line with the page & no \\
+\hline
+\end{tabularx}
+\end{table}
+
+For RQ3 (a), an agent that gets a fixed list of operations often calls one the current state does not allow, however the list is written. Filtering the list by state removes most of these errors. Only answering with the index of a control on the current page removes all of them, for every model. Keeping the agent to these controls does not lower its success, and for the three larger models it tends to raise it.
+
+For RQ3 (b), the same holds for the interface the user sees. Built from a fixed list, it shows dead controls. Built from a filtered list, it shows the right controls, but asks the user again for values the page already has and adds fields that do not exist. Built from the page's controls, it shows the right controls with their values, and its zeros do not depend on the model.
+
+Using the page needs no second interface, and its token cost is as low as that of the filtered server. What the constraint does not do is choose the right action among the valid ones: on goals that cannot be reached, every condition sometimes changes the booking. Chapter~\ref{sec:discussion} discusses what these results mean for the authors of applications and agents, and where their limits are.
+

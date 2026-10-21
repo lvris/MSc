@@ -57,6 +57,8 @@ H \emph{hypermedia} --- the controls rendered in the current page, selected by i
 
 \todo{Chooser backends: a uniform random chooser; qwen3.5 at 2b, 4b and 9b run locally; qwen3.8-27b hosted. [frontier model: pending decision]. Temperature 0, one run per task and condition, because greedy decoding makes repeats copy the same trajectory.}
 
+\todo{界面审计只用 9b 和 27b：4b / 2b 在 Ollama 默认 4096 上下文下思考被截断，输出为空（见 research-notes/genui-audit.md）。}
+
 \todo{Why the random chooser: under H and X+ it can only pick from the offered set, so whatever it achieves is achieved by the constraint, not the model. It cannot run under P, which has no set to pick from; this is reported, not hidden.}
 
 \subsection{Experiment 1: Agent Episodes}\label{sec:methods:episodes}
@@ -71,24 +73,42 @@ H \emph{hypermedia} --- the controls rendered in the current page, selected by i
 
 \todo{第二个实验（RQ3 (b)）。同样 24 个任务的起始状态和目标；每个（任务 $\times$ 条件 $\times$ 模型）只调用一次模型，不执行动作，t=0。模型输出一段给用户的话，加一组控件；每个控件引用一个操作，字段标为 fixed / prefill / ask。条件 P / J / J+ / X+ / H（X 不单独设：生成界面时不发生工具调用，X 拿到的信息和 J+ 相同）。H 下模型只选下标，字段由渲染器画，模型不碰。}
 
+\todo{审计只用两个模型：qwen3.5:9b（本地）和 qwen3.8-27b（托管）。4b / 2b 在默认上下文下大多被截断，没有采用（见 Section~\ref{sec:disc:threats}）。}
+
 \todo{逐控件检查：死控件（不在当前合法集合）、不存在的操作、按下去被拒、编造字段、漏掉必填字段、多问（当前状态已确定的值）、编造个人信息；每个界面：T1 / T2 是否给了推进目标的控件，T3 是否出现能改变状态的控件。H 下前几项结构上为 0。}
 
 \todo{预测在跑之前写下（research-notes/genui-audit.md）。prompt 在 3 题试跑后改过一次：原写法让模型每屏只给 1 个控件，界面退化成「推荐下一步」，和 agent 实验测同一件事。见 Discussion 的 Limitations 一节（Section~\ref{sec:disc:threats}）。}
 
 \subsection{Metrics}\label{sec:eval:method:metrics}
 
-\todo{分两组写：实验一用下面的列表；实验二用审计的检查项（死控件、不存在的操作、按下去被拒、编造字段、漏掉必填、多问、编造个人信息、T1/T2 覆盖、T3 出现改状态的控件）。}
+\todo{每个指标都要写清楚：用日志里哪些字段算出来；哪些 0 是结构上的（构造上不可能出现），哪些是测出来的。下面括号里是它在 Results 的位置。}
 
-\todo{Define each in terms of log fields. Mark which zeros are structural (cannot occur by construction) and which are measured.}
+\paragraph{Experiment 1 (agent episodes).}
 
 \begin{enumerate}
-    \item invalid action rate --- per decision, following AgentBoard; plus the same rate over distinct (state, request) attempts
-    \item invalid breakdown --- off-catalogue (named operation does not exist) / wrong state / stale tool (offered earlier, withdrawn since; X and X+ only)
-    \item correct abstention on T3
-    \item task success --- secondary, small $n$
-    \item steps and tokens per episode
-    \item dead-control rate --- over the whole state space, no model involved
-    \item value provenance --- fixed by the control / prefilled / supplied by the model / left for the user
+    \item invalid action rate --- per decision, following AgentBoard; plus the same rate over distinct (state, request) attempts (Tables~\ref{tab:eval:invalid}, \ref{tab:eval:invalid-kind})
+    \item invalid breakdown --- invented operation (does not exist) / wrong state / stale tool (offered earlier, withdrawn since; X+ only) (Table~\ref{tab:eval:invalid-kind})
+    \item task success --- secondary, small $n$; compared with H task by task with a sign test (Tables~\ref{tab:eval:success}, \ref{tab:eval:paired})
+    \item how each episode ended --- goal reached / stopped / stuck / detour / step limit / unreadable output / no tool call reported in the Discussion (Table~\ref{tab:eval:endings})
+    \item T3 outcome --- stopped without changing anything / stopped after changing state / did not stop (Table~\ref{tab:eval:t3})
+    \item steps and tokens per episode (Table~\ref{tab:eval:tokens})
+    \item personal data made up by the agent --- observation only, reported in the Discussion (Table~\ref{tab:eval:fabricated})
+\end{enumerate}
+
+\paragraph{Whole state space, no model.}
+
+\begin{enumerate}
+    \item dead-control rate --- the full operation list drawn as an interface, in every reachable state (Section~\ref{sec:results:interface}, in the text)
+    \item value provenance --- per declared field: fixed by the control / prefilled / left for the model or the user (Section~\ref{sec:results:interface}, in the text)
+\end{enumerate}
+
+\paragraph{Experiment 2 (generated-interface audit).}
+
+\begin{enumerate}
+    \item per control: dead / names nothing the site has / refused when pressed / invented field / missing required field / asks for a value the state already determines / made-up personal data (Table~\ref{tab:eval:audit})
+    \item per interface: T1 and T2 --- a working control towards the goal is on screen; T3 --- a control that would change the booking is on screen (Table~\ref{tab:eval:audit})
 \end{enumerate}
 
 \todo{table: metric, definition, log fields, which claim it serves.}
+
+\todo{三类越界（invented / wrong state / stale tool）要写成完整定义：Results 表 \ref{tab:eval:invalid-kind} 的 caption 指到这里。T3 成功判定（停下且没执行 GET 以外的动作）也在这里写清楚。}
