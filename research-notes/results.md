@@ -146,7 +146,7 @@ T3：J / J+ 下没停的 25 次里 16 次 stuck、5 次换桌（T3-03）、4 次
 
 ## \subsubsection{Values that come with the control}
 
-(1) 9b 的 H 有 3 个界面因 4096 上下文截断没读出来（T2-02、T2-05、T2-06）。T2-02 已在 \texttt{rerun-9b-H.jsonl} 重跑成功但没并进主日志；T2-05、T2-06 的第二次重跑（\texttt{\_a-9b-rerun2.txt}）全部超时，没有结果。表里 9b H 一行是 audit-report 对主日志的输出（unread = 3），补完再更新。
+(1) 9b 的 H 有 3 个界面因 4096 上下文截断没读出来（T2-02、T2-05、T2-06），用 16384 上下文重跑。T2-02 在 \texttt{rerun-9b-H.jsonl}；T2-05、T2-06 第二次重跑（\texttt{\_a-9b-rerun2.txt}）在 5 分钟超时下全部超时，2026-10-31 把超时放宽到 15 分钟后第三次重跑成功（\texttt{rerun-9b-H-3.jsonl}，completion 4804 / 6346 token，无死控件）。三条已用 \texttt{audit-merge.ts} 并进 \texttt{qwen3.5\_9b.jsonl}，合并前的日志没有留在仓库里。合并后 9b H：unread 3→0，ctl/UI 1.04→1.21，T2 covered 50.0\%→87.5\%，dead / re-asked / invented 仍为 0，T3 acts 不变。
 (2) 4b / 2b 不做（截断，见 research-notes/genui-audit.md），在 Methods 模型一节说明。
 (3) 死控件明细（J / J+）：9b 中 add\_dish 7 次（T1-06、T2-03、T2-07、T3-06）、cancel\_booking 2（T1-02）、discard\_draft 3、confirm\_booking 2（T2-02）等；27b 中 add\_dish 2、change\_slot 2（T2-04，等定金时改时间）、cancel\_booking 1、discard\_draft 1、check\_availability 1、view\_cancellation 1。
 (4) Asked again 全是 date / partySize（P 下 9b 有 1 次只问 date）。
