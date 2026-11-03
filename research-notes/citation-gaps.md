@@ -181,6 +181,31 @@ Conclusion 按惯例不引新文献，只回指本文各章，所以不需要补
 
 **顺手修了：** `hypermediaBook` 的作者原来写的是 William Talcott，这是错的，已改成 Gross、Stepinski、Akşimşek（*Hypermedia Systems* 的三位作者）。`htmxlDocs` 的标题里有 HTML 转义残留，已清掉。
 
+## 4b. 第二批检索结果（2026-11-03）
+
+导入清单见 `zotero-import.md`「第二批」。key 以 Zotero 导出后的为准。下面「支撑什么」都是根据摘要和检索结果写的，引用前要读原文。
+
+| 文献 | 支撑什么（对应第 2 节的哪一条） | 要点 |
+| --- | --- | --- |
+| Fouquet, Laperdrix & Rouvoy 2023, *Breaking Bad*（arXiv 2301.10597） | 09 §guarantee：很多网站离开 JavaScript 就用不了 | 禁用 JavaScript 后爬了 6384 个页面：只有 43\% 的页面不严格依赖 JavaScript。**这是目前最直接的证据**，比 Web Almanac 好用 |
+| Mesbah, van Deursen & Lenselink 2012（ACM TWEB 6(1)） | 同上；也可用于 04 的 S2 | Ajax 应用的界面状态只能在浏览器里通过执行事件才能发现，爬虫要动态分析 DOM 变化。说明「控件不在服务器返回的 HTML 里」是老问题 |
+| Web Almanac（2022 / 2024 / 2025 SEO 章、2024 Jamstack 章） | 同上，但**不够直接** | 只比较了渲染前后的 canonical 标签、结构化数据和字数（例如 2024 年渲染改变了 2.1\% 移动页面的 canonical），没有统计控件，也没有给出 SPA 的占比。2024 Jamstack 章说约 94.5\% 的站点属于「Dynamic」，但这是启发式分类。**建议不用**，或者只作补充 |
+| Uddin & Robillard 2015, *How API Documentation Fails*（IEEE Software 32(4)） | 09 §restate：第二份描述会走样（drift） | 两次调查共 323 名开发者，分析了 179 个文档单元，归纳出 10 类文档问题。要读原文确认其中有没有「文档过时 / 与实现不一致」 |
+| *Making REST APIs Agent-Ready*（arXiv 2507.16044） | 同上，**而且直接连到 MCP** | 把 50 个真实 API 的 OpenAPI 转成 MCP server，五类反复出现的失败都来自 OpenAPI 契约不一致或不完整，包括声明的参数类型和实际 API 不符。这正是「另一份机器描述会和实现走样」的实证 |
+| *Making OpenAPI Documentation Agent-Ready*（arXiv 2605.14312） | 同上 | 16 个工业 API、约 600 个端点：文档缺漏和偏离 REST 约定会导致 agent 调用工具失败 |
+| Nguyen, Sidorova & Torres 2022（Computers in Human Behavior 128） | 01 Motivation 第 1 点：纯对话界面负担重 | 和菜单式界面相比，chatbot 带来更低的自主感和更高的认知负荷，满意度更低。**同行评审，正好对口** |
+| AXIS（Lu et al., ACL 2025） | 02 第四档 | API 优先，UI 兜底；自动探索应用来构建 API。动作集来自探索，不是应用自己按状态给出 |
+| UFO2（Zhang et al. 2025, arXiv 2504.14603） | 02 第四档 | Windows 上 GUI 动作和原生 API 混用；控件检测靠 UI Automation 加视觉模型 |
+| OS-Copilot（Wu et al. 2024） | 02 第四档 | 统一接口操作整个操作系统，FRIDAY 能自学不熟悉的应用 |
+| DynaSaur（Nguyen et al., COLM 2025） | 02 第四档；也可用于 Discussion | 动作不是预先定义的，而是 agent 自己写 Python 函数生成。和本文正好相反：本文是把动作空间收紧到页面给的控件 |
+| CLI-Anything（HKUDS, GitHub） | 02 第四档 | 为任意软件自动生成给 agent 用的命令行。只有仓库，没有论文，已写进 `MISC.bib` |
+| Greshake et al. 2023（AISec '23） | 01 Scope：不处理 prompt injection | 提出「indirect prompt injection」：攻击指令可以藏在 agent 读的网页里。本文的 agent 也读页面，所以 Scope 里要点名它 |
+| Qwen3 Technical Report（arXiv 2505.09388） | 04 §models | qwen3.5 / qwen3.8 没有单独的技术报告，可以引 Qwen3 报告，再加模型卡链接 |
+| WSDL 1.1（W3C Note 2001）、OpenAPI 3.1.0 | 02 §hypermedia：带外契约 | 已写进 `MISC.bib` |
+| CopilotKit、Ollama | 02 §rendering；04 §stack | 已写进 `MISC.bib` |
+
+**还没找的：** OpenCLI；Gibson 1979 / Norman（affordance 的原始出处，是书，要手动加进 Zotero）；HAL 和 Siren 规范（优先级低）；MCP 生态里 `listChanged` 的实际使用情况（目前没有现成统计）。
+
 ## 5. 顺带发现的问题
 
 - **09 有一处引用指空：** 09 §endings 说 Section `sec:disc:threats` 会讨论输出读不出来的「一个可能原因」（4096 上下文截断）。但 Limitations 里原来那条 interface audit 已经删了，现在那里没有这个内容。第 4 章 Experiment 2 的 todo 也还指向 Limitations。要么把那条加回来，要么改掉这两处引用。

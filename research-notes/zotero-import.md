@@ -12,6 +12,42 @@
 - [ ] 可选：`steiner2025mcp` 带的是 ACM 正式版 DOI（10.1145/3774904.3792893），但类型还是 technical report。想引正式版就改成 Conference Paper
 - [ ] `mcpSpec2025`（在 `MISC.bib`）：核对原型用的 MCP SDK 对应哪个规范版本，再定写哪一版
 
+## 第二批（2026-11-03）
+
+魔术棒整块粘贴：
+
+```
+10.18653/v1/2025.acl-long.381
+arXiv:2504.14603
+arXiv:2402.07456
+arXiv:2411.01747
+10.1109/MS.2014.80
+arXiv:2302.12173
+arXiv:2505.09388
+10.1016/j.chb.2021.107093
+10.1145/2109205.2109208
+arXiv:2301.10597
+arXiv:2507.16044
+arXiv:2605.14312
+```
+
+| 标识符 | 文献 | 导入后要改的 |
+| --- | --- | --- |
+| 10.18653/v1/2025.acl-long.381 | Lu et al. 2025, AXIS（ACL 2025） | 如果 DOI 解析失败，在 ACL Anthology 搜 2025.acl-long.381 |
+| arXiv:2504.14603 | Zhang et al. 2025, UFO2: The Desktop AgentOS | — |
+| arXiv:2402.07456 | Wu et al. 2024, OS-Copilot | 可选：改成 Conference Paper（ICLR 2024 LLM Agents Workshop） |
+| arXiv:2411.01747 | Nguyen et al., DynaSaur | 可选：改成 Conference Paper（COLM 2025） |
+| 10.1109/MS.2014.80 | Uddin & Robillard 2015, How API Documentation Fails | — |
+| arXiv:2302.12173 | Greshake et al. 2023, indirect prompt injection | 改成 Conference Paper：Proceedings of the 16th ACM Workshop on Artificial Intelligence and Security (AISec '23)，pp. 79–90 |
+| arXiv:2505.09388 | Qwen3 Technical Report | — |
+| 10.1016/j.chb.2021.107093 | Nguyen, Sidorova & Torres 2022, chatbot vs menu-based interfaces | — |
+| 10.1145/2109205.2109208 | Mesbah et al. 2012, Crawling Ajax-based web applications | — |
+| arXiv:2301.10597 | Fouquet et al. 2023, Breaking Bad: web elements' dependence on JavaScript | — |
+| arXiv:2507.16044 | Making REST APIs Agent-Ready: From OpenAPI to MCP Servers | — |
+| arXiv:2605.14312 | Making OpenAPI Documentation Agent-Ready | — |
+
+网页和规范已直接写进 `MISC.bib`：`wsdl2001`、`openapi2021`、`copilotkitDocs`、`ollama`、`cliAnything`。
+
 已经改好：`gidey2025affordance`、`gur2023realworld` 改成了 Preprint；Hevner 标题末尾的 “1” 删掉了；Wohlin 的地点改成了 London, UK。
 
 > 2026-11-03。目标：Zotero 作为唯一来源，Better BibTeX 把 Thesis collection 自动导出为 `references/references.bib`。导完告诉我，我来切换 `_toc.tex`、核对 key、删掉旧的四个 bib。
