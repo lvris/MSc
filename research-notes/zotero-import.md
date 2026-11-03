@@ -9,7 +9,7 @@
 - [ ] `leviathan2025generative`、`schultze2025building`：没有 DOI 也没有链接，在参考文献里没法查到原文；补上 arXiv 编号或 DOI
 - [ ] Fielding 2000 博士论文：还没导入（字段见下面第 2 步）
 - [ ] `hevner2004design`：标题现在是 `Information Systems {{Research}}`，花括号会让 Research 保持大写。在 Zotero 里把它改回普通的 Research
-- [ ] 可选：`steiner2025mcp` 带的是 ACM 正式版 DOI（10.1145/3774904.3792893），但类型还是 technical report。想引正式版就改成 Conference Paper
+- [ ] `steiner2025mcp`：类型改成 Conference Paper，Proceedings of the ACM Web Conference 2026 (WWW '26)，pp. 8493–8496，DOI 10.1145/3774904.3792893（arXiv 的 journal-ref 字段里写的）
 - [ ] `mcpSpec2025`（在 `MISC.bib`）：核对原型用的 MCP SDK 对应哪个规范版本，再定写哪一版
 
 ## 第二批（2026-11-03）
@@ -42,8 +42,8 @@ arXiv:2605.14312
 | arXiv:2505.09388 | Qwen3 Technical Report | — |
 | 10.1016/j.chb.2021.107093 | Nguyen, Sidorova & Torres 2022, chatbot vs menu-based interfaces | — |
 | 10.1145/2109205.2109208 | Mesbah et al. 2012, Crawling Ajax-based web applications | — |
-| arXiv:2301.10597 | Fouquet et al. 2023, Breaking Bad: web elements' dependence on JavaScript | — |
-| arXiv:2507.16044 | Making REST APIs Agent-Ready: From OpenAPI to MCP Servers | — |
+| arXiv:2301.10597 | Fouquet et al. 2023, Breaking Bad: web elements' dependence on JavaScript | **改用 DOI `10.1145/3579846` 导入**：它发表在 ACM TOIT，用 DOI 导进来就是期刊论文。已用 arXiv 导入的，可以删掉重导 |
+| arXiv:2507.16044 | Making REST APIs Agent-Ready: From OpenAPI to MCP Servers | **版本问题**：引用的是 v1 的数字，但最新的 v4 标题和内容都变了。在 Zotero 里把标题改成 v1 的，Extra 写 `arXiv:2507.16044v1`，URL 用 https://arxiv.org/abs/2507.16044v1 |
 | arXiv:2605.14312 | Making OpenAPI Documentation Agent-Ready | — |
 
 网页和规范已直接写进 `MISC.bib`：`wsdl2001`、`openapi2021`、`copilotkitDocs`、`ollama`、`cliAnything`。
