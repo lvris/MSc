@@ -220,6 +220,19 @@
 %% once all notes are rewritten in English.
 \usepackage{CJKutf8}
 
+%% DRAFT ONLY: points = outline points for a section (Chinese), to be rewritten
+%% by the author; oldtext = earlier drafts kept for reference. Set \showoldfalse
+%% to hide all old text. Remove both environments before submission.
+\usepackage{comment}
+\newif\ifshowold
+\showoldtrue
+\newenvironment{points}{\par\medskip\color{teal}\noindent\textbf{要点}\begin{itemize}}{\end{itemize}\par\medskip}
+\ifshowold
+  \newenvironment{oldtext}{\par\color{gray}\noindent\textbf{[旧稿]}\par}{\par}
+\else
+  \excludecomment{oldtext}
+\fi
+
 % Rewrite \autoref
 \addto\extrasenglish{
   \def\sectionautorefname{Chapter}

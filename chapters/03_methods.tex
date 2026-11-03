@@ -1,25 +1,111 @@
-\todo{本章讲选了什么研究方法、为什么这样选（导师反馈第 1 条）。实验细节都在 Chapter~\ref{sec:implementation}。开头加一段 metatext。各节论点等中文思路。}
+\begin{points}
+    \item 开头一句：本章讲我用什么方法回答三个 RQ，以及为什么这样选。系统怎么工作、实验细节，都在第 4 章。
+    \item 本章的规矩：不出现条件的字母（P、J、H……）和 $V(s)$ 这类第 4 章才定义的东西，用白话说；不提任何结果。
+    \item 告诉读者本章顺序：总流程 $\to$ 三个 RQ 各用什么方法 $\to$ 范围。
+\end{points}
 
-\subsection{Research Approach}\label{sec:methods:approach}
+\subsection{Overview}\label{sec:methods:procedure}\label{sec:methods:approach}
 
+\begin{points}
+    \item 总流程（老师说的 general procedure），按先后顺序：读文献、找出 gap（RQ1，第 2 章）$\to$ 定义框架（RQ2，第 4 章框架一节）$\to$ 实现原型（RQ2，第 4 章原型一节）$\to$ 用两个实验检验（RQ3，设置在第 4 章，结果在第 5 章）$\to$ 讨论意义和局限（第 6 章）。
+    \item 图：这五步的流程图，每一步标出对应的 RQ 和章节。读者先看到全貌，后面每章都能放回这张图里。
+    \item 表：RQ $\to$ 方法 $\to$ 为什么用这个方法 $\to$ 在哪一章回答。三行：文献比较、design science、受控实验。
+\end{points}
+
+\begin{oldtext}
+\todo{总体流程和 RQ 的对应：RQ1 文献比较（Chapter~\ref{sec:background}）；RQ2 设计并实现框架（Chapter~\ref{sec:implementation}）；RQ3 两个实验（Chapter~\ref{sec:results}）。可以用一张表。}
+\end{oldtext}
+
+\subsection{Literature Comparison}\label{sec:methods:review}
+
+\begin{points}
+    \item RQ1 问的是``现状是什么''，只能靠读文献回答。
+    \item 怎么找的：从导师建议的``确认有没有人做过类似研究''开始做定向检索（2026 年 8 月），再顺着引用往前、往后找。照实写，叫 targeted literature review 就行。
+    \item 为什么不是系统综述：这个领域很新，名词还不统一（agentic UI、generative UI、agent-native interface 指的东西有重叠），固定关键词搜不全。待你定：同意这个理由吗？
+    \item 来源除了论文，还有产品和协议文档（MCP 规范、AI SDK、AG-UI 等）。要说一句为什么这些也算：很多系统只有文档，没有论文。
+    \item 怎么比：按``动作从哪来''分档（读页面猜、开发时注册、另一份机器接口、agent 专用接口），再用同一组维度逐个比，比如是否随状态变、由谁决定、是否和人用的界面是同一份。比较的结果就是第 2 章的对比表。
+    \item 待你定：检索时有没有用固定的关键词或数据库（arXiv、ACM DL、Google Scholar）？有的话列出来。
+\end{points}
+
+\subsection{Design Science}\label{sec:methods:design}
+
+\begin{points}
+    \item RQ2 问的是``怎么做到''。这类问题的回答方式是：真的做出一个，并说明它为什么成立。
+    \item 点名 design science，引 Hevner et al. 2004；需要的话再引 Peffers et al. 2007 的步骤。这两篇还要加进 bib。
+    \item 做出来的东西分两层：框架（不依赖具体站点的定义和契约）和原型（一个站点加一个通用客户端）。
+    \item 怎样算做成了：(1) 契约能写清楚，并能论证满足契约时保证成立；(2) 原型确实满足契约，有检查脚本；(3) 拿到实验里检验，也就是 RQ3。
+    \item 只做了一个站点：通用性靠契约来论证，而不是靠第二个站点。这里提一句，Limitations 再展开。
+\end{points}
+
+\begin{oldtext}
 \todo{design science：构造一个 artifact（框架 + 原型），再用受控实验评估。为什么选这个方法，而不是纯文献研究或用户研究。}
+\end{oldtext}
 
-\subsection{What Is Evaluated}\label{sec:eval:aim}
+\subsection{Controlled Experiments}\label{sec:eval:aim}
 
+\begin{points}
+    \item RQ3 想知道的是约束本身的作用，所以用受控实验：只改一件事，其他都固定。
+    \item 改的那件事：模型怎么知道现在能做什么。从``自己读页面''、``一份固定的操作列表''、``按状态过滤过的列表''，到``从页面的控件里选''，几种做法在第 4 章逐个定义。这里不用字母。
+    \item 固定不变的：同一个站点、同一个客户端、同样的页面文字、同样的任务和目标、同一条执行路径。
+    \item 两个实验对应 RQ3 的两半：一个让 agent 自己执行，看它会不会去做现在做不了的事；一个让模型生成给人看的界面，看界面上会不会出现用不了的控件。
+    \item 下面四小节各回答一个``为什么这样设计''。
+\end{points}
+
+\subsubsection{What is measured, and what is not}\label{sec:methods:measures}
+
+\begin{points}
+    \item 主要测合法性：做了或摆出了现在做不了的操作，占多少。
+    \item 不只看成功率：一个任务可以最后成功，但中途被拒好几次，只看成功率就看不到。
+    \item 成功率作为次要指标，用来确认约束没有让任务变得更难。
+    \item 不测好不好用、好不好看、快不快。这些要做用户研究，而论文没有主张这些。合法性可以机械地检查，所以不需要人参与。
+\end{points}
+
+\begin{oldtext}
 \todo{table: the framing table. Rows precision / recall; columns unconstrained action sources / this framework; cells measured, measured, ``guaranteed, not measured'', measured. Small and early: it defines the chapter.}
 
 \todo{为什么测合法性（当前做不了的操作、用不了的控件），而不是一般的界面质量。}
 
 \todo{Scope exclusions: interface aesthetics, completion time, user preference, and anything requiring human participants. 这里要写为什么不做用户研究。}
+\end{oldtext}
 
-\subsection{Why a Synthetic Site}\label{sec:methods:synthetic}
+\subsubsection{Why a synthetic site}\label{sec:methods:synthetic}
 
+\begin{points}
+    \item 要算``做了做不了的事''的比例，就得知道每个状态下所有能做的操作。
+    \item 真实网站给不出这份完整答案；现成的 benchmark（如 WebArena）一般只检查最后的状态，也给不出。
+    \item 所以自己建一个站点，用状态机明确定义每个状态下能做什么。这是测量的前提，不是图省事。
+    \item 代价是只有一个站点，放到 Limitations 讲。
+\end{points}
+
+\begin{oldtext}
 \todo{A fully defined set of valid actions is the precondition for the dependent variable, which is why the site is synthetic. 和 Discussion 的 Limitations（Section~\ref{sec:disc:threats}）呼应。}
+\end{oldtext}
 
-\subsection{An Independent Judge}\label{sec:methods:judge}
+\subsubsection{An independent judge}\label{sec:methods:judge}
 
+\begin{points}
+    \item 如果用定义站点的那个状态机来判对错，就是自己判自己。
+    \item 所以另设一个裁判：它不读状态机，只看服务器拒不拒。一个操作在某个状态下算``能做''，当且仅当存在一组参数让服务器不拒绝。
+    \item 先拿它和状态机全面对照，一致了才用。对照结果放在第 4 章。
+    \item 可以提一句：ASIL 也用了类似的独立校验。
+\end{points}
+
+\begin{oldtext}
 \todo{Why this is not circular: an independent behavioural judge that never reads the site's definition of validity. An action counts as available in $s$ iff some parameter assignment is not refused by the server. Same idea as the fail-closed validator in ASIL. 具体结果在 Section~\ref{sec:eval:method:truth}。}
+\end{oldtext}
 
-\subsection{Overall Procedure}\label{sec:methods:procedure}
+\subsubsection{Separating the constraint from the model}\label{sec:methods:models}
 
-\todo{总体流程和 RQ 的对应：RQ1 文献比较（Chapter~\ref{sec:background}）；RQ2 设计并实现框架（Chapter~\ref{sec:implementation}）；RQ3 两个实验（Chapter~\ref{sec:results}）。可以用一张表。}
+\begin{points}
+    \item 担心的问题：如果结果好，是因为约束，还是因为模型够聪明？
+    \item 办法一：用几个大小不同的模型，看结论是否随模型能力变化。
+    \item 办法二：加一个随机选择器。它完全不理解任务，所以它在约束下做到的任何事，都只能归功于约束。
+    \item 只说为什么这样设计，不说结果。温度、每格跑几次这些细节放第 4 章。
+\end{points}
+
+\subsection{Scope}\label{sec:methods:scope}
+
+\begin{points}
+    \item 简短列出不做什么：没有用户研究；只有一个合成站点；只讨论 HTML 超媒体网站；不处理安全问题（比如 prompt injection）。
+    \item 待你定：Introduction 里已经有一节 Scope。这里是保留一小段（讲方法层面的范围），还是删掉这节、只在 Introduction 里说？
+\end{points}

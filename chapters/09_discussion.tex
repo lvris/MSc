@@ -1,40 +1,70 @@
-As Chapter~\ref{sec:results} showed, H does well at its task: it keeps the agent to the actions the current state allows. This chapter first asks what H adds over the two conditions that come closest to it, P and X+. It then looks at how the agent fails and which failures H leaves, and ends with the limits of the study.
+As Chapter~\ref{sec:results} showed, H does well at its task: it keeps the agent to the actions the current state allows.
+This chapter first asks what H adds over the two conditions that come closest to it, P and X+.
+It then looks at how the agent fails and which failures H leaves, and ends with the limits of the study.
 
 \subsection{Comparison with P and X+}\label{sec:disc:compare}
 
-Two conditions come close to H. Under P and under X+ the larger models also make no invalid action. This section asks what H adds over each of them.
+Two conditions come close to H. Under P and under X+ the larger models also make no invalid action.
+This section asks what H adds over each of them.
 
 \subsubsection{Reading the Page Directly}\label{sec:disc:guarantee}
 
-Under P the agent reads the same page as H, but it does not get the list of controls that H takes from the page, and it writes each request itself. For the larger models this works as well as H: they make no invalid action (Section~\ref{sec:results:index}). One reason is our site. Its pages follow the hypermedia principle: what a page shows is what can be done, and every control is in the HTML the server returns. A capable model can read the valid actions straight off such a page, so for it the extra step of H, turning the page into a list to choose from, is less needed.
+Under P the agent reads the same page as H, but it does not get the list of controls that H takes from the page, and it writes each request itself.
+For the larger models this works as well as H: they make no invalid action (Section~\ref{sec:results:index}).
+One reason is our site.
+Its pages follow the hypermedia principle: what a page shows is what can be done, and every control is in the HTML the server returns.
+A capable model can read the valid actions straight off such a page, so for it the extra step of H, turning the page into a list to choose from, is less needed.
 
-Many real sites are not built this way. In a single-page application, the HTML the server returns holds little more than a script, and which controls exist is only known after the JavaScript has run. A model that reads such a page cannot see the actions, however capable it is. H reads the same page and would not see them either; this is why the site contract requires the controls to be in the page (Section~\ref{sec:design:site-contract}). The good result under P therefore depends on the page as much as on the model, and it is one reason we argue that pages should follow the hypermedia principle.
+Many real sites are not built this way.
+In a single-page application, the HTML the server returns holds little more than a script, and which controls exist is only known after the JavaScript has run.
+A model that reads such a page cannot see the actions, however capable it is.
+H reads the same page and would not see them either; this is why the site contract requires the controls to be in the page (Section~\ref{sec:design:site-contract}).
+The good result under P therefore depends on the page as much as on the model, and it is one reason we argue that pages should follow the hypermedia principle.
 
 \todo{cite: we need js so much...}
 
-The more important role of H is the guarantee. Under P the agent writes its request as free text, so nothing stops it from writing one the page does not offer. Whether it does depends on the model: the smallest model often does, and P is the only condition where models invent operations the site does not have (Section~\ref{sec:results:index}). Under H the agent answers with the index of a control, and no index points outside the page. We therefore do not claim that H is more accurate than reading the page. What H adds is that, by construction, the result no longer depends on the model being capable enough.
+The more important role of H is the guarantee.
+Under P the agent writes its request as free text, so nothing stops it from writing one the page does not offer.
+Whether it does depends on the model: the smallest model often does, and P is the only condition where models invent operations the site does not have (Section~\ref{sec:results:index}).
+Under H the agent answers with the index of a control, and no index points outside the page.
+We therefore do not claim that H is more accurate than reading the page.
+What H adds is that, by construction, the result no longer depends on the model being capable enough.
 
 \subsubsection{Filtering by State}\label{sec:disc:restate}
 
-The other strong alternative is X+. As the results showed, X+ can do nearly everything H does: for the larger models it also makes no invalid action (Section~\ref{sec:eval:results:c2}). It also works on sites that do not follow the hypermedia principle, where H has no page to read. Its only problem is the work. The server has to state again what the page already states, and keep it in step with the page.
+The other strong alternative is X+.
+As the results showed, X+ can do nearly everything H does: for the larger models it also makes no invalid action (Section~\ref{sec:eval:results:c2}).
+It also works on sites that do not follow the hypermedia principle, where H has no page to read.
+Its only problem is the work.
+The server has to state again what the page already states, and keep it in step with the page.
 
 The differences that remain between X+ and H can each be closed on the server or client side, but each addition states again something the page already states:
 \begin{enumerate}
-    \item Stale tools. The agent names a tool, so it can name one that was already withdrawn (Section~\ref{sec:results:index}). A client can let the model answer with the position of a tool in the current list, as H does.
-    \item Values asked again. Our server publishes the allowed values of a parameter as an enum, but not a value the current state has already fixed (Section~\ref{sec:results:values}). JSON Schema can state such a value with \texttt{const} or \texttt{default}, so this comes from our server, not from MCP.
-    \item Invented fields. An interface drawn from the schema by a renderer, as under H, would show only the declared fields.
+    \item Stale tools.
+    The agent names a tool, so it can name one that was already withdrawn (Section~\ref{sec:results:index}).
+    A client can let the model answer with the position of a tool in the current list, as H does.
+    \item Values asked again.
+    Our server publishes the allowed values of a parameter as an enum, but not a value the current state has already fixed (Section~\ref{sec:results:values}).
+    JSON Schema can state such a value with \texttt{const} or \texttt{default}, so this comes from our server, not from MCP.
+    \item Invented fields.
+    An interface drawn from the schema by a renderer, as under H, would show only the declared fields.
 \end{enumerate}
 A server with all of this describes the page a second time, and every change to the rules of the site has to be made in both places (Section~\ref{sec:eval:results:c4}).
 
-We did not measure this cost. Our server was written from the same rules as the site and stayed consistent with it throughout. That a separate server falls out of step in practice is an argument from the structure, not a result of this study.
+We did not measure this cost.
+Our server was written from the same rules as the site and stayed consistent with it throughout.
+That a separate server falls out of step in practice is an argument from the structure, not a result of this study.
 
-For the authors of applications, this suggests that if the pages already follow the hypermedia principle, nothing has to be added for agents; otherwise a filtered server such as X+ reaches the same result, at the cost of keeping it in step with the site. For the authors of agents, it suggests letting the model choose from the current list by position instead of writing a name, since only this removed invalid actions for every model.
+For the authors of applications, this suggests that if the pages already follow the hypermedia principle, nothing has to be added for agents; otherwise a filtered server such as X+ reaches the same result, at the cost of keeping it in step with the site.
+For the authors of agents, it suggests letting the model choose from the current list by position instead of writing a name, since only this removed invalid actions for every model.
 
-Filtering by state therefore gives the agent the same valid actions as the page. The difference lies not in what X+ can reach, but in what it costs: a second description that has to be written and kept up to date.
+Filtering by state therefore gives the agent the same valid actions as the page.
+The difference lies not in what X+ can reach, but in what it costs: a second description that has to be written and kept up to date.
 
 \subsection{How the Agent Failed}\label{sec:disc:endings}
 
-H does not remove failure. It only limits failure to two things: the agent stops before it reaches the goal, or it takes a valid action that is wrong for the user.
+H does not remove failure.
+It only limits failure to two things: the agent stops before it reaches the goal, or it takes a valid action that is wrong for the user.
 
 \begin{table}[ht]
 \centering
@@ -55,23 +85,54 @@ No tool call, no stop & -- & -- & -- & 1 & 1 & -- \\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:eval:endings} shows how the episodes ended. The conditions do not only fail at different rates, they fail in different ways. Under the fixed lists the agent can get stuck: the site refuses a request, and the agent sends the same request again. We end the episode when the same request has been refused eight times from the same state. In a typical case, qwen3.5:9b under J is asked on T3-01 to add a dish to the pre-order, which is not open yet, and it calls the operation that adds a dish eight times in a row. The list it works from still contains the operation, so it tries again. Under X+ and H an operation that cannot be used now is not on the list, so there is nothing to repeat.
+Table~\ref{tab:eval:endings} shows how the episodes ended.
+The conditions do not only fail at different rates, they fail in different ways.
+Under the fixed lists the agent can get stuck: the site refuses a request, and the agent sends the same request again.
+We end the episode when the same request has been refused eight times from the same state.
+In a typical case, qwen3.5:9b under J is asked on T3-01 to add a dish to the pre-order, which is not open yet, and it calls the operation that adds a dish eight times in a row.
+The list it works from still contains the operation, so it tries again.
+Under X+ and H an operation that cannot be used now is not on the list, so there is nothing to repeat.
 
-Under H the failures are of the two kinds named above. Most are stops: 27 of the 31 failed episodes, 15 of them from qwen3.5:2b, which often stops before taking any action (Section~\ref{sec:results:paired}). A stop by itself changes nothing, so it costs the user the task but not the booking. The rest are valid but wrong actions, which Section~\ref{sec:disc:possible} looks at. Under X and X+ the models also fill in values the user never gave, which Section~\ref{sec:disc:fabricated} looks at. Output that cannot be read and answers with neither a tool call nor a stop are rare; Section~\ref{sec:disc:threats} discusses a possible cause of the first.
+Under H the failures are of the two kinds named above.
+Most are stops: 27 of the 31 failed episodes, 15 of them from qwen3.5:2b, which often stops before taking any action (Section~\ref{sec:results:paired}).
+A stop by itself changes nothing, so it costs the user the task but not the booking.
+The rest are valid but wrong actions, which Section~\ref{sec:disc:possible} looks at.
+Under X and X+ the models also fill in values the user never gave, which Section~\ref{sec:disc:fabricated} looks at.
+Output that cannot be read and answers with neither a tool call nor a stop are rare; Section~\ref{sec:disc:threats} discusses a possible cause of the first.
 
 \subsubsection{Valid but Wrong Actions}\label{sec:disc:possible}
 
-The constraint keeps the agent away from actions the current state does not allow. It cannot keep the agent away from an allowed action that is wrong for the user. Under the fixed lists the agent failed because it did not know the state. Under H the page gives the state, and what is left is not knowing what the user meant.
+The constraint keeps the agent away from actions the current state does not allow.
+It cannot keep the agent away from an allowed action that is wrong for the user.
+Under the fixed lists the agent failed because it did not know the state.
+Under H the page gives the state, and what is left is not knowing what the user meant.
 
-The T3 tasks show this (Table~\ref{tab:eval:t3}). In T3-02 the user asks to forget a ``half-finished'' booking that is in fact confirmed. Under H, qwen3.5:4b, qwen3.5:9b and qwen3.8-27b cancel it: the user was wrong about the state, and the agent followed the user instead of the page. In T3-03 another guest has taken the table, and H offers no control that confirms the booking. The same three models hold a new table and pay the deposit on it, and end with a booking at a time the user did not choose. This happens in 16 of the 24 runs of T3-03 across the four models and six conditions. Every step in these runs is valid. The generated interfaces show the same: under H, T3 screens also contain working controls that would change the booking (Table~\ref{tab:eval:audit}).
+The T3 tasks show this (Table~\ref{tab:eval:t3}).
+In T3-02 the user asks to forget a ``half-finished'' booking that is in fact confirmed.
+Under H, qwen3.5:4b, qwen3.5:9b and qwen3.8-27b cancel it: the user was wrong about the state, and the agent followed the user instead of the page.
+In T3-03 another guest has taken the table, and H offers no control that confirms the booking.
+The same three models hold a new table and pay the deposit on it, and end with a booking at a time the user did not choose.
+This happens in 16 of the 24 runs of T3-03 across the four models and six conditions.
+Every step in these runs is valid.
+The generated interfaces show the same: under H, T3 screens also contain working controls that would change the booking (Table~\ref{tab:eval:audit}).
 
-One response is to ask the user before an action that changes the booking. The page already marks such actions: every control states its HTTP method, and only GET leaves the state unchanged. Asking before every other action would mean asking at almost every step. Asking only before DELETE would catch the cancellation in T3-02, but not the new table in T3-03. Magentic-UI asks for approval in a similar way, before actions its developers mark as irreversible \cite{mozannar2025magenticui}. In a hypermedia application, a first version of such a mark is already in the page.
+One response is to ask the user before an action that changes the booking.
+The page already marks such actions: every control states its HTTP method, and only GET leaves the state unchanged.
+Asking before every other action would mean asking at almost every step.
+Asking only before DELETE would catch the cancellation in T3-02, but not the new table in T3-03.
+Magentic-UI asks for approval in a similar way, before actions its developers mark as irreversible \cite{mozannar2025magenticui}.
+In a hypermedia application, a first version of such a mark is already in the page.
 
-Neither rule tells the agent what the user meant. The constraint makes sure that the agent only does what can be done. What matters most is still whether it does what the user needs.
+Neither rule tells the agent what the user meant.
+The constraint makes sure that the agent only does what can be done.
+What matters most is still whether it does what the user needs.
 
 \subsubsection{Personal Data in Tool Calls}\label{sec:disc:fabricated}
 
-The last point is an observation. Every condition got the same instruction: leave the name, phone and card empty, because the user will be asked for them. Under X and X+ the models often filled these fields anyway, with values found neither in the goal nor on the page (Table~\ref{tab:eval:fabricated}). Apart from qwen3.5:2b under P, every such value comes from these two conditions, the two where the model acts through native tool calls.
+The last point is an observation.
+Every condition got the same instruction: leave the name, phone and card empty, because the user will be asked for them.
+Under X and X+ the models often filled these fields anyway, with values found neither in the goal nor on the page (Table~\ref{tab:eval:fabricated}).
+Apart from qwen3.5:2b under P, every such value comes from these two conditions, the two where the model acts through native tool calls.
 
 \begin{table}[ht]
 \centering
@@ -89,9 +150,13 @@ qwen3.8-27b & -- & 0/15 & 0/13 & 1/11 & 0/4 & 0/32 \\
 \end{tabular}
 \end{table}
 
-One possible reason is the form of a tool call. It asks for all required arguments at once, in a shape the schema accepts, and gives the model no way to say that a value is unknown and should come from the user. Some models tried to say this anyway, inside the value: qwen3.5:9b under X sent the name ``[Please provide your name]''.
+One possible reason is the form of a tool call.
+It asks for all required arguments at once, in a shape the schema accepts, and gives the model no way to say that a value is unknown and should come from the user.
+Some models tried to say this anyway, inside the value: qwen3.5:9b under X sent the name ``[Please provide your name]''.
 
-We draw no conclusion from this. qwen3.8-27b almost never fills in such values, so the effect may disappear with more capable models. MCP also lets a server ask the user for a value directly, a feature called elicitation, which might remove the problem. We did not test it.
+We draw no conclusion from this. qwen3.8-27b almost never fills in such values, so the effect may disappear with more capable models.
+MCP also lets a server ask the user for a value directly, a feature called elicitation, which might remove the problem.
+We did not test it.
 
 \todo{cite: MCP elicitation}
 
@@ -99,9 +164,19 @@ We draw no conclusion from this. qwen3.8-27b almost never fills in such values, 
 
 The study has the following limits.
 \begin{itemize}
-    \item \textbf{A synthetic site.} The invalid action rate needs a complete and authoritative set of valid actions for every state, and a real site does not provide one. The site therefore had to be synthetic. This is what makes the measure exact.
-    \item \textbf{One site.} All results come from one booking site. That the approach carries over to other sites rests on the site contract (Section~\ref{sec:design:site-contract}). The contract is also a precondition: a site whose pages do not contain their controls is outside its scope.
-    \item \textbf{Small cells.} Each cell has 24 tasks, so success rates vary a lot. We therefore treat success only as a secondary result.
-    \item \textbf{Our X+ server.} It publishes the allowed values of a parameter, but not the values the state has already fixed. The values asked again are therefore measured against this server, not against MCP in general (Section~\ref{sec:disc:restate}).
+    \item \textbf{A synthetic site.}
+    The invalid action rate needs a complete and authoritative set of valid actions for every state, and a real site does not provide one.
+    The site therefore had to be synthetic.
+    This is what makes the measure exact.
+    \item \textbf{One site.}
+    All results come from one booking site.
+    That the approach carries over to other sites rests on the site contract (Section~\ref{sec:design:site-contract}).
+    The contract is also a precondition: a site whose pages do not contain their controls is outside its scope.
+    \item \textbf{Small cells.}
+    Each cell has 24 tasks, so success rates vary a lot.
+    We therefore treat success only as a secondary result.
+    \item \textbf{Our X+ server.}
+    It publishes the allowed values of a parameter, but not the values the state has already fixed.
+    The values asked again are therefore measured against this server, not against MCP in general (Section~\ref{sec:disc:restate}).
 \end{itemize}
 Two further limits were discussed above: H is not more accurate than reading the page (Section~\ref{sec:disc:guarantee}), and the constraint does not keep the agent from valid but wrong actions (Section~\ref{sec:disc:possible}).
