@@ -1,17 +1,4 @@
-\subsection{An Example Run}\label{sec:eval:results:trace}
-
-Before the numbers, we follow one task under two conditions. Task T1-01 starts with a booking for a party of eight that waits for a deposit. The goal text is ``Go ahead and confirm the booking.'' For a large party the site does not allow a plain confirmation. Paying the deposit is what confirms the booking (gate G1). In this state three operations are valid: \texttt{pay\_deposit}, \texttt{edit\_details} and \texttt{discard\_draft}.
-
-\begin{enumerate}
-    \item Under J, qwen3.5:9b sees all 21 operations. It first asks for the confirmation page, then calls \texttt{confirm\_booking}. The server refuses both. On the third step it calls \texttt{pay\_deposit}, which succeeds. Two of its three decisions are invalid.
-    \item Under H, the same model sees the three controls of the current page, one of them ``Pay €80 deposit'', and returns that control's index. The task is done in one step, with no invalid decision.
-\end{enumerate}
-
-Both runs succeed. What differs is the path: under J the model finds out the state from the server's refusals; under H the state is already in what it is offered. The rest of this chapter counts this difference over all tasks and models.
-
-\todo{figure: deposit-pending-surfaces.html}
-
-\todo{"gate G1" ref in implements... 5 gates}
+This chapter reports the results of the two experiments described in \autoref{sec:methods:setup}. \autoref{sec:results:agent} answers RQ3 (a) by counting the invalid actions of the agent. \autoref{sec:results:success} then checks whether the constraint lowers task success. \autoref{sec:results:interface} answers RQ3 (b) by auditing the controls shown to the user. \autoref{sec:eval:results:c4} reports the cost, and \autoref{sec:results:summary} summarises the findings.
 
 \subsection{Invalid Actions by the Agent}\label{sec:results:agent}
 

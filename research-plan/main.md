@@ -76,7 +76,7 @@ TODO(我)：P 和 C 之间的过渡用自己的话写一句。
 | RQ | 回答在 | 结论在 |
 | --- | --- | --- |
 | RQ1 | 02 §frameworks、§gap | 10 |
-| RQ2 | 05 Design、06 Implementation | 10 |
+| RQ2 | 04 Framework and Implementation | 10 |
 | RQ3 (a) | 08 Results C1、C2、C4 | 10 |
 | RQ3 (b) | 08 Results C3 | 10 |
 
@@ -104,15 +104,18 @@ CUI 的局限只作为 01 引言里的动机，不再是 RQ。没有第二个站
 | 09 Discussion | 每节一句陈述：same-artifact 的价值在哪；X+ 够不够；P 对大模型也行；T3 局限；编造个人信息（观察） | — | 回引 08 | 待列 |
 | 10 Conclusion | 逐条回答 RQ1–3 + open questions | — | — | 最后写 |
 
-### 3 05 / 06 / 07 怎么分
+### 3 03 / 04 怎么分（2026-11-01 按导师反馈改，下面第 2 节表里的 05 / 06 / 07 都已并入这里）
+
+顺序：Introduction → Background → Methods → Framework and Implementation → Results → Discussion → Conclusion。
 
 | 部分 | 判断：这句话…… | 写 | 不写 |
 | --- | --- | --- | --- |
-| 05 Design | 换个网站还成立 → 放这里 | $A(s)$ 定义、soundness、site / client contract、三层、两个 consumer | 订餐、B1、代码 |
-| 06 Implementation | 只对我们做的东西成立 | B1 状态机、parser、replay、renderer（R1）、技术栈 | 实验条件、基线 |
-| 07 Method | 在说怎么测 | 裁判、六条件（**MCP server、目录都放这里**）、任务推导、模型、指标、审计做法 | 系统怎么工作 |
+| 03 Methods | 在说为什么这样研究 | 研究方法、为什么测合法性不做用户研究、为什么合成站点、裁判思路、总体流程 | 实验细节 |
+| 04 §Framework | 换个网站还成立 | $A(s)$ 与 $V(s)$、site contract、保证与限制、两个 consumer | 订餐、B1、代码 |
+| 04 §Prototype | 只对我们做的东西成立 | B1 状态机、client contract、parser、replay、renderer（R1）、技术栈 | 实验条件、基线 |
+| 04 其余各节 | 在说具体怎么测 | 六个变体（含 MCP server）、裁判结果、任务推导、模型、两个实验、一条示例 run、指标 | 系统怎么工作 |
 
-B1 状态机：06 描述，07 只引用。06 写短（6–8 页）。
+如果 04 写完太长，把变体、任务和指标拆成单独一章 Experimental Setup。
 
 ### 4 08 Results 结构调整（已定）
 
