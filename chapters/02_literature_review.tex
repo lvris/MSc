@@ -19,12 +19,10 @@ Existing frameworks for such interfaces are reviewed, the question of what groun
 Web interaction evolved from pages authored for human reading toward pages that non-human clients also need to act on.
 The earliest such clients like web crawlers only read while later ones increasingly act: scripted automation at first, and most recently LLM-based agents that follow links, fill forms, and complete transactions on the user's behalf \cite{mesbah2012crawling, ning2025survey, yang2025agentic}.
 
-\todo{figure: human-facing web pages, machine-facing web pages... }
 
 Because pages are written for humans, a machine client has no direct access to application meaning: it must recover what a page is, and what can currently be done with it, from artifacts intended for human perception --- markup structure, layout, and visible text. 
 This recovery is indirect and brittle, and the difficulty motivated a long line of work on giving the web machine-readable semantics, most prominently the Semantic Web programme and its lighter-weight descendants such as embedded structured annotations \cite{berners-lee2001semantic, guha2016schemaorg}.
 % https://arxiv.org/html/2507.10644v1#bib.bib87 may be useful for the semantic-web citation
-(Maybe: shall we extend a little bit to make a list?)
 
 The semantic-web approach asked authors to maintain a second, machine-facing representation of their application in parallel with the human-facing page.
 Annotations that are not needed to render the page for people are exercised by nothing the author depends on, and so they are the first thing to fall out of date.
@@ -57,7 +55,7 @@ The rest of this chapter is organized around that problem: a generated surface c
 
 \subsection{HTML Hypermedia, State, and Affordances}\label{sec:bg:hypermedia}
 
-\todo{结构调整：这一节提前到系统比较之前，先给出比较要用的概念（状态、affordance、同一份 artifact）。下面「Read against Section~\ref{sec:bg:frameworks}, this identifies the pattern that MCP repeats」和 Consequences 里提到 MCP 的句子，现在变成了在 MCP 介绍之前提它：改成前向引用，或者把和 MCP 的对比挪到下一节。}
+\todo{结构调整：这一节提前到系统比较之前，先给出比较要用的概念（状态、affordance、同一份 artifact）。下面「Read against \autoref{sec:bg:frameworks}, this identifies the pattern that MCP repeats」和 Consequences 里提到 MCP 的句子，现在变成了在 MCP 介绍之前提它：改成前向引用，或者把和 MCP 的对比挪到下一节。}
 
 \subsubsection{REST and the hypermedia constraint}
 
@@ -67,7 +65,7 @@ Hypermedia formats aimed only at machines also exist, such as the JSON-based HAL
 
 This is not a new idea but the original architecture of the web.
 Fielding's REST names the principle hypermedia as the engine of application state: transitions should be driven by controls that the server places in the current representation, not by out-of-band contracts the client holds separately \cite{hypermediaBook}.
-Read against Section~\ref{sec:bg:frameworks}, this identifies the pattern that MCP repeats.
+Read against \autoref{sec:bg:frameworks}, this identifies the pattern that MCP repeats.
 WSDL and OpenAPI were the out-of-band contracts of their eras \cite{wsdl2001, openapi2021}; a tool catalog obtained at connection time is the same client-held description, separate from the representation the application actually serves.
 \todo{cite: Fielding 2000 博士论文（REST 的原始出处），还没导入 Zotero}
 
@@ -83,7 +81,7 @@ An agent that takes those controls as its source of valid actions is not guessin
 A separate contract such as MCP cannot offer this property, however well specified, because separateness is exactly what the property excludes.
 
 \begin{enumerate}
-    \item \textbf{No drift:} the affordance description is a byproduct of building the application, not a second artifact to maintain, so the incentive failure of Section~\ref{sec:bg:internet} does not arise.
+    \item \textbf{No drift:} the affordance description is a byproduct of building the application, not a second artifact to maintain, so the incentive failure of \autoref{sec:bg:internet} does not arise.
     \item \textbf{Native state-dependence:} the unit of description is the current state and its exits, not a catalog of everything the server could ever do.
     \item \textbf{Graceful fallback:} when the agent fails, the human can operate the same page directly.
     Early evidence that machine-legible interfaces improve agent reliability is consistent with this picture \cite{schultze2025building}.
@@ -91,26 +89,20 @@ A separate contract such as MCP cannot offer this property, however well specifi
 
 \subsection{How Existing Systems Decide What Can Be Done}\label{sec:bg:frameworks}
 
-\todo{结构调整：原「Generative UI and Agentic UI Frameworks」。这一节回答 RQ1：现有系统怎么决定 agent 能做什么、界面上放什么。按四档写，最后一张对比表，比较维度用上一节的概念。渲染那一侧挪到下一节。}
-
-\todo{figure: human, agent, application data-flow pipeline (intent, action selection, execution, new state, rendering); locate each framework on it}
-
-To compare existing systems... /todo{describe the figure}
+\todo{本节开头一两句：这一节按什么来比较现有系统（RQ1），以及最后的对比表。}
 
 \subsubsection{Rendering-side vs. Source-side}
-
-\todo{「the rest of this section groups systems by the second」：渲染一侧现在单独成下一节，这句要相应改。}
 
 Two concerns run through this loop and are worth separating, because existing systems tend to address only one of them.
 The rendering side concerns how agent output is drawn for the human.
 The action-source side concerns where the set of actions the agent may take, and may offer, comes from.
-The two are independent, and the rest of this section groups systems by the second.
+The two are independent; the rest of this section groups systems by the second, and \autoref{sec:bg:rendering} covers the first.
 
 \subsubsection{Action Grounding Approaches}
 
 The weakest grounding is inference from the live page.
 Browser and computer-use agents recover their action set from the DOM, the accessibility tree, or screenshots, and realistic web tasks remain difficult and brittle when the agent must guess in this way what a page affords \cite{zhou2024webarena, song2025browsing}. 
-% This is the indirect-recovery problem of Section~\ref{sec:bg:internet} replayed with a stronger model. 
+% This is the indirect-recovery problem of \autoref{sec:bg:internet} replayed with a stronger model. 
 Magentic-UI is the generative-UI exemplar ... \cite{mozannar2025magenticui}.
 
 A stronger answer registers the actions on the client at build time: the developer declares a set of tools or components that the model may invoke, explicit and typed \cite{aisdkGUI}.
@@ -122,15 +114,12 @@ MCP deserves full credit on this axis: the contract is machine-readable, owned b
 
 \todo{第四档（新增）：agent 专用接口 agent-native interfaces —— ASIL、AXIS、Beyond Browsing (Song et al., ACL 2025)、CLI-Anything、OpenCLI、DynaSaur、UFO2、OS-Copilot；必读 Wang et al. 2026 (arXiv 2510.04607)。对 ASIL 的三条划界：(1) 动作集由 adapter 产出，不是应用自身产出（其 Table 6 自认四项需手工）；(2) 不是人用的界面，要可视化还得另做 GUI 同步；(3) 只测 task success，没有 validity 指标。}
 
-\todo{table: five-dimension framework comparison; rows: DOM-inference agents, build-time registries, MCP, agent-native interfaces, hypermedia affordances (this thesis, forward reference to Section~\ref{sec:design}); cite each row's primary system; the dimensions must include: is the action set state-dependent, and is it the same artifact as the human interface (原 Design 章的对比表并入这里)}
+\todo{table: five-dimension framework comparison; rows: DOM-inference agents, build-time registries, MCP, agent-native interfaces, hypermedia affordances (this thesis, forward reference to \autoref{sec:design}); cite each row's primary system; the dimensions must include: is the action set state-dependent, and is it the same artifact as the human interface (原 Design 章的对比表并入这里)}
 
 \subsection{Generative-UI Rendering Frameworks}\label{sec:bg:rendering}
 
-\todo{结构调整：原 2.3 里的 Rendering Frameworks 小节，单独成节。}
-
 AG-UI defines an event and transport protocol between agents and front ends \cite{aguiOverview}, Vercel's AI SDK maps model output to registered interface components \cite{aisdkGUI}, and CopilotKit embeds agent interaction into existing applications \cite{copilotkitDocs}.
 These systems are complementary to this thesis: they answer how a generated surface is drawn, not what it may legitimately contain, and they could sit on top of the framework developed here.
-\todo{expand this}
 
 \subsection{Research Gap}\label{sec:bg:gap}
 
@@ -144,4 +133,4 @@ This thesis responds by using HTML hypermedia affordances as that binding layer:
 This is also the precise sense in which the title claims determinism.
 What is deterministic is the action space, not the agent: the set of offerable actions is a function of server state alone rather than of model sampling; every offered control exists and is executable at the moment it is shown; every refusal is structural.
 The agent's selection among valid actions remains stochastic, and no stronger claim is made.
-Chapter~\ref{sec:implementation} defines this property precisely and builds the framework that realizes it.
+\autoref{sec:implementation} defines this property precisely and builds the framework that realizes it.

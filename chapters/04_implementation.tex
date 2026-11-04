@@ -458,7 +458,7 @@ That choice is a model decision, and making it inside the renderer would put a m
 A click by a person and a step by the agent go through the same replay, so both act on one set of actions.
 The person can therefore take over at any step, and if the agent fails, the site itself remains directly usable, which is the graceful fallback of \autoref{sec:bg:hypermedia}.
 
-\todo{figure: 两个状态下生成界面的截图并排，旁边列出对应的 $A(s)$。}
+\todo{figure: 两个状态下生成界面的截图并排，旁边列出对应的 $A(s)$。可以和 Results 里界面截图那张合成一张，这里引用过去。}
 
 \subsubsection{Technology stack and reproducibility}\label{sec:impl:stack}
 
@@ -575,7 +575,8 @@ T3 & 6 & No such operation is valid in any state reachable that way. & Say so an
 \subsubsection{Models and repetition}\label{sec:eval:method:models}
 
 The experiments use a random chooser, three local models (qwen3.5 with 2, 4 and 9 billion parameters, run through Ollama \cite{ollama}), and one larger model, qwen3.8-27b, run through a hosted provider \todo{cite: Qwen 模型的技术报告，见下面说明}.
-The temperature is 0, so the same input gives the same output, and each cell is run once.
+All models run at temperature 0, and each cell is run once.
+For the local models this makes a run repeatable; for the hosted model, temperature 0 does not guarantee identical output on every call.
 The random chooser picks uniformly from the list it is given, with a fixed seed.
 Under H and X+ that list is already filtered, so whatever the random chooser achieves there is due to the constraint alone.
 Under P there is no list, so the random chooser cannot run in that condition.
@@ -608,7 +609,6 @@ Task T1-01 starts with a booking for a party of eight that is waiting for a depo
 The goal text is ``Go ahead and confirm the booking.''
 For a party of this size the site does not allow a plain confirmation: paying the deposit is what confirms the booking (G1 in \autoref{tab:impl:gates}).
 In this state three operations are valid: \texttt{pay\_deposit}, \texttt{edit\_details} and \texttt{discard\_draft}.
-\todo{如果 Introduction 用大桌的例子开头，这里加半句前后呼应。}
 
 \begin{enumerate}
     \item Under J, qwen3.5:9b sees all 21 operations.
