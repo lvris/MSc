@@ -230,7 +230,7 @@ The second cost is tokens (Table~\ref{tab:eval:tokens}). H and X+ use the fewest
 
 Few steps do not always mean an efficient agent. qwen3.5:2b takes few steps under J, J+ and H because it mostly stops at once (Section~\ref{sec:results:success}). It is expensive under P because it writes long outputs when it builds requests from the raw page, about 3\,000 completion tokens per step, and under X because it gets stuck and repeats refused calls.
 
-\todo{出终稿前用 \texttt{report.ts} 重出表 \ref{tab:eval:tokens}：有 3 格步数和日志重算差 0.1。}
+\todo{出终稿前用 \texttt{report.ts} 重出表 \ref{tab:eval:tokens}}
 
 \FloatBarrier
 
