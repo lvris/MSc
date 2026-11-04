@@ -1,0 +1,15 @@
+Each backend response should expose the current state and valid controls using ordinary HTML elements, with lightweight machine-readable annotations where useful. Candidate affordances include:
+
+\begin{itemize}
+    \item \texttt{add\_course}
+    \item \texttt{remove\_course}
+    \item \texttt{replace\_course}
+    \item \texttt{resolve\_conflict}
+    \item \texttt{request\_exception}
+    \item \texttt{submit\_plan}
+    \item \texttt{respond\_to\_feedback}
+    \item \texttt{revise\_plan}
+    \item \texttt{confirm\_final\_plan}
+\end{itemize}
+
+For each affordance, the representation should make at least four pieces of information available: the action identifier, the target endpoint or control target, the required input fields, and the expected next state or state refresh behavior. This keeps the representation close to HTML hypermedia while still allowing deterministic extraction by the agent layer.
