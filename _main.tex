@@ -206,8 +206,14 @@
 %% Add here the packages you need
 %%
 \usepackage{graphicx}
+\usepackage{tikz} % figures in figures/*.tex
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds}
+\usepackage{fvextra} % verbatim prompts in the appendix
+\fvset{breaklines, breakanywhere, fontsize=\scriptsize, frame=single, framesep=2mm}
 \usepackage{hyperref}
 \usepackage{tabularx}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X} % ragged-right X column for tables
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}} % ragged-right fixed-width column
 \usepackage{placeins}
 \usepackage{xurl}
 \usepackage[numbers]{natbib}
@@ -225,7 +231,7 @@
 %% to hide all old text. Remove both environments before submission.
 \usepackage{comment}
 \newif\ifshowold
-\showoldtrue
+\showoldfalse
 \newenvironment{points}{\par\medskip\color{teal}\noindent\textbf{要点}\begin{itemize}}{\end{itemize}\par\medskip}
 \ifshowold
   \newenvironment{oldtext}{\par\color{gray}\noindent\textbf{[旧稿]}\par}{\par}

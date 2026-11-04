@@ -1,0 +1,46 @@
+% Architecture of the prototype: user, generic client A (a/), booking site (b1/).
+\begin{tikzpicture}[
+    box/.style={draw, rounded corners=2pt, minimum height=7mm, minimum width=17mm, align=center, font=\footnotesize},
+    data/.style={draw, minimum height=6mm, align=center, font=\footnotesize},
+    lab/.style={font=\scriptsize, inner sep=1.5pt, align=center},
+    go/.style={-{Stealth[length=2mm]}},
+    group/.style={draw, dashed, rounded corners=4pt, inner sep=3mm},
+    gtitle/.style={font=\footnotesize\bfseries, anchor=south west, inner sep=1pt},
+]
+% client
+\node[box] (disc) at (0.8,0) {discover\\{\scriptsize native, htmx parsers}};
+\node[data] (aff) at (0.8,-1.4) {$A(s)$};
+\node[box] (rend) at (-1.6,-1.4) {render\\{\scriptsize lookup table}};
+\node[box] (choo) at (0.8,-2.8) {choose};
+\node[box] (repl) at (3.9,-2.8) {replay};
+\node[box, minimum width=0mm, font=\scriptsize] (model) at (0.8,-4.2) {model, random\\or manual};
+
+% site
+\node[box] (page) at (7.2,0) {pages\\{\scriptsize HTML $r(s)$}};
+\node[box] (sm) at (7.2,-1.4) {state machine\\{\scriptsize $V(s)$}};
+\node[box] (guard) at (7.2,-2.8) {guard\\{\scriptsize refuses $\notin V(s)$}};
+
+% user
+\node[box] (user) at (-4.4,-2.1) {user};
+
+% groups
+\begin{scope}[on background layer]
+\node[group, fit=(disc)(rend)(repl)(model)] (client) {};
+\node[group, fit=(page)(guard)] (site) {};
+\end{scope}
+\node[gtitle] at (client.north west) {Client A (knows no site)};
+\node[gtitle] at (site.north west) {Site};
+
+% flows
+\draw[go] (page.west) -- node[lab, above] {HTTP response} (disc.east);
+\draw[go] (disc) -- (aff);
+\draw[go] (aff) -- (choo);
+\draw[go] (aff) -- (rend);
+\draw[go] (choo) -- node[lab, above] {index, values} (repl);
+\draw[go] (repl) -- node[lab, above] {HTTP request} (guard);
+\draw[go, dashed] (choo) -- (model);
+\draw[go] (sm) -- (page);
+\draw[go] (sm) -- (guard);
+\draw[go] (rend.west) to[out=180,in=90] node[lab, above left] {controls} (user.north);
+\draw[go] (user.south) to[out=-90,in=180] node[lab, below left, pos=0.4] {goal, answers} (choo.west);
+\end{tikzpicture}

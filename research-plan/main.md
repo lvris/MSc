@@ -76,7 +76,7 @@ TODO(我)：P 和 C 之间的过渡用自己的话写一句。
 | RQ | 回答在 | 结论在 |
 | --- | --- | --- |
 | RQ1 | 02 §frameworks、§gap | 10 |
-| RQ2 | 04 Framework and Implementation | 10 |
+| RQ2 | 04 Design and Implementation | 10 |
 | RQ3 (a) | 08 Results C1、C2、C4 | 10 |
 | RQ3 (b) | 08 Results C3 | 10 |
 
@@ -106,7 +106,7 @@ CUI 的局限只作为 01 引言里的动机，不再是 RQ。没有第二个站
 
 ### 3 03 / 04 怎么分（2026-11-01 按导师反馈改，下面第 2 节表里的 05 / 06 / 07 都已并入这里）
 
-顺序：Introduction → Background → Methods → Framework and Implementation → Results → Discussion → Conclusion。
+顺序：Introduction → Background → Methods → Design and Implementation → Results → Discussion → Conclusion。
 
 | 部分 | 判断：这句话…… | 写 | 不写 |
 | --- | --- | --- | --- |

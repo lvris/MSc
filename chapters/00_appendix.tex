@@ -1,6 +1,98 @@
 \section{Prompts}\label{app:prompts}
 
-\todo{六个条件的 system prompt 和每一步的 user message 全文（a/choose.ts），审计实验的 prompt（exp/audit.ts）。附录要有一段说明文字，不只是贴 prompt。}
+Every model call consists of a system prompt and one user message.
+The system prompt is fixed for each condition; the user message is assembled from the current state at every step.
+When a reply cannot be read, one retry message is appended and the model is called again; a second failure ends the step.
+All texts below were captured from the requests the harness sends, not copied from the source code.
+
+\subsection{Agent episodes}\label{app:prompts:episodes}
+
+J, J+ and H share the selection prompt: the model answers with the number of an entry in a list.
+\begin{Verbatim}
+You are a web agent driving a website by choosing among the actions it currently offers.
+You are given a goal and a numbered list of AVAILABLE ACTIONS. Each action has a method, a url, and zero or more input fields.
+Choose the SINGLE action that best advances the goal right now.
+Provide values ONLY for fields whose value you can derive from the goal. Never invent personal data (names, phone numbers) that is not in the goal — leave those out and they will be requested from the user.
+If the goal is already achieved, or no available action helps, use index -1.
+Respond with ONLY a JSON object: {"index": <number>, "values": {"<fieldName>": "<value>"}}. No prose, no code fences.
+\end{Verbatim}
+Retry message:
+\begin{Verbatim}
+Return ONLY a single JSON object {"index":..,"values":{..}} and nothing else.
+\end{Verbatim}
+P gets the construction prompt: there is no list, and the model writes the request itself.
+\begin{Verbatim}
+You are a web agent driving a website. You are given a goal and the current page's HTML.
+There is no list of available actions: work out for yourself what request to send next.
+Read the page, decide what to do, and emit the HTTP request a browser would send.
+Provide values ONLY for parameters you can derive from the goal or from the page. Never invent personal data (names, phone numbers) that is not in the goal — leave those out and they will be requested from the user.
+If the goal is already achieved, or nothing on this page helps, use method "STOP".
+Respond with ONLY a JSON object: {"method": "GET|POST|PUT|DELETE|STOP", "url": "/path", "values": {"<param>": "<value>"}}. No prose, no code fences.
+\end{Verbatim}
+Retry message:
+\begin{Verbatim}
+Return ONLY a single JSON object {"method":..,"url":..,"values":{..}} and nothing else.
+\end{Verbatim}
+X and X+ get the tool-calling prompt. The tools are passed in the \texttt{tools} parameter of the request, not in the text (\autoref{app:surfaces}).
+\begin{Verbatim}
+You are a web agent driving a website by calling the tools it currently offers.
+You are given a goal and the current page. Call the SINGLE tool that best advances the goal right now.
+Provide values ONLY for arguments you can derive from the goal. Never invent personal data (names, phone numbers) that is not in the goal — leave those out and they will be requested from the user.
+If the goal is already achieved, or no available tool helps, do NOT call a tool: reply with the single word STOP.
+\end{Verbatim}
+Retry message:
+\begin{Verbatim}
+Call exactly one of the available tools, or reply with the single word STOP.
+\end{Verbatim}
+The user message has the same blocks in every condition.
+\texttt{ACTIONS TAKEN SO FAR} appears from the second step on; P calls it \texttt{REQUESTS SENT SO FAR} and receives the raw HTML instead of the page text and the list.
+\begin{Verbatim}
+GOAL: <goal text of the task>
+
+CURRENT PAGE:
+<visible text of the current page>
+
+ACTIONS TAKEN SO FAR:
+- <one line per earlier step>
+
+AVAILABLE ACTIONS:
+<numbered list; J, J+ and H only>
+\end{Verbatim}
+
+\subsection{Interface audit}\label{app:prompts:audit}
+
+In the audit the model designs the controls for one screen instead of acting.
+All conditions share the first part of the system prompt:
+\begin{Verbatim}
+You design the interface a user sees for the current step of a task on a website.
+An assistant is helping the user. You decide which buttons and forms to put on screen.
+Show the controls that are relevant to the goal and that the user may want at this step, not only the single next action.
+Show only controls the user can actually use on this site right now. Leave everything else out.
+If nothing on the site can help with the goal right now, show no controls and say so in the message.
+For each field of a control, say whether the interface fixes its value ("fixed"), fills in a value the user may change ("prefill"), or asks the user ("ask").
+Never invent personal data (names, phone numbers, card numbers) that is not in the goal or on the page. Mark such fields "ask".
+\end{Verbatim}
+The second part says how a control refers to the site. Under H:
+\begin{Verbatim}
+Each control must be one of the AVAILABLE CONTROLS below, referenced by its number. Their fields are drawn automatically; do not list them.
+Respond with ONLY a JSON object: {"message": "<text for the user>", "controls": [{"ref": <number>, "label": "<button text>"}]}
+\end{Verbatim}
+Under J and J+ (\texttt{OPERATIONS}) and X+ (\texttt{TOOLS}):
+\begin{Verbatim}
+Each control invokes one of the OPERATIONS below, referenced by its name.
+Respond with ONLY a JSON object: {"message": "<text for the user>", "controls": [{"ref": "<name>", "label": "<button text>", "fields": [{"name": "<parameter>", "mode": "fixed|prefill|ask", "value": "<value or omit>"}]}]}
+\end{Verbatim}
+Under P:
+\begin{Verbatim}
+Each control is an HTTP request this site accepts, written as method and path.
+Respond with ONLY a JSON object: {"message": "<text for the user>", "controls": [{"ref": {"method": "GET|POST|PUT|DELETE", "url": "/path"}, "label": "<button text>", "fields": [{"name": "<parameter>", "mode": "fixed|prefill|ask", "value": "<value or omit>"}]}]}
+\end{Verbatim}
+Retry message:
+\begin{Verbatim}
+Return ONLY the JSON object described, nothing else.
+\end{Verbatim}
+The user message has the goal and the page text as in the episodes, followed by \texttt{AVAILABLE CONTROLS} (H), \texttt{OPERATIONS} (J, J+) or \texttt{TOOLS} (X+); under P it has the raw HTML only.
+In the audit the X+ tools are listed as text, because generating an interface involves no tool call.
 
 \clearpage
 
@@ -8,8 +100,182 @@
 
 \todo{24 个任务的完整列表：编号、类别、目标原文、起始状态、T2 的路线。加推导规则 R1--R4 的简短说明（exp/tasks.json）。}
 
+{\footnotesize
+\begin{longtable}{@{}lP{0.19\textwidth}P{0.24\textwidth}P{0.2\textwidth}l@{}}
+\caption{All 24 tasks. \emph{Start}: status, party size, date and pre-order of the start state. \emph{Satisfied by}: the operations that achieve the goal. \emph{Route}: for T2, the request that leads to a state where one of them is valid. Generated from \texttt{exp/tasks.json}.}
+\label{tab:app:tasks} \\
+\hline
+Task & Start & Goal & Satisfied by & Route \\
+\hline
+\endfirsthead
+\hline
+Task & Start & Goal & Satisfied by & Route \\
+\hline
+\endhead
+\hline
+\endfoot
+T1-01 & \texttt{deposit\_\allowbreak{}pending}, party 8, \texttt{next-week} & ``Go ahead and confirm the booking.'' & \texttt{confirm\_\allowbreak{}booking}, \texttt{pay\_\allowbreak{}deposit} & -- \\
+T1-02 & \texttt{confirmed}, party 8, \texttt{tomorrow} & ``We cannot make it — cancel the booking.'' & \texttt{cancel\_\allowbreak{}booking}, \texttt{request\_\allowbreak{}cancellation}, \texttt{discard\_\allowbreak{}draft}, \texttt{release\_\allowbreak{}hold} & -- \\
+T1-03 & \texttt{browsing} & ``Find out which tables are free.'' & \texttt{check\_\allowbreak{}availability} & -- \\
+T1-04 & \texttt{holding}, party 8, \texttt{next-week} & ``Forget this half-finished booking, we never completed it.'' & \texttt{discard\_\allowbreak{}draft}, \texttt{release\_\allowbreak{}hold} & -- \\
+T1-05 & \texttt{waitlisted}, party 8, \texttt{saturday} & ``Take us off the queue, we have made other plans.'' & \texttt{leave\_\allowbreak{}waitlist} & -- \\
+T1-06 & \texttt{details\_\allowbreak{}entered}, party 2, \texttt{next-week} & ``We would like to order the food in advance.'' & \texttt{open\_\allowbreak{}preorder} & -- \\
+T1-07 & \texttt{cancellation\_\allowbreak{}requested}, party 8, \texttt{tomorrow} & ``Start again from scratch.'' & \texttt{start\_\allowbreak{}over} & -- \\
+T1-08 & \texttt{browsing}, party 8, \texttt{saturday} & ``Get us in the queue for a table on that day.'' & \texttt{join\_\allowbreak{}waitlist} & -- \\
+T1-09 & \texttt{holding}, party 8, \texttt{next-week} & ``Actually, we would like a different time.'' & \texttt{change\_\allowbreak{}slot} & -- \\
+T1-10 & \texttt{waitlisted}, party 8, \texttt{saturday} & ``Tell me how far up the queue we are.'' & \texttt{check\_\allowbreak{}position} & -- \\
+\hline
+T2-01 & \texttt{browsing} & ``Get us in the queue for a table on that day.'' & \texttt{join\_\allowbreak{}waitlist} & \texttt{GET /availability} \\
+T2-02 & \texttt{holding}, party 8, \texttt{next-week} & ``Go ahead and confirm the booking.'' & \texttt{confirm\_\allowbreak{}booking}, \texttt{pay\_\allowbreak{}deposit} & \texttt{POST /details} \\
+T2-03 & \texttt{details\_\allowbreak{}entered}, party 2, \texttt{next-week} & ``Add the tiramisù to what we are ordering ahead.'' & \texttt{add\_\allowbreak{}dish} & \texttt{POST /preorder} \\
+T2-04 & \texttt{deposit\_\allowbreak{}pending}, party 8, \texttt{next-week} & ``Actually, we would like a different time.'' & \texttt{change\_\allowbreak{}slot} & \texttt{POST /edit-details} \\
+T2-05 & \texttt{browsing} & ``Put a table on hold for us.'' & \texttt{hold\_\allowbreak{}slot} & \texttt{GET /availability} \\
+T2-06 & \texttt{holding}, party 2, \texttt{next-week} & ``We would like to order the food in advance.'' & \texttt{open\_\allowbreak{}preorder} & \texttt{POST /details} \\
+T2-07 & \texttt{details\_\allowbreak{}entered}, party 2, \texttt{next-week} & ``Add the pasta dish to the advance order.'' & \texttt{add\_\allowbreak{}dish} & \texttt{POST /preorder} \\
+T2-08 & \texttt{holding}, party 2, \texttt{next-week}, pre-order open & ``Take that dish off the advance order.'' & \texttt{remove\_\allowbreak{}dish} & \texttt{POST /details} \\
+\hline
+T3-01 & \texttt{holding}, party 8, \texttt{next-week} & ``Add the tiramisù to what we are ordering ahead.'' & \texttt{add\_\allowbreak{}dish} & -- \\
+T3-02 & \texttt{confirmed}, party 8, \texttt{next-week} & ``Forget this half-finished booking, we never completed it.'' & \texttt{discard\_\allowbreak{}draft}, \texttt{release\_\allowbreak{}hold} & -- \\
+T3-03 & \texttt{conflict}, party 8, \texttt{next-week} & ``Go ahead and confirm the booking.'' & \texttt{confirm\_\allowbreak{}booking}, \texttt{pay\_\allowbreak{}deposit} & -- \\
+T3-04 & \texttt{cancellation\_\allowbreak{}requested}, party 8, \texttt{tomorrow} & ``We cannot make it — cancel the booking.'' & \texttt{cancel\_\allowbreak{}booking}, \texttt{request\_\allowbreak{}cancellation}, \texttt{discard\_\allowbreak{}draft}, \texttt{release\_\allowbreak{}hold} & -- \\
+T3-05 & \texttt{cancelled}, party 8, \texttt{next-week} & ``What is happening with the cancellation we asked for?'' & \texttt{view\_\allowbreak{}cancellation} & -- \\
+T3-06 & \texttt{holding}, party 8, \texttt{next-week} & ``Add the pasta dish to the advance order.'' & \texttt{add\_\allowbreak{}dish} & -- \\
+\end{longtable}
+}
+
 \clearpage
 
 \section{What Each Condition Sees}\label{app:surfaces}
 
-\todo{同一个状态（建议大桌等定金那个状态），六个条件下模型分别看到的内容，并排列出。用来说明基线是公平的。}
+This appendix shows the first model request of task T1-01 under each condition.
+In the start state a party of eight has entered the guest details and must pay a deposit before the booking is confirmed (G1).
+The goal is ``Go ahead and confirm the booking.''
+Three operations are valid: \texttt{pay\_deposit}, \texttt{edit\_details} and \texttt{discard\_draft}.
+
+\subsection{The page}\label{app:surfaces:page}
+
+Every condition except P receives the same \texttt{CURRENT PAGE} block, the visible text of the page:
+\begin{Verbatim}
+CURRENT PAGE:
+Deposit required
+next-week at 20:00 for 8 — Ada Lovelace (+358 40 123 4567)
+Parties of more than 6 require a €80 deposit before the booking can be confirmed.
+\end{Verbatim}
+P receives the raw HTML instead; this is the complete user message under P:
+\begin{Verbatim}
+GOAL: Go ahead and confirm the booking.
+
+CURRENT PAGE (raw HTML):
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Trattoria — reservations</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body>
+<header class="container">
+<nav><ul><li><strong>La Trattoria</strong></li></ul><ul><li><small>reservations</small></li></ul></nav>
+</header>
+<main class="container">
+<article id="booking">
+<h2>Deposit required</h2>
+<p><strong>next-week</strong> at <strong>20:00</strong> for <strong>8</strong> — Ada Lovelace (+358 40 123 4567)</p>
+<p><mark>Parties of more than 6 require a €80 deposit
+before the booking can be confirmed.</mark></p>
+
+<form method="POST" action="/deposit">
+<label>Card number<input name="card" type="text" required></label>
+<button type="submit">Pay €80 deposit</button>
+</form>
+<form method="POST" action="/edit-details">
+
+<button type="submit">Edit details</button>
+</form>
+<button type="button" hx-delete="/draft" hx-target="#booking" hx-swap="innerHTML">Discard draft</button>
+</article>
+</main>
+</body>
+</html>
+\end{Verbatim}
+
+\subsection{J and J+}\label{app:surfaces:catalogue}
+
+The list of all 21 operations under J+.
+Under J each entry is the same without its second sentence, the precondition.
+\begin{Verbatim}
+AVAILABLE ACTIONS:
+[0] List the tables free on a given date for a given party size. Only meaningful before a table is held. — GET /availability
+      - date (text, required, one of: tomorrow, next-week, saturday)
+      - partySize (text, required)
+[1] Put a temporary hold on a time slot. Only possible if that slot is still free; a fully booked date offers the waitlist instead. — POST /hold
+      - slot (text, required)
+[2] Join the queue for a table on the chosen date. Only offered when no slot on the date is free. — POST /waitlist
+[3] Leave the waitlist queue. Only while queued. — DELETE /waitlist
+[4] Read your current position in the waitlist queue. Only while queued. — GET /waitlist
+[5] Attach the guest's name and phone number to the held table. Only while a table is held. — POST /details
+      - name (text, required)
+      - phone (text, required)
+[6] Give up the held slot and return to the slot list. Only while a table is held and not yet confirmed. — POST /change-slot
+[7] Release the temporary hold on the slot. Only while a table is held. — DELETE /hold
+[8] Turn the reviewed draft into a confirmed booking. Only for parties that do not require a deposit; large parties must pay a deposit instead. — POST /confirm
+[9] Pay the deposit a large party requires, which also confirms the booking. Only when the party size is above the restaurant's threshold. — POST /deposit
+      - card (text, required)
+[10] Go back and re-enter the guest details. Only before the booking is confirmed. — POST /edit-details
+[11] Throw away the unconfirmed draft booking. Only before confirmation; this is not the same action as cancelling a confirmed booking. — DELETE /draft
+[12] Start a food pre-order for the booking. Only after details are entered and before the booking is confirmed. — POST /preorder
+[13] Add a dish to the pre-order. Only while the pre-order is open and not yet submitted. — POST /preorder/dishes
+      - dish (text, required, one of: Bruschetta, Tagliatelle al ragù, Tiramisù)
+[14] Remove a dish from the pre-order. Only while the pre-order is open and not yet submitted. — DELETE /preorder/dishes
+      - dish (text, required, one of: Bruschetta, Tagliatelle al ragù, Tiramisù)
+      - index (text, required)
+[15] Submit the pre-order, locking it. Only while the pre-order is open. — POST /preorder/submit
+[16] Read the confirmation page for the booking. Only once the booking is confirmed. — GET /confirmation
+[17] Cancel a confirmed booking outright. Only when seating is more than 24 hours away; closer than that, a cancellation must be requested. — DELETE /booking
+[18] Ask the restaurant to cancel a booking, giving a reason. Only within 24 hours of seating; earlier than that, the booking can simply be cancelled. — POST /cancellation-request
+      - reason (text, required)
+[19] Read the status of a pending cancellation request. Only after a cancellation has been requested. — GET /cancellation
+[20] Abandon everything and start a new session. Only from a finished session. — GET /reset
+\end{Verbatim}
+
+\subsection{X and X+}\label{app:surfaces:mcp}
+
+Under X the \texttt{tools} parameter carries the 21 operations as tool definitions.
+Each description is the J+ entry word for word; the parameters are a JSON Schema with the same domains.
+One of the 21:
+\begin{Verbatim}
+{
+  "type": "function",
+  "function": {
+    "name": "pay_deposit",
+    "description": "Pay the deposit a large party requires, which also confirms the booking. Only when the party size is above the restaurant's threshold.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "card": {
+          "type": "string",
+          "description": "The card to use."
+        }
+      },
+      "required": [
+        "card"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
+\end{Verbatim}
+Under X+ the server returns only the tools valid in the current state, here \texttt{pay\_deposit}, \texttt{edit\_details}, \texttt{discard\_draft}, with the same definitions as under X. The text of the user message is the same as under X: the goal and the page.
+
+\subsection{H}\label{app:surfaces:h}
+
+The list of the controls parsed from the page:
+\begin{Verbatim}
+AVAILABLE ACTIONS:
+[0] Pay €80 deposit — POST /deposit
+      - card (text, required)
+[1] Edit details — POST /edit-details
+[2] Discard draft — DELETE /draft
+\end{Verbatim}

@@ -12,6 +12,38 @@
 - [ ] `steiner2025mcp`：类型改成 Conference Paper，Proceedings of the ACM Web Conference 2026 (WWW '26)，pp. 8493–8496，DOI 10.1145/3774904.3792893（arXiv 的 journal-ref 字段里写的）
 - [ ] `mcpSpec2025`（在 `MISC.bib`）：核对原型用的 MCP SDK 对应哪个规范版本，再定写哪一版
 
+## 补导（2026-11-04）：第二批漏掉的 + 第三批
+
+逐条核对过 `MsC.bib`，下面 7 个都不在里面。魔术棒整块粘贴：
+
+```
+arXiv:2504.14603
+arXiv:2402.07456
+arXiv:2411.01747
+arXiv:2302.12173
+arXiv:2507.16044
+arXiv:2605.14312
+10.1007/978-3-642-29044-2
+```
+
+导入后要改的，和第二批表格里写的一样：Greshake 改成 Conference Paper（AISec '23）；2507.16044 改回 v1 的标题和链接；Wohlin 应该是 Book。Qwen3 Technical Report 暂时不导，原因见下面“待处理”里的 Qwen 一条。
+
+## 待处理（2026-11-04 核对第 3、4 章引用时发现）
+
+- [x] **重复条目**：三对重复已删（2026-11-04 核对，`MsC.bib` 现在 34 条，无重复）
+- [x] **Fouquet**：已导入为 `fouquet2023breaking`（期刊论文，ACM TOIT），第 4 章 4.1.2 已引用
+- [x] **补导 7 个已全部进来**（2026-11-04 核对，`MsC.bib` 41 条，无重复）：`zhang2025ufo2`、`wu2024oscopilot`、`nguyen2025dynasaur`、`greshake2023not`、`mastouri2026rest`、`lima2026making`、`wohlin2012experimentation`（Book，第 3 章 3.3 已引用）
+- [ ] `mastouri2026rest`：导进来的是 v4（标题 *From REST to MCP…*，2026）。在 Zotero 里改成 v1：标题 *Making REST APIs Agent-Ready: From OpenAPI to Model Context Protocol Servers for Tool-Augmented LLMs*，日期 2025-07-21，Extra 写 `arXiv:2507.16044v1`，URL `https://arxiv.org/abs/2507.16044v1`。改完 key 会变成 `mastouri2025making` 之类
+- [ ] `greshake2023not`：现在是 preprint，改成 Conference Paper：Proceedings of the 16th ACM Workshop on Artificial Intelligence and Security (AISec '23)，pp. 79–90
+- [ ] 可选：`nguyen2025dynasaur` 改成 Conference Paper（COLM 2025）；`wu2024oscopilot` 改成 Conference Paper（ICLR 2024 LLM Agents Workshop）
+- [ ] **Qwen 模型的引用（第 4 章 4.4 Models）**：实验用的是 qwen3.5 和 qwen3.8，第二批里的 Qwen3 Technical Report（arXiv:2505.09388）写的是 Qwen3，不是这两代。如果 qwen3.5 / qwen3.8 有自己的技术报告就引报告；没有的话，引 Hugging Face 上实际用的模型卡（网页，我来写进 `MISC.bib`，需要你确认用的是哪几个模型页面）
+
+## 第三批（2026-11-04）
+
+| 标识符 | 文献 | 用在哪 | 导入后要改的 |
+| --- | --- | --- | --- |
+| 10.1007/978-3-642-29044-2 | Wohlin et al. 2012, *Experimentation in Software Engineering*（Springer） | 第 3 章 3.3 开头，三类效度（construct / internal / external）那句；导入后在那里加 `\cite` | 类型应为 Book；只引第 8 章 Validity 的话可以在 `\cite` 里写页码 |
+
 ## 第二批（2026-11-03）
 
 魔术棒整块粘贴：

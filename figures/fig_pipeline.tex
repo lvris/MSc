@@ -1,0 +1,23 @@
+% The framework: one affordance set, two consumers. Site-independent.
+\begin{tikzpicture}[
+    box/.style={draw, rounded corners=2pt, minimum height=7mm, align=center, font=\footnotesize, inner xsep=4pt},
+    data/.style={draw, minimum height=7mm, align=center, font=\footnotesize, inner xsep=4pt},
+    lab/.style={font=\scriptsize, inner sep=1.5pt, align=center},
+    go/.style={-{Stealth[length=2mm]}},
+    node distance=6mm and 9mm,
+]
+\node[data] (s) {server state\\$s$};
+\node[data, right=of s] (r) {representation\\$r(s)$};
+\node[data, right=of r] (A) {affordance set\\$A(s)$};
+\node[box, above right=1mm and 11mm of A] (ex) {execute: select one,\\fill values, send};
+\node[box, below right=1mm and 11mm of A] (pr) {present: one control\\per affordance};
+\node[box, right=of pr] (u) {user};
+
+\draw[go] (s) -- node[lab, above] {server} (r);
+\draw[go] (r) -- node[lab, above] {parser} (A);
+\draw[go] (A.east) to[out=0,in=180] (ex.west);
+\draw[go] (A.east) to[out=0,in=180] (pr.west);
+\draw[go] (pr) -- (u);
+\draw[go] (ex.north) to[out=90,in=90, looseness=0.45] node[lab, above] {request; the server moves to $s'$ or refuses} (s.north);
+\draw[go] (u.north) |- node[lab, right, pos=0.3] {answers to\\required fields} (ex.east);
+\end{tikzpicture}

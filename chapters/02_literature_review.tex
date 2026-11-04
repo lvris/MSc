@@ -6,17 +6,23 @@ Software agents built on large language models can now operate the web on a pers
 This chapter discusses how agents increasingly meet their users through generated interfaces.
 Existing frameworks for such interfaces are reviewed, the question of what grounds the actions they offer is raised, and HTML hypermedia is proposed as a solution.
 
+\begin{points}
+    \item 从第 3 章挪来（RQ1 的方法放在用到它的地方）：在本章开头用两三句交代材料怎么来、怎么比。
+    \item 怎么找的：只说做了文献检索（targeted literature review），不展开检索过程，也不为不做系统综述辩护。顺着引用往前往后找叫 snowballing，可以引 \citet{wohlin2014guidelines}。
+    \item 可选，最多半句：这个领域的名词还不统一（agentic UI、generative UI、agent-native interface 指的东西有重叠）。
+    \item 来源除了论文，还有产品和协议文档（MCP 规范、AI SDK、AG-UI 等）。要说一句为什么这些也算：很多系统只有文档，没有论文。
+    \item 怎么比：按``动作从哪来''分档（读页面猜、开发时注册、另一份机器接口、agent 专用接口），再用同一组维度逐个比，比如是否随状态变、由谁决定、是否和人用的界面是同一份。比较的结果就是本章的对比表。
+\end{points}
+
 \subsection{Internet, Human, and Machine}\label{sec:bg:internet}
 
 Web interaction evolved from pages authored for human reading toward pages that non-human clients also need to act on.
-The earliest such clients like web crawlers only read while later ones increasingly act: scripted automation at first, and most recently LLM-based agents that follow links, fill forms, and complete transactions on the user's behalf.
-\todo{cite: general web history / rise of non-human web clients}
+The earliest such clients like web crawlers only read while later ones increasingly act: scripted automation at first, and most recently LLM-based agents that follow links, fill forms, and complete transactions on the user's behalf \cite{mesbah2012crawling, ning2025survey, yang2025agentic}.
 
 \todo{figure: human-facing web pages, machine-facing web pages... }
 
 Because pages are written for humans, a machine client has no direct access to application meaning: it must recover what a page is, and what can currently be done with it, from artifacts intended for human perception --- markup structure, layout, and visible text. 
-This recovery is indirect and brittle, and the difficulty motivated a long line of work on giving the web machine-readable semantics, most prominently the Semantic Web programme and its lighter-weight descendants such as embedded structured annotations.
-\todo{cite: semantic web, schema.org, microdata, RDFa, JSON-LD, etc.}
+This recovery is indirect and brittle, and the difficulty motivated a long line of work on giving the web machine-readable semantics, most prominently the Semantic Web programme and its lighter-weight descendants such as embedded structured annotations \cite{berners-lee2001semantic, guha2016schemaorg}.
 % https://arxiv.org/html/2507.10644v1#bib.bib87 may be useful for the semantic-web citation
 (Maybe: shall we extend a little bit to make a list?)
 
@@ -47,8 +53,7 @@ The industry is already moving this way: mainstream assistants increasingly wrap
 
 This thesis narrows to the demanding end of that: generated controls that correspond to real actions on an external, stateful application.
 Namely the correctness of the surface --- does this control exist, and is it valid now?
-The rest of this chapter is organized around that problem: a generated surface can present controls that are invalid, stale, or outright hallucinated relative to what the application can actually do at this moment. 
-\todo{cite: LLM hallucination}
+The rest of this chapter is organized around that problem: a generated surface can present controls that are invalid, stale, or outright hallucinated relative to what the application can actually do at this moment \cite{ji2023survey}.
 
 \subsection{HTML Hypermedia, State, and Affordances}\label{sec:bg:hypermedia}
 
@@ -61,10 +66,10 @@ In HTML those controls are links, forms, and buttons, and in server-driven varia
 Hypermedia formats aimed only at machines also exist, such as the JSON-based HAL and Siren, but HTML is the one that matters here, for a reason this section builds toward: it is the only widely deployed hypermedia format whose representations are at the same time a human interface.
 
 This is not a new idea but the original architecture of the web.
-Fielding's REST names the principle hypermedia as the engine of application state: transitions should be driven by controls that the server places in the current representation, not by out-of-band contracts the client holds separately.
+Fielding's REST names the principle hypermedia as the engine of application state: transitions should be driven by controls that the server places in the current representation, not by out-of-band contracts the client holds separately \cite{hypermediaBook}.
 Read against Section~\ref{sec:bg:frameworks}, this identifies the pattern that MCP repeats.
-WSDL and OpenAPI were the out-of-band contracts of their eras; a tool catalog obtained at connection time is the same client-held description, separate from the representation the application actually serves.
-\todo{cite: REST, Hypermedia} 
+WSDL and OpenAPI were the out-of-band contracts of their eras \cite{wsdl2001, openapi2021}; a tool catalog obtained at connection time is the same client-held description, separate from the representation the application actually serves.
+\todo{cite: Fielding 2000 博士论文（REST 的原始出处），还没导入 Zotero}
 
 The controls in a representation can be read as its affordances: the state-dependent set of actions the application currently makes available \cite{gidey2025affordance}.
 The term is used here in the hypermedia community's sense \cite{hypermediaBook}. 
@@ -113,8 +118,7 @@ This grounds the vocabulary but not the state.
 The registry is static and application-specific, and nothing prevents it from drifting away from what the backend currently allows.
 
 The strongest existing answer is a server-declared contract, and its current form is the Model Context Protocol (MCP).
-MCP deserves full credit on this axis: the contract is machine-readable, owned by the server rather than assumed by the client, gives every tool a typed input schema, and can update the tool list at runtime.
-\todo{cite: MCP}
+MCP deserves full credit on this axis: the contract is machine-readable, owned by the server rather than assumed by the client, gives every tool a typed input schema, and can update the tool list at runtime \cite{mcpSpec2025}.
 
 \todo{第四档（新增）：agent 专用接口 agent-native interfaces —— ASIL、AXIS、Beyond Browsing (Song et al., ACL 2025)、CLI-Anything、OpenCLI、DynaSaur、UFO2、OS-Copilot；必读 Wang et al. 2026 (arXiv 2510.04607)。对 ASIL 的三条划界：(1) 动作集由 adapter 产出，不是应用自身产出（其 Table 6 自认四项需手工）；(2) 不是人用的界面，要可视化还得另做 GUI 同步；(3) 只测 task success，没有 validity 指标。}
 
@@ -124,8 +128,8 @@ MCP deserves full credit on this axis: the contract is machine-readable, owned b
 
 \todo{结构调整：原 2.3 里的 Rendering Frameworks 小节，单独成节。}
 
-AG-UI defines an event and transport protocol between agents and front ends \cite{aguiOverview}, Vercel's AI SDK maps model output to registered interface components \cite{aisdkGUI}, and CopilotKit embeds agent interaction into existing applications.
-\todo{cite: CopilotKit} These systems are complementary to this thesis: they answer how a generated surface is drawn, not what it may legitimately contain, and they could sit on top of the framework developed here.
+AG-UI defines an event and transport protocol between agents and front ends \cite{aguiOverview}, Vercel's AI SDK maps model output to registered interface components \cite{aisdkGUI}, and CopilotKit embeds agent interaction into existing applications \cite{copilotkitDocs}.
+These systems are complementary to this thesis: they answer how a generated surface is drawn, not what it may legitimately contain, and they could sit on top of the framework developed here.
 \todo{expand this}
 
 \subsection{Research Gap}\label{sec:bg:gap}

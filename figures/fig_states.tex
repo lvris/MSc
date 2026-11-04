@@ -1,0 +1,68 @@
+% State diagram of the booking site (b1/model.ts, b1/server.ts).
+% Solid: moves the booking on. Dashed: gives the booking up.
+\begin{tikzpicture}[
+    st/.style={draw, rounded corners=3pt, minimum height=6mm, inner xsep=4pt, font=\footnotesize\ttfamily},
+    ghost/.style={font=\scriptsize\itshape, inner sep=1pt},
+    op/.style={font=\scriptsize\ttfamily, inner sep=1.5pt},
+    gate/.style={font=\scriptsize, inner sep=1.5pt},
+    go/.style={-{Stealth[length=2mm]}},
+    giveup/.style={go, dashed},
+    loop/.style={go, looseness=6},
+]
+% nodes
+\node[st] (br) at (0,0) {browsing};
+\node[st] (wl) at (-4.0,0) {waitlisted};
+\node[st] (ho) at (0,-2) {holding};
+\node[st] (de) at (-2.9,-4) {details\_entered};
+\node[st] (dp) at (2.9,-4) {deposit\_pending};
+\node[st] (cf) at (0,-5.6) {conflict};
+\node[st] (co) at (0,-7.4) {confirmed};
+\node[st] (ca) at (-2.9,-9.2) {cancelled};
+\node[st] (cr) at (2.9,-9.2) {cancellation\_requested};
+
+% entry
+\draw[go] ($(br.east)+(0.9,0)$) node[gate, right] {start} -- (br.east);
+
+% browsing
+\path (br) edge[go, loop above] node[op, above] {check\_availability} (br);
+\draw[go] (br.south) -- node[op, left] {hold\_slot} (ho.north);
+\draw[go] (br.west) -- node[op, above] {join\_waitlist} node[gate, below] {full date (G4)} (wl.east);
+
+% waitlist
+\path (wl) edge[go, loop above] node[op, above] {check\_position} (wl);
+\draw[go] (wl.south) to[out=-90,in=180] node[op, below left, pos=0.5] {hold\_slot} node[gate, above right, pos=0.6] {after a check (G4)} (ho.west);
+\node[ghost, left=16mm of wl] (wlg) {to browsing};
+\draw[giveup] (wl.west) -- node[op, above] {leave\_waitlist} (wlg.east);
+
+% holding
+\draw[go] (ho.south west) -- node[op, above left, pos=0.3] {enter\_details} node[gate, below right] {${\le}6$} (de.north);
+\draw[go] (ho.south east) -- node[op, above right, pos=0.3] {enter\_details} node[gate, below left] {${>}6$ (G1)} (dp.north);
+\draw[giveup] (ho.east) to[out=0,in=-30, looseness=1.2] node[op, right, align=left] {change\_slot,\\release\_hold} (br.south east);
+
+% review states
+\draw[go] (de.south) to[out=-90,in=160] node[op, left, pos=0.55] {confirm\_booking} (co.west);
+\draw[go] (dp.south) to[out=-90,in=20] node[op, right, pos=0.55] {pay\_deposit} (co.east);
+\draw[go] (de.east) to[out=-10,in=150] node[gate, above right, pos=0.6] {taken} (cf.north west);
+\draw[go] (dp.west) to[out=190,in=30] node[gate, above left, pos=0.6] {taken} (cf.north east);
+\draw[go] (cf.west) to[out=180,in=-60] node[op, below left, pos=0.5] {hold\_slot} (de.south east);
+\draw[go] (cf.east) to[out=0,in=-120] node[op, below right, pos=0.5] {hold\_slot} (dp.south west);
+\node[ghost, above=3mm of de.north west, align=center] (deg) {\texttt{discard\_draft} (G5)\\to browsing};
+\draw[giveup] (de.north west) -- (deg.south);
+\node[ghost, above=3mm of dp.north east, align=center] (dpg) {\texttt{discard\_draft} (G5)\\to browsing};
+\draw[giveup] (dp.north east) -- (dpg.south);
+
+% conflict to waitlist
+\draw[go] (cf.south west) .. controls (-3.2,-6.8) and (-5.4,-5.5) .. node[op, left, pos=0.62] {join\_waitlist} (wl.south);
+
+% confirmed
+\path (co) edge[go, loop below] node[op, below] {view\_confirmation} (co);
+\draw[go] (co.west) to[out=180,in=90] node[op, above left] {cancel\_booking} node[gate, below right, pos=0.7] {${>}24$\,h (G2)} (ca.north);
+\draw[go] (co.east) to[out=0,in=90] node[op, above right] {request\_cancellation} node[gate, below left, pos=0.7] {${\le}24$\,h (G2)} (cr.north);
+
+% end states
+\path (cr) edge[go, loop below] node[op, below] {view\_cancellation} (cr);
+\node[ghost, left=13mm of ca] (cag) {to browsing};
+\draw[giveup] (ca.west) -- node[op, above] {start\_over} (cag.east);
+\node[ghost, below=8mm of cr.south east, anchor=north east] (crg) {to browsing};
+\draw[giveup] (cr.south east) -- node[op, right] {start\_over} (crg.north east);
+\end{tikzpicture}

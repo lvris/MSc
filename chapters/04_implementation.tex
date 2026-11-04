@@ -1,547 +1,614 @@
-\begin{points}
-    \item 开头一句接上 Background 的 gap：没有系统把给人看的生成界面绑到一个随状态变、由服务器决定的动作集上。
-    \item 这一章做三件事：先定义框架（不依赖任何站点），再讲我做的原型，最后讲怎么测。
-    \item 按节告诉读者接下来是什么（老师第 3 条 signposting）：框架 $\to$ 原型 $\to$ 六个变体 $\to$ 任务和实验 $\to$ 一条示例 $\to$ 测什么。
-    \item 待你定：章名用 ``Framework and Implementation'' 可以吗？
-\end{points}
+\autoref{sec:background} ended with a gap: no existing system binds a human-facing generated interface to an action set that changes with the state and is decided by the server.
+This chapter describes a system that closes this gap: a framework that does not depend on any particular site, a prototype that implements it, and the setup used to test it.
+\autoref{sec:design} defines the framework, and \autoref{sec:impl:prototype} describes the prototype that implements it.
+\autoref{sec:eval:method:conditions} introduces the six conditions compared in the experiments, and \autoref{sec:methods:setup} the tasks, models and the two experiments.
+\autoref{sec:eval:results:trace} follows one task through two of the conditions, and \autoref{sec:eval:method:metrics} closes the chapter with what is measured.
 
 \begin{oldtext}
-\autoref{sec:background} ended with a gap: no existing system binds a human-facing generated surface to an action set that is both state-dependent and owned by the server.
-This chapter defines that binding and describes how I built and tested it.
-\autoref{sec:design} defines the framework in terms that do not depend on any particular site.
-\autoref{sec:impl:prototype} describes the prototype, a booking site and a generic client.
-\autoref{sec:eval:method:conditions} describes the conditions compared in the experiments, and \autoref{sec:methods:setup} the tasks, models and runs.
-\autoref{sec:eval:results:trace} follows one example task, and \autoref{sec:eval:method:metrics} ends the chapter with what is measured.
+接上 Background 的 gap：没有系统把给人看的生成界面绑到一个随状态变、由服务器决定的动作集上. (我感觉这章还是就直接叫 implementation 合适一点)
+最后的时候signpost 一下
 \end{oldtext}
 
 \subsection{The Framework}\label{sec:design}
 
-\begin{points}
-    \item 本节的规矩：每句话换个网站都成立，不出现订餐、b1。开头就直接说出来。
-    \item 核心想法一句话：页面上的控件就是现在能做的操作；agent 和界面都只从这里面挑，不自己造。
-    \item 本节四小节：这个集合是什么 $\to$ 网站要满足什么 $\to$ 因此保证什么、不保证什么 $\to$ 谁来用它。
-    \item 旧稿里 ``Problems that generative UI have...'' 和 ``To align...'' 两句想说的是：agent 和人共用同一套合法动作，所以能提供的一定能做，拒绝有结构上的理由，要问用户什么由必填字段决定。待你定：这个意思放这里，还是并进 Background 的 Consequences？
-\end{points}
+The framework rests on a simple, intuitive idea: the controls on a page correspond one to one to the actions that are possible now.
+On this basis, the controls on the page can be treated as a set, the \emph{affordance set} of the current state.
+
+Everything downstream is confined to the affordance set: the agent may only execute actions drawn from it, and the interface presented to the user may only offer controls drawn from it.
+Because the set is derived from the representation the server chose to serve, and a well-behaved server renders exactly the controls that are valid in the current state, an action outside the set is unavailable to both the agent and the interface.
+The agent and the person therefore work from the same set of valid actions: what the interface offers can always be executed, a refusal has a structural reason, and the required fields of a control determine what the user must be asked.
+
+Nothing in this section depends on a particular site; the prototype appears only in \autoref{sec:impl:prototype}.
+The rest of the section states the idea formally (\autoref{sec:design:formal}), gives the contract a site must meet (\autoref{sec:design:site-contract}), the guarantees and limits that follow from it (\autoref{sec:design:soundness}), and the two consumers of the set (\autoref{sec:design:consumers}).
 
 \begin{oldtext}
-\todo{写作规则：本节的每句话换个网站都要成立，不出现订餐和 b1。开头明确说这一点。}
+一个非常符合直觉的想法是: 页面上的控件必须和当前可行的操作一一对应.
+建立在这个基础上, 我们自然可以把页面上的控件抽象成一个集合, 这个集合就是当前状态下的 ``affordance set''.
 
-The framework consists of one idea applied at two places.
-A user states an intent.
-The agent fetches the application's current representation and extracts from it the controls the server has placed there.
-Those controls, taken together, form a closed set --- the \emph{affordance set} of the current state.
+everything downstream is confined to that set: the agent may only execute actions drawn from it, and the interface presented to the user may only offer controls drawn from it.
+由于这个集合是从服务器选择的表示中导出的, 并且一个行为良好的服务器会渲染当前状态下有效的控件, 因此集合之外的操作对 agent 和界面都是不可用的.
 
-Everything downstream is confined to that set: the agent may only execute actions drawn from it, and the interface presented to the user may only offer controls drawn from it.
-Because the set is derived from the representation the server chose to serve, and because a well-behaved server renders exactly the controls that are valid in the current state, an action outside the set is unavailable to both the agent and the interface.
-
-\todo{从 02 原「Affordance-Driven Human--Agent Interaction」挪来，待融入本节开头：agent 和人共用同一套合法动作。}
-
-Problems that generative UI have ...
-
-To align the action space that the agent offers with what the human user expects.
-They sharing a same wordlist of valid actions, which is affordance.
-Namely what it may offer, ask, and refuse — offers are always executable, refusals are structural/explainable, required form-fields define exactly what to ask.
+接下来我们将这个想法形式化, 并说明它的保证和限制, 以及谁来使用这个集合.
 \end{oldtext}
 
 \subsubsection{The affordance set}\label{sec:design:formal}\label{sec:design:defs}
 
-\begin{points}
-    \item 两样东西要分开：$A(s)$ 是从页面读出来的控件；$V(s)$ 是网站在这个状态下真正接受的操作。框架靠的是两者相等，而相等要靠下一小节的契约。
-    \item 一个控件留下哪些信息：方法、目标地址、字段（名字、类型、是否必填、固定值、可选值）、给人看的标签。用一张表列出每一项、对应的 HTML、为什么重建请求需要它。表可以代替旧稿里那段长句。
-    \item $A$ 跟着状态走：它说的是``现在''能做什么，不是网站的全部能力。这里可以回扣 Background：工具目录描述的是全部能力。
-    \item 图：$s \to r(s) \to A(s)$，再分成执行、展示两个分支。
-\end{points}
+Let $s$ denote the application state held by the server, and $r(s)$ the representation the server returns for that state.
+A \emph{parser} extracts from the representation the controls it declares; for HTML these are links, forms, and the attributes of extensions such as htmx \cite{htmxlDocs}.
+The result is the affordance set of the state:
+\[
+A(s) = \mathrm{parse}\bigl(r(s)\bigr).
+\]
+Each element of $A(s)$ keeps what is needed to rebuild the request its control would send, as listed in \autoref{tab:design:affordance}.
+
+As \autoref{fig:design:pipeline} shows, the set is closed: its consumers select from it and add nothing of their own.
+Once an element is executed, whether a person clicks the control or the agent sends the request, which is the same HTTP request, the application moves from $s$ to a new state $s'$.
+The server returns a new representation $r(s')$, which is parsed into a new set $A(s')$, and so on.
+$A$ therefore describes what can be done now. A tool catalogue, by contrast, lists every operation of the application at once \cite{openapi2021, mcpSpec2025}.
+
+The set of actions the server actually accepts in $s$, written $V(s)$, is a different thing: $A(s)$ is read from the page, while $V(s)$ is decided by the server.
+Nothing makes the two equal by itself; the site contract in the next subsection states when $A(s) = V(s)$.
 
 \begin{oldtext}
-\todo{figure: server state $s \rightarrow$ representation $r(s) \rightarrow$ affordance set $A(s)$, then two branches executing and presenting}
+我们令 $s$ 表示服务器持有的应用状态，$r(s)$ 表示服务器为该状态返回的表示.
+如果我们使用一个解析器来分析界面中的控件, 对 HTML 来说就是连接, 表单等, 以及拓展 如htmx 这这些.
+就可以得到一个解析出的 affordance 集合:
 
-Let $s$ denote the application state held by the server, and $r(s)$ the representation the server returns for that state.
-A \emph{parser} extracts from a representation the controls declared in its vocabulary; for HTML those are links, forms, and the attributes of server-driven extensions such as htmx \cite{htmxlDocs}.
-The \emph{affordance set} is the result:
+A(s) = ...
 
-\[
-A(s) \;=\; \mathrm{parse}\bigl(r(s)\bigr).
-\]
+集合中的元素应该像表 2 所说的一样留下能够可以重建这个请求的信息.
 
-Each element of $A(s)$ is a control reduced to what is needed to exercise it: a method, a target, an ordered list of declared input fields, and a human-readable label.
-A field carries its name, its type, whether it is required, any value fixed by the control, and, where the control declares them, its permitted values.
-% maybe delete, only use the table
+如图一所示, 这个集合应该不仅仅是呈现出所有的控件, 而且应该是一个封闭的集合, 也就是说, 这个集合中不应该有任何元素是无法执行的.
+而一旦选择执行, 不论是用户点击了控件还是 Agent 发送了请求(这两者应该是本质上相同的), 都会将应用状态从 s 转换到 s'.
+并且服务器会返回一个新的表示 r(s') , 这个表示又会被解析成一个新的 affordance 集合 A(s'), 以此类推.
 
-\todo{table: the affordance tuple --- each component, its HTML counterpart, and why it is needed to reconstruct a request.}
-
-$A$ is indexed by state: it describes what can be done \emph{now}, not what the application can ever do.
-It is read from the page, and it is a different thing from the set of actions the application actually accepts in $s$, written $V(s)$.
-The framework depends on the two being equal, and the site contract states when they are.
+但是, 服务器真正能够接受的操作集合 V(s) 不一定满足 A(s) = V(s) 的契约, 这正是我们接下来要讨论的.
 \end{oldtext}
+
+\begin{figure}[ht]
+\centering
+\input{figures/fig_pipeline}
+\caption{The framework. A parser reduces the representation of the current state to the affordance set, and both consumers draw on that set only: execution selects one element and sends it, presentation draws one control per element.}
+\label{fig:design:pipeline}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\caption{What one control leaves in the affordance set. Every item is read from the markup; attributes that only steer presentation, such as \texttt{hx-target}, are ignored.}
+\label{tab:design:affordance}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{lLL}
+\hline
+Item & Declared in HTML by & Needed to \\
+\hline
+Method & \texttt{method} of a form; \texttt{hx-get}, \texttt{hx-post}, \texttt{hx-put}, \texttt{hx-delete}; GET for a link & send the request with the right verb \\
+\hline
+Target & \texttt{action} of a form; \texttt{href}; the value of the \texttt{hx-*} attribute & send the request to the right address \\
+\hline
+Field name & \texttt{name} of an \texttt{input}, \texttt{select} or \texttt{textarea} & name the parameter \\
+\hline
+Field type & \texttt{type} of an \texttt{input}; the element itself for \texttt{select} and \texttt{textarea} & choose how the field is presented \\
+\hline
+Required & \texttt{required} & decide whether the user must be asked \\
+\hline
+Value & \texttt{value}; the selected \texttt{option}; the content of a \texttt{textarea} & fix a hidden value or prefill a default \\
+\hline
+Options & the \texttt{option} elements of a \texttt{select} & know which values are accepted \\
+\hline
+Label & text of the link or submit button; the enclosing \texttt{label} of a field & show the control to a person \\
+\hline
+\end{tabularx}
+\end{table}
 
 \subsubsection{The site contract}\label{sec:design:contracts}\label{sec:design:site-contract}
 
-\begin{points}
-    \item 先说为什么要有契约：$A(s) = V(s)$ 不会自动成立，要网站配合。
-    \item 三条：S1 页面上只放现在能用的控件（而且能用的都放）；S2 请求能从控件本身重建，不靠 JavaScript 临时算值；S3 服务器自己拒绝不合法的请求，作为兜底。
-    \item S1 是主要成本：它要求页面诚实地反映现在能做什么。很多网站本来就这样，因为人用页面也需要这样；单页应用往往不是，Discussion 再展开。
-    \item 你在 S2 旁边注了 ``This is tough''：要说清楚 S2 把哪些网站排除在外了。
-    \item 收尾：框架只适用于满足契约的网站，所以它既是客户端设计，也是对网站作者的建议。
-    \item 待你定：找一两个真实网站做例子（旧稿 todo cite）。
-\end{points}
-
-\begin{oldtext}
+For $A(s) = V(s)$ to hold, the site has to cooperate.
 The framework gives its guarantee only for a site that meets the following contract.
 
-\begin{enumerate}
-    \item[\textbf{S1}] \textbf{Only valid controls are rendered.}
-    The representation for $s$ contains a control if and only if the corresponding action is valid in $s$.
-    \item[\textbf{S2}] \textbf{Requests are reconstructible.}
-    Every value a control submits appears as a declared field.
-    No value is computed at request time by client-side script. %!! This is tough.
-    \item[\textbf{S3}] \textbf{The server guards its own state.}
-    A request for an action invalid in the current state is refused.
-\end{enumerate}
+\begin{description}
+    \item[S1: Exactly the valid controls are rendered.]
+    The representation for $s$ contains a control if and only if the corresponding action is valid in $s$: every action that is possible now has a control on the page, and every control on the page can be used now.
+    This asks the site to report honestly what can be done now.
+    Many sites already do so, because a person using the page needs the same thing; the GOV.UK Service Manual, for example, states that government services ``should be functional using only HTML'' \cite{govukProgressive}.
+    Single-page applications, which depend heavily on JavaScript, often do not, and \autoref{sec:discussion} returns to this.
+    \item[S2: Requests can be rebuilt from the controls.]
+    Every value a control submits appears as a declared field, and no value is computed by client-side script when the request is sent.
+    This is a strict requirement.
+    Modern web applications often use JavaScript to build and update their content and their requests, which makes it hard to rebuild a request from the HTML alone \cite{fouquet2023breaking}.
+    A hidden field that the server writes into a form, such as a token, does not break S2, because it is declared in the markup; a value assembled by a script at the moment of the click does.
+    \item[S3: The server guards its own state.]
+    A request for an action that is invalid in the current state is refused, whatever the page showed.
+    S3 is the backstop: if S1 fails, an invalid action is still refused by the server.
+    It is also ordinary practice, since a server cannot assume that a request came from its own page; OWASP advises: ``Validate on the server even when the browser checks the same fields'' \cite{owaspInputValidation}.
+\end{description}
 
-S1 is the substantive one and the framework's main adoption cost: it asks applications to treat their representation as an honest report of what is currently possible.
-Many applications already do this, since it is also what makes a page usable by a person; but many do not, and Chapter~\ref{sec:discussion} returns to what this means in practice.
+The framework applies only to sites that meet this contract.
+It is therefore as much a proposal to site authors as a design for a client.
 
-\todo{cite: find some examples}
+\begin{oldtext}
+为了满足 $A(s) = V(s)$, 需要网站的配合:
 
-The framework applies to applications that satisfy this contract, and it is therefore as much a proposal to application authors as a client architecture.
+S1: 页面上存在且包含现在能用的所有控件.
+这要求网站诚实的反应现在能做的操作, 很多网站现在就是这样的, 因为人在使用网站的时候也需要这个条件.
+但是像 SPA 这样重度依赖 JavaScript 的应用就很难实现, 我们在 discussion 里展开.
+
+S2: 请求本身能从控件重建, 不依赖 Javascript 脚本的临时计算.
+这是非常严格的要求, 现代的 Web 应用通常使用 JavaScript 来动态生成和更新页面内容，这使得从静态 HTML 中重建请求变得困难.
+
+S3: 服务器自己会拒绝不合法的请求. 
+(你自己编一点, 这个是非常合理的)
+
+(例子你帮我补上)
 \end{oldtext}
 
 \subsubsection{Guarantees and limits}\label{sec:design:soundness}
 
-\begin{points}
-    \item 保证：使用者只从 $A(s)$ 里挑，不自己造；网站守 S1 时，挑出来的一定合法。确定的是``能挑什么''，不是``挑哪个''，这就是题目里 deterministic 的意思。
-    \item 不保证 (1)：网站没放在页面上的操作，走不到。这是真实的代价。旧稿说 Results 会测，其实没测，这句已删。待你定：只说它是代价，还是到 Discussion 再讲？
-    \item 不保证 (2)：挑哪个仍然是模型的事，可能挑错。合法但不是用户想要的，比如 Results 里取消了已确认的订位（T3-02）。
-    \item 不保证 (3)：界面好不好用、对话怎么设计，不在保证范围内。
-    \item 原 Loss 小节一直是空的：从页面抽控件时丢掉了什么？可能的方向有页面上的说明文字、控件之间的关系（比如两个表单要一起填）、JavaScript 行为。待你给想法。
-\end{points}
+If a site meets the contract, the following can be derived from it.
+
+\paragraph{What is guaranteed.}
+\begin{itemize}
+    \item Anything a consumer executes or presents is an element of $A(s)$: consumers select from the set and do not author elements of their own.
+    \item If the site meets S1, then $A(s) = V(s)$, so whatever is executed or presented is valid in $s$.
+\end{itemize}
+What is fixed is therefore the set of actions that can be chosen, and this set depends on the server's state alone.
+The choice within it is still made by the agent.
+This is the sense in which the title of this thesis calls the framework deterministic.
+
+\paragraph{What is not guaranteed.}
+\begin{itemize}
+    \item Actions the site supports but does not put on the page cannot be reached. This is a real cost, and \autoref{sec:disc:threats} returns to it.
+    \item Which element is chosen is still up to the model and depends on its capability and its prompt. It may choose an action that is valid but not what the user wanted (\autoref{sec:disc:possible}).
+    \item The parts of the interaction that are not controls, the text of the interface and the dialogue with the user, are not covered.
+\end{itemize}
 
 \begin{oldtext}
-Every consumer of the affordance set works by selecting from it.
-It may select one element to execute, or a subset to present, but it does not author elements of its own.
-The consequence is trivial:
+如果满足了站点协议, 那么我们就可以推出一些有用的内容
 
-\begin{quote}
-\emph{Soundness.}
-Anything a consumer executes or presents is an element of $A(s)$.
-If the site meets S1, then $A(s) = V(s)$, and whatever is executed or presented is valid in $s$.
-\end{quote}
+(小标题)保证
+照搬两句, 用列表
 
-An invalid action lies outside the space being selected from.
-This is the precise sense in which the title of this thesis claims determinism: what is deterministic is the action space, being a function of server state alone, not the agent's choice within it.
-
-These are not claimed...
-
-\begin{enumerate}
-    \item \textbf{Reachability is bounded by disclosure.}
-    Actions the application supports but does not expose in its representation are unreachable through this construction.
-    This is a genuine cost.
-    \todo{原文说评估章会测量这项代价，但 Results 里没有对应的测量（Unreachable goals 测的是另一回事）。确认后改写。}
-    \item \textbf{Selection remains stochastic.}
-    Which element of $A(s)$ gets chosen is a model decision with all the usual uncertainty.
-    Only the set is guaranteed.
-    Selecting and ordering what is relevant to the user's intent is the agent's job.
-\end{enumerate}
-
-\todo{原 Loss 小节（sec:design:parser-loss，一直是空的）：抽取控件时丢失什么。通用的部分并进这里，等中文思路。}
-
-Interface quality, dialogue design, and free-form information gathering fall outside the property.
+(小标题)不保证
+用列表
+- 无法访问网站没有放在页面上的操作
+- 挑选操作仍然受限于模型的能力或提示等
+- 模型里和用户交流的部分, 界面和对话无法保证
 \end{oldtext}
 
 \subsubsection{The consumers of \texorpdfstring{$A(s)$}{A(s)}}\label{sec:design:consumers}
 
-\begin{points}
-    \item 同一份 $A(s)$ 有两个使用者，这是``同一份页面同时给 agent 和界面用''在框架里的样子。
-    \item agent 执行：挑一个；填能从用户意图推出来的字段；推不出来的去问用户，不编。
-    \item 界面展示分三层。控件层：只能是 $A(s)$ 的子集，直接画，不经过模型。询问层：问什么，由``必填但推不出来''的字段决定；怎么问，由字段类型决定；什么答案算数，由可选值决定。展示层：文字、分组、解释，由 agent 写，框架不管。
-    \item 旧稿有一句可以留作总结：内容由 agent 讲，控件由服务器授权。
-    \item 这里只讲概念，渲染器怎么做放到原型一节。
-    \item 图：一个 affordance 逐字段变成一个控件。表：字段类型 $\to$ 控件 $\to$ 用户能改什么 $\to$ 控件固定什么。
-\end{points}
+Once $A(s)$ has been extracted, it has two consumers: execution and presentation.
+
+\paragraph{Execution.}
+The agent selects the element it judges best for the user's intent.
+It fills in the declared fields whose values it can derive from the intent; values it cannot derive are asked of the user, and none are invented.
+
+\paragraph{Presentation.}
+The interface between the agent and the user takes its controls from $A(s)$: each control is drawn from the fields its element declares, with no model in between (\autoref{tab:design:widgets}).
+What the interface asks the user is decided in the same way, by the fields that are required but have no value.
+The text around the controls, such as explanations and grouping, is written by the agent and lies outside the framework.
+
+In short, the content is narrated by the agent, and the controls are authorised by the server.
 
 \begin{oldtext}
-\paragraph{Execution.}\label{sec:design:consumer-agent} At the execution boundary the agent does three things with the affordance set: it selects an element, supplies values for those declared fields it can derive from the user's intent, and issues the corresponding request.
-Values it cannot derive are not invented; they are asked of the user, which leads directly to the next consumer.
+在我们提取到 A(s) 之后, 有两个消费者: 执行和展示.
 
-\paragraph{Presentation.}\label{sec:design:consumer-ui} The interface draws on the affordance set in three layers.
+小标题(执行), agent 可以挑选出一个它认为对用户意图最合适的控件, 并从它声明的字段里填入能从意图推出来的值, 不能推出来的就去问用户.
 
-\paragraph{The action layer.}
-The controls offered to the user.
-This layer is bounded: $\mathrm{controls}(UI) \subseteq A(s)$.
-Each control can be rendered directly from an affordance, one generic renderer per declared field type, with no model in the rendering path and no task-specific component registry.
-%!! or ... not quite sure about rendering
+小标题(展示), agent 和用户交互的界面上, 可以从 A(s) 中由声明的字段作为关键要素.
+想问用户的值, 也可以由``必填但没有值''的字段决定.
 
-\paragraph{The elicitation layer.}
-What the interface asks the user for.
-This layer is also grounded in $A(s)$, but through the fields of its elements.
-Which questions must be asked is determined by which required fields cannot be derived from the intent; how they are asked is determined by the declared field types; and what counts as an admissible answer is determined by the permitted values a control declares.
-
-\paragraph{The presentation layer.}
-Everything else: the data shown, the grouping, the wording, the explanation of what is offered and of what is structurally absent.
-This layer draws on the non-interactive content of $r(s)$ and on the agent's own language, and it is not bounded by anything in this framework.
-The division can be summarised as follows: \emph{the content is narrated by the agent; the controls are authorised by the server.}
-
-\todo{figure: one affordance $\rightarrow$ one rendered control, field by field (name / type / required / permitted values / fixed value $\rightarrow$ widget), showing that the rendering step needs no model.}
-
-\todo{table: field type $\rightarrow$ rendered control $\rightarrow$ what the user may change $\rightarrow$ what the control fixes.}
+（旧稿里的）：内容由 agent 讲，控件由服务器授权。
 \end{oldtext}
+
+\begin{table}[ht]
+\centering
+\caption{How a declared field becomes part of a control. Top: the declared type selects the widget; an unknown type falls back to a text box and is marked as such. Bottom: whether the field is prefilled, asked or optional follows from its declaration alone.}
+\label{tab:design:widgets}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{LLL}
+\hline
+Declared type & Widget & What the user may set \\
+\hline
+\texttt{hidden} with a value & none & nothing; the control submits the value as declared \\
+\hline
+\texttt{select} & drop-down & one of the declared options \\
+\hline
+\texttt{checkbox} & checkbox & on or off \\
+\hline
+\texttt{number}, \texttt{range} & number box & a number \\
+\hline
+\texttt{date}, \texttt{month}, \texttt{week}, \texttt{datetime-local} & date picker & a date \\
+\hline
+\texttt{time} & time picker & a time \\
+\hline
+\texttt{tel}, \texttt{email}, \texttt{url}, \texttt{password} & typed text box & text of that kind \\
+\hline
+\texttt{text}, \texttt{search}, \texttt{color}, \texttt{textarea} & text box or text area & free text \\
+\hline
+any other type & text box, marked as degraded & free text \\
+\hline
+\end{tabularx}
+
+\medskip
+
+\begin{tabularx}{\textwidth}{lL}
+\hline
+Field declaration & What the interface does \\
+\hline
+carries a value & \emph{prefilled}: the control is usable as it stands; the user may change the value \\
+\hline
+required, no value & \emph{asked}: the interface must put a question to the user \\
+\hline
+not required, no value & \emph{optional}: nothing is asked and nothing is sent \\
+\hline
+\end{tabularx}
+\end{table}
 
 \subsection{The Prototype}\label{sec:impl:prototype}
 
-\begin{points}
-    \item 提醒读者换了层次：从这里开始讲的是具体实现，只对这个原型成立。
-    \item 两个能单独运行的部分：一个通用客户端，一个订餐站点，中间只有 HTTP。
-    \item 小节顺序：站点 $\to$ 客户端守什么规矩 $\to$ 怎么从页面读出控件 $\to$ 怎么执行 $\to$ 怎么画界面 $\to$ 技术栈。
-    \item 图：架构图（用户 $\leftrightarrow$ 客户端 $\leftrightarrow$ 站点）。
-\end{points}
+From here on, what is described is the concrete implementation, and it holds for this prototype only.
+The prototype is a scenario in which an agent books a table at a restaurant.
+It consists of two parts that run separately: a generic client and a booking site.
+As \autoref{fig:impl:architecture} shows, the user completes tasks through the client, and the client and the site communicate only through HTTP requests.
+\autoref{sec:impl:site} describes the site, \autoref{sec:design:client-contract} the rules the client keeps, \autoref{sec:impl:discovery} how it reads the controls from a page, \autoref{sec:impl:agent} how it executes them, \autoref{sec:impl:ui} how it draws the interface, and \autoref{sec:impl:stack} the technology used.
 
 \begin{oldtext}
-This section describes the artifact built to make the framework of \autoref{sec:design} concrete and testable.
-It has two independently runnable parts: a fixed generic client and a hypermedia site.
-
-\todo{figure: architecture. User $\leftrightarrow$ client (discover / choose / render / replay) $\leftrightarrow$ site over HTTP.}
+从这里开始讲的是具体实现，只对这个原型成立.
+这个原型正是为了解决我们在引言中提出的问题, 一个通过 Agent 订餐的场景.
+我们包含两个单独运行的部分, 一个通用的客户端和一个订餐的站点.
+如图2所示, 用户通过客户端来完成各种任务, 而客户端和站点之前只有 HTTP 请求.
+(signpost 一下)
 \end{oldtext}
+
+\begin{figure}[ht]
+\centering
+\input{figures/fig_architecture}
+\caption{Architecture of the prototype. The client knows nothing about the site: it parses the page, and the model is used only in the choose step. The site derives its pages and its guard from the same state machine.}
+\label{fig:impl:architecture}
+\end{figure}
 
 \subsubsection{The Site Side}\label{sec:impl:site}
 
-\begin{points}
-    \item 为什么选订餐：步骤多，每一步能做的事都不一样，还有定金、取消期限这类只在服务器上才知道的规则。待你定：理由是这些吗？
-    \item 规模：9 种状态（浏览、占座、已填信息、等定金、已确认、冲突、排队、已申请取消、已取消）；展开后有 997 个可达状态、3950 条转移；共 21 个操作，每个状态平均只有 2.87 个能用。旧稿写的``六个状态''过时了。
-    \item 五条规则（gate），每条打破固定工具列表的一个假设：G1 大桌要先付定金；G2 24 小时内只能申请取消；G3 点菜只在确认前开放；G4 满座时只能排队，查一次排位又能占座；G5 同一个``取消''在不同状态下是三个不同的操作。待你定：都讲，还是只讲 Results 里用到的几条？
-    \item 刻意不存在的控件：确认后没有改时间，冲突时没有``强行确认''。它们不是被拒绝，而是根本不出现。
-    \item 下面三段分别讲：状态机是权威、页面层不会违抗、用了哪些 HTML 词汇。
-\end{points}
+Booking a table is a classic case of an application in which the actions available differ from state to state, and which has special rules such as deposits and cancellation periods.
+I chose it for the prototype site mainly because it is complex enough, yet a reader needs no domain knowledge to judge whether a task was done correctly.
+
+\autoref{fig:impl:states} shows all nine statuses of the site and the transitions between them.
+\autoref{tab:impl:states} lists, for each status, the controls on the page and those that are deliberately absent: after confirmation there is no control to change the time, and in a conflict there is none to confirm anyway.
+Such controls never appear on the page at all.
+
+\begin{figure}[ht]
+\centering
+\input{figures/fig_states}
+\caption{The status graph of the booking site. Dashed edges give the booking up and return to \texttt{browsing}. Not drawn: \texttt{edit\_details}, which returns both review states to \texttt{holding}, and the pre-order operations, which do not change the status. After a conflict the guest details are known, so \texttt{hold\_slot} leads straight back to a review state; from \texttt{waitlisted} it does the same when the details are known.}
+\label{fig:impl:states}
+\end{figure}
+
+On the whole the site is plain: a guest browses, holds a table, enters their details and confirms.
+On top of this, it has five rules, the gates of \autoref{tab:impl:gates}.
+A large party must pay a deposit (G1), a cancellation within 24 hours of seating must be requested from the restaurant (G2), and dishes can be pre-ordered only in a window before confirmation (G3).
+In addition, a fully booked date offers only the waitlist, and checking the queue position can bring a table back (G4); and the same word, ``cancel'', stands for three different operations depending on the state (G5).
+The tasks of the experiments rest largely on these rules (\autoref{sec:eval:method:tasks}).
+
+\label{sec:impl:site:model}
+The site has a single source of truth: one function that, given the current state, returns the actions valid in it.
+The page shows a control for every action this function returns and for nothing else, and the server refuses every request for an action it does not return.
+S1 and S3 therefore hold for this site by construction.
+The same function is also the definition of $V(s)$ in the experiments, so the correct answers need no manual annotation.
+A check script walks all 997 reachable states and 3\,950 transitions and confirms, in 52\,748 assertions, that the page and the server agree with the function in every state.
+
+\label{sec:impl:site:vocab}
+The site uses the plainest HTML it can: links for navigation and forms for operations.
+htmx \cite{htmxlDocs} is used only where HTML cannot describe the request itself, in two places: methods other than GET and POST, such as DELETE for releasing a table or cancelling a booking, and partial refresh, for the panel of free slots.
+Both are attributes in the returned HTML and can be read without running any JavaScript, so the site also meets S2.
 
 \begin{oldtext}
-The site, \texttt{b1}, is a minimal but fully browsable restaurant-reservation application...
+订餐是一类经典的场景, 即在不同的状态下能执行的操作不相同, 以及定金和取消期等特殊的规则.
+我选择了这个任务作为原型的站点, 主要是因为它有足够的复杂性, 但又不需要读者有领域知识就能判断任务做对没有.
 
-\todo{Introduce b1,}
+如图三所示, 这是整个网站所有的 9 种状态和转移.
+在表格中展示了每个状态的详细信息，以及每个状态下页面上有哪些控件，哪些控件刻意不出现.
+
+整体上是一个比较朴素的站点, 顾客需要浏览, 预订等.
+此外, 我们还设计了五条规则(如表):
+大桌子需要付定金, 24小时的取消窗口, 预点菜窗口等, 我们的问题设计很大程度上依托这些规则.
 \end{oldtext}
 
-\paragraph{The state machine as the authority}\label{sec:impl:site:model}
+\begin{table}[ht]
+\centering
+\caption{The five gates of the booking site. Each rule is held only by the server, and each breaks one assumption a fixed list of operations makes.}
+\label{tab:impl:gates}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{P{0.16\textwidth}LL}
+\hline
+Gate & Rule on the server & Assumption it breaks \\
+\hline
+G1 deposit & For a party of more than six, \texttt{pay\_deposit} (\texteuro{}10 per guest) replaces \texttt{confirm\_booking}. & A booking is always finished by confirming it. \\
+\hline
+G2 cancellation window & Within 24 hours of seating, \texttt{request\_cancellation}, which requires a reason, replaces \texttt{cancel\_booking}. & One intent is served by one operation. \\
+\hline
+G3 pre-order window & A pre-order can be opened only after the guest details are entered and before confirmation; dishes can be changed only while it is open; it locks once submitted. & Whether an operation is available does not depend on another resource. \\
+\hline
+G4 waitlist & On a fully booked date \texttt{hold\_slot} disappears and \texttt{join\_waitlist} appears; once the queue position has been checked, a released table brings \texttt{hold\_slot} back. & The flow only moves forward. \\
+\hline
+G5 same word & ``Cancel'' is \texttt{discard\_draft} before confirmation, and \texttt{cancel\_booking} or \texttt{request\_cancellation} after it, each at a different address. & One name is one operation. \\
+\hline
+\end{tabularx}
+\end{table}
 
-\begin{points}
-    \item 同一个函数既决定页面上画什么，也决定服务器接受什么。
-    \item 所以它同时是实验的标准答案（$V(s)$），不需要人工标注。
-    \item 已验证：52\,748 条断言覆盖所有状态和转移。
-    \item 表：每种状态下有哪些控件，标出刻意不存在的。图：状态图，边上标操作名。
-\end{points}
-
-\begin{oldtext}
-\todo{we have a state machine that can be used as ground truth. states: browsing, holding, details entered, confirmed, conflict, cancelled. Note the second role: it is the authoritative definition of validity $V(s)$, hence the annotation-free ground truth used in Section~\ref{sec:eval:method:truth}.}
-
-\todo{table: the six states and the affordances exposed in each, highlighting the deliberately absent controls.}
-
-\todo{figure: state diagram, transitions labelled by the affordance that causes them.}
-\end{oldtext}
-
-\paragraph{A representation layer that cannot disobey}\label{sec:impl:site:render}
-
-\begin{points}
-    \item 页面上的每个控件都来自合法动作函数，没有别的来源。所以对这个站点来说，S1 是构造出来的，不是靠自觉。
-\end{points}
-
-\begin{oldtext}
-\todo{The renderer is  dumb: every interactive control it emits comes from the valid-affordance function and it has no other source.}
-\end{oldtext}
-
-\paragraph{Vocabulary}\label{sec:impl:site:vocab}
-
-\begin{points}
-    \item 主流程用最普通的 HTML：链接用来导航，表单用来操作。
-    \item htmx 只用在 HTML 自己表达不了的两处：DELETE 这类方法（释放、取消），以及局部刷新（查空位）。
-    \item 两者都能直接从返回的 HTML 读出来，不用运行 JavaScript，满足 S2。
-\end{points}
-
-\begin{oldtext}
-\todo{Core flow (browse, hold, enter details, confirm) carried by standard HTML: \texttt{<a href>} for navigation, \texttt{<form action method>} with named inputs for operations. htmx \citep{htmxlDocs} used only at the two boundaries native HTML cannot describe about itself --- honest verbs beyond GET/POST (release, cancel via \texttt{hx-delete}) and partial refresh (availability via \texttt{hx-get} with \texttt{hx-target}). Both readable from the returned HTML with no JavaScript executed.}
-\end{oldtext}
+\begin{table}[ht]
+\centering
+\caption{The controls on the page in each status. With the date, party size, slot and pre-order, the nine statuses expand to 997 reachable states and 3\,950 transitions. Of the 21 operations, 2.87 are valid in a state on average. The right column lists controls that are never drawn at all.}
+\label{tab:impl:states}
+\renewcommand{\arraystretch}{1.15}
+\small
+\begin{tabularx}{\textwidth}{lLP{0.2\textwidth}}
+\hline
+Status & Controls on the page & Deliberately absent \\
+\hline
+\texttt{browsing} & \texttt{check\_availability}; one \texttt{hold\_slot} per free slot, or \texttt{join\_waitlist} if the date is full (G4) & -- \\
+\hline
+\texttt{holding} & \texttt{enter\_details}, \texttt{change\_slot}, \texttt{release\_hold} & -- \\
+\hline
+\texttt{details\_entered} & \texttt{confirm\_booking}, \texttt{edit\_details}, \texttt{discard\_draft}; \texttt{open\_preorder} if there is no pre-order (G3); \texttt{add\_dish}, one \texttt{remove\_dish} per dish and \texttt{submit\_preorder} while the pre-order is open & -- \\
+\hline
+\texttt{deposit\_pending} & \texttt{pay\_deposit}, \texttt{edit\_details}, \texttt{discard\_draft}; the pre-order controls while it is open & \texttt{confirm\_booking} (G1) \\
+\hline
+\texttt{confirmed} & \texttt{view\_confirmation}; \texttt{cancel\_booking} more than 24 hours before seating, otherwise \texttt{request\_cancellation} (G2) & changing the time or the details \\
+\hline
+\texttt{conflict} & one \texttt{hold\_slot} per free slot, or \texttt{join\_waitlist} if the date is now full & confirming anyway \\
+\hline
+\texttt{waitlisted} & \texttt{check\_position}, \texttt{leave\_waitlist}; \texttt{hold\_slot} once the position has been checked (G4) & -- \\
+\hline
+\texttt{cancellation\_requested} & \texttt{view\_cancellation}, \texttt{start\_over} & -- \\
+\hline
+\texttt{cancelled} & \texttt{start\_over} & -- \\
+\hline
+\end{tabularx}
+\end{table}
 
 \subsubsection{The client contract}\label{sec:design:client-contract}
 
-\begin{points}
-    \item 客户端对站点一无所知：不存 URL，不认识``订位''这类词，只认页面上声明的东西。这是``通用客户端''的意思。
-    \item 要支持另一种超媒体格式，只需加一个 parser，产出同样形状的控件。
-    \item 你在旧稿里注了 cookie 这类问题：会话状态是怎么带的？待你定：要不要提。
-\end{points}
+The client is where the user mainly communicates with the agent.
+To be generic, the client must be blind to the site: it understands controls only through what the page declares.
+It stores no addresses of the site and knows no words of its domain, such as ``booking''.
+Supporting another hypermedia format only requires adding a parser, as a plug-in that produces controls of the same shape.
+In the prototype the client carries no session information and keeps no cookies; the site holds a single session in memory, so this causes no problem here.
+A real site with many users would need the client to keep cookies as a browser does, which still requires no knowledge of the site.
 
 \begin{oldtext}
-\begin{enumerate}
-    \item[\textbf{C1}] \textbf{No site knowledge.}
-    The client holds no site-specific identifiers, urls, or business vocabulary.
-    A control is identified only by what the representation declares about it.
-    %!! this actually leads to problem with many... like cookies or other things that needed to be passed, may discuss or what
-    \item[\textbf{C2}] \textbf{Vocabulary extensibility.}
-    Supporting a further hypermedia format means adding a parser that produces the same affordance shape.
-\end{enumerate}
+客户端是一个用户主要和 Agent 沟通的载体.
+为了做到通用, 客户端需要满足的是对站点的 blindness, 也就是只通过页面上声明的东西来理解控件.
+如果需要支持另外的超媒体格式, 只需要将 parser 作为一种插件来理解, 就可以产出相同形状的控件.
+对于我们的原型, 客户端不带任何会话信息, 也不保存 cookie, 所以在原型里不是问题, 但真实多用户网站需要客户端像浏览器一样保存 cookie.
 \end{oldtext}
 
 \subsubsection{Discovery}\label{sec:impl:discovery}
 
-\begin{points}
-    \item 这一小节讲怎么从页面得到 $A(s)$。
-    \item 每个控件都归一成同一个形状，就是框架一节表里的那几项。
-    \item 两个 parser：原生 HTML（链接、带提交按钮的表单）和 htmx（\texttt{hx-get}、\texttt{hx-post}、\texttt{hx-delete} 等）。只看会发请求的属性，\texttt{hx-target} 这类只管显示的属性忽略。
-    \item 一个值得写的细节：去重时要看字段的值。五个``占这个时段''的表单地址一样、隐藏字段不同，是五个不同的操作，不看值就会被错误合并。
-    \item 结果就是 $A(s)$，在任何使用者看到之前就已经完整。
-    \item 旧稿的 ``existing HTML parsers like ASTs'' 和 ``need more test''：只在技术栈里提一句用了什么解析库就够了吗？待你定。
-    \item 图或代码：一个控件 $\to$ 它的归一形状 $\to$ 重新画出来的控件，一圈走完。
-\end{points}
+Discovery turns a page into $A(s)$.
+Two parsers read the page, one for plain HTML and one for htmx.
+The HTML parser takes every link as a GET and every form that has a real submit button as an operation, with the inputs of the form as its fields.
+The htmx parser takes the method and the address from \texttt{hx-get}, \texttt{hx-post}, \texttt{hx-put} or \texttt{hx-delete}; attributes that only decide how a response is displayed, such as \texttt{hx-target} and \texttt{hx-swap}, are ignored, because the client always reads the whole next page.
+Both parsers reduce a control to the shape of \autoref{tab:design:affordance}, and \autoref{fig:impl:discovery} shows two controls of one page and what they become.
 
-\paragraph{The normalised affordance}\label{sec:impl:discovery:shape}
+The results of the two parsers are merged and duplicates are removed.
+The identity of a control includes its address and the value of each of its fields.
+On a page with five free time slots there are five forms that post to the same address and differ only in a hidden field; they are five different operations, and ignoring the values would merge them into one.
+The resulting list is $A(s)$, and it is complete before any consumer sees it.
 
-\begin{oldtext}
-\todo{One shape for every control, native or htmx: method, url as written, ordered declared fields, human-visible label, source vocabulary. A field records name, type, required, any prefilled or fixed value, and the enumerated options of a select. Identity for de-duplication includes each field's name and value: five ``hold this slot'' forms posting to the same url with different hidden slot values are five distinct affordances and would wrongly collapse if values were ignored.}
-
-\todo{figure or listing: one rendered control $\rightarrow$ its normalised tuple, paired with the framework figure so the reader sees representation $\rightarrow$ tuple $\rightarrow$ re-rendered control as one round trip.}
-\end{oldtext}
-
-\paragraph{Vocabulary parsers}\label{sec:impl:discovery:parsers}\label{sec:design:parser}
-
-\begin{oldtext}
-\todo{need more test before writing}
-
-\todo{existing HTML parsers like ASTs}
-
-\todo{Native parser: \texttt{<a href>} as GET navigation, \texttt{<form>} as operation, but only when the form has a real submit control, so an action-less form whose only button carries htmx attributes yields no phantom affordance. htmx parser: \texttt{hx-get/post/put/delete} give method and url; where a control declares that it includes the enclosing form, that form's inputs become its fields. Presentation-only attributes (\texttt{hx-target}, \texttt{hx-swap}) ignored, since the client always reads whole responses. }
-\end{oldtext}
-
-\paragraph{Closure}\label{sec:impl:discovery:closure}
-
-\begin{oldtext}
-\todo{Discovery parses once, runs both parsers, de-duplicates. The resulting list \emph{is} $A(s)$, complete before any consumer sees it}
-\end{oldtext}
+\begin{figure}[ht]
+\centering
+\begin{Verbatim}
+<form method="POST" action="/deposit">
+<label>Card number<input name="card" type="text" required></label>
+<button type="submit">Pay €80 deposit</button>
+</form>
+<button type="button" hx-delete="/draft" hx-target="#booking" hx-swap="innerHTML">Discard draft</button>
+\end{Verbatim}
+\begin{Verbatim}
+[ { "method": "POST", "url": "/deposit",
+    "fields": [ { "name": "card", "type": "text", "required": true, "label": "Card number" } ],
+    "label": "Pay €80 deposit", "source": "native" },
+  { "method": "DELETE", "url": "/draft", "fields": [],
+    "label": "Discard draft", "source": "htmx" } ]
+\end{Verbatim}
+\caption{Two controls from the page of a booking that waits for a deposit (top), and the affordances the parsers extract from them (bottom). The form is read by the HTML parser, the button by the htmx parser; \texttt{hx-target} and \texttt{hx-swap} do not appear in the result.}
+\label{fig:impl:discovery}
+\end{figure}
 
 \subsubsection{Execution}\label{sec:impl:agent}
 
-\begin{points}
-    \item 选择：整个系统里唯一有随机性的地方。输入是目标加上已经确定好的列表，输出是一个编号或``停''。后端可以换：手动、随机、本地小模型、托管模型。
-    \item 提示词的要求：一次只选一个；只填能从目标推出的字段；不编个人信息。
-    \item 回放：照控件的描述发请求，固定字段强制用原值。客户端总是读完整的下一页，不处理片段。所以``点这个按钮''就是一个纯函数。
-    \item 循环：从入口地址冷启动；每一步都是 读页面 $\to$ 找控件 $\to$ 选 $\to$ 补字段 $\to$ 回放。客户端不带任何状态地图，每个状态都是读到了才知道。这就是``hypermedia-constrained''的字面意思。
-    \item 旧稿写了 ``hosted frontier model''，实际托管的是 qwen3.8-27b，frontier 模型没做，要改。
-    \item 图：一次循环的时序图。
-\end{points}
+Execution turns a choice into a request.
+It has three parts: choosing, replaying, and the loop that connects them (\autoref{fig:impl:loop}).
 
-\paragraph{Choosing}\label{sec:impl:agent:choose}
+\begin{figure}[ht]
+\centering
+\input{figures/fig_loop}
+\caption{One iteration of the client loop under H. The client starts from the entry address and learns each state only by reading its page. In the experiments no person is present: a required field that neither the control nor the goal fills is given a sample value, and the log records it as a question a real interface would have asked.}
+\label{fig:impl:loop}
+\end{figure}
 
-\begin{oldtext}
-\todo{The only place nondeterminism lives: one interface handed the goal and the already-closed set, returning an index into it or a stop signal. Interchangeable backends --- manual, an OpenAI-compatible chat endpoint (by default a small local model via Ollama, temperature 0, strict JSON, one reprompt, fallback to manual), and a hosted frontier model. The prompt instructs the model to choose a single action and supply values only for fields derivable from the goal, never inventing personal data; missing required fields are asked of the user. Note this backend list is also the model ladder of Section~\ref{sec:eval:method:models}, which adds a random backend.}
-\end{oldtext}
+\paragraph{Choosing.}
+Choosing is the only step in the whole system that is not deterministic.
+It receives the goal and the list $A(s)$, which is already fixed, and returns the number of one element, or a signal to stop.
+The backend that chooses can be exchanged: a person at the keyboard, a random chooser, a small local model, or a hosted model.
+The prompt asks the model to choose a single action, to fill in only the values it can derive from the goal, and never to invent personal data (\autoref{app:prompts}).
+If the reply cannot be read, the model is asked once more.
 
-\paragraph{Acting by replay}\label{sec:impl:agent:replay}
+\paragraph{Replaying.}
+The client then sends exactly the request the control describes: query parameters for GET, a form-encoded body otherwise.
+Fixed fields are reset to their declared values, since the control decides them.
+The client never marks its requests as htmx requests, so the site answers as it would to a plain form and redirects to the next page, which the client follows.
+The client therefore always reads a complete page, with no fragments and no script to run, and ``clicking the control'' depends only on its method, address, fields and values.
 
-\begin{oldtext}
-\todo{construct exactly the request the control describes --- query parameters for GET, form-encoded body otherwise, fixed fields forced back to their declared value because they are determined by the control rather than chosen. The client never sends the header marking a partial request, so the site answers on its ordinary Post/Redirect/Get path and the redirect is followed; the client therefore always reads a complete next representation, with no fragments and no client-side runtime to interpret. ``Clicking the control'' is thus a pure function of method, url, fields and values.}
-\end{oldtext}
-
-\paragraph{The loop}\label{sec:impl:agent:loop}
-
-\begin{oldtext}
-\todo{Cold-start from an entry url; at each step read the representation, discover, choose, fill any required field the chooser could not supply, replay, read the next representation. No map of states or urls is carried; each state is learned only by fetching it. This out-of-band-free progressive discovery is what makes ``hypermedia-constrained'' literal.}
-
-\todo{figure: sequence diagram of one iteration --- GET, discover, choose, fill, replay, GET next.}
-\end{oldtext}
+\paragraph{The loop.}
+The client starts from the entry address of the site and repeats the same step: read the page, discover the controls, choose, fill the missing fields, replay.
+It carries no map of the states or addresses of the site; each state is known only once its page has been read.
+This is the literal sense in which the agent is constrained by hypermedia.
 
 \subsubsection{Presentation}\label{sec:impl:ui}
 
-\begin{points}
-    \item 渲染器是一个纯函数：一组控件进，界面出。核心是一张``字段类型 $\to$ 控件''的查找表，不认识的类型退成文本框并标出来。
-    \item 隐藏且有值的字段由控件固定，用户看不到；其他字段标成预填、必须问、可选三种。
-    \item 三项检查：R1 渲染时不调用模型；R2 一个控件对应一个界面元素，画两次结果一样；R3 字段不多不少。
-    \item 渲染器不做挑选。挑哪些控件是模型的决定，放进渲染器就等于把模型放回渲染路径。旧稿 (ii) 说 agent 负责挑子集，和这点冲突，按实现写。
-    \item 人点按钮和 agent 走一步，走的是同一条回放路径，所以两者操作的是同一份动作集。
-    \item 人随时可以接手；agent 失败了，网站本身照样能直接用（回扣 Background 的 graceful fallback）。
-    \item 图：两个状态下的界面截图并排，旁边列出对应的 $A(s)$。
-\end{points}
+The renderer turns a list of controls into an interface.
+It is a pure function: the same list always gives the same interface, and no model is called.
+Its core is the lookup table of \autoref{tab:design:widgets}, from declared field type to widget; an unknown type falls back to a text box and is marked as degraded.
+A hidden field with a value is fixed by the control and not shown; every other field is marked as prefilled, asked or optional.
+Three checks verify this: no model is called while rendering (R1), each control is drawn as exactly one element and the same way every time (R2), and each control keeps exactly its declared fields (R3).
 
-\begin{oldtext}
-\todo{已经做完（更新这一节）：渲染器是一个纯函数，把一组 affordance 变成控件，核心是一张「声明的字段类型 → 控件」查找表，未知类型退化成文本框并标出来。hidden 且带值的字段由控件固定，不让用户看到；其余字段标为预填 / 必须问 / 可选。检查 R1：渲染代码只依赖 affordance 的定义，不调用模型；R2：一个 affordance 对应一个控件，渲染两次结果相同；R3：字段不多不少。输出是零依赖的 HTML。}
+The renderer does not choose which controls to show.
+That choice is a model decision, and making it inside the renderer would put a model back on the rendering path; if only some controls are shown, the agent selects them before rendering.
+A click by a person and a step by the agent go through the same replay, so both act on one set of actions.
+The person can therefore take over at any step, and if the agent fails, the site itself remains directly usable, which is the graceful fallback of \autoref{sec:bg:hypermedia}.
 
-\todo{注意：下面 (ii) 说 agent 负责挑子集，和实现不一致——渲染器不做筛选（筛选是模型的决定，放进来就等于把模型放回渲染路径）。按实现改写。}
-
-\todo{Planned content: (i) one generic renderer per declared field type, no model in the rendering path, so the surface is a function of the subset handed to it --- it cannot contain a control outside $A(s)$ nor ask for an input no affordance declares; (ii) what the agent contributes --- subset selection, ordering, prefilling from the goal, and explanation of both what is offered and what is structurally absent, never authoring a control; (iii) a human click and an agent step go through the same replay path, so the two operate one action set rather than two.}
-
-\todo{figure: screenshots of the generated surface for two different states, side by side, with the corresponding affordance set printed beside each.}
-
-\todo{Takeover and fallback: the human may act at any step, and if the agent fails the underlying site remains directly operable --- the graceful-fallback consequence of Section~\ref{sec:bg:hypermedia} realised.}
-\end{oldtext}
+\todo{figure: 两个状态下生成界面的截图并排，旁边列出对应的 $A(s)$。}
 
 \subsubsection{Technology stack and reproducibility}\label{sec:impl:stack}
 
-\begin{points}
-    \item 一段就够：Node.js 和 TypeScript，站点用 Express，客户端用 linkedom 解析页面。
-    \item 可复现：几个检查脚本（站点自检、客户端自检、端到端跑通）。
-    \item 日志格式要写清楚：每一步记录什么。它是 Results 唯一的数据来源。
-    \item 待你定：要不要放代码仓库链接。
-\end{points}
+The prototype is written in TypeScript and runs on Node.js.
+The site uses Express, and the client parses pages with linkedom.
+The code is available at \url{https://github.com/lvris/msc-prototype}.
 
-\begin{oldtext}
-\todo{Node.js and TypeScript run directly with tsx, no build step, managed with pnpm. Sites use Express and template-literal HTML so affordances are visible in the source; the client uses platform fetch for replay and linkedom to parse responses. Shared toolchain at the top level, one TypeScript configuration for the workspace.}
-
-\todo{Reproducibility scripts: run the site, drive its flows over HTTP and assert the refusals, self-check the client engine against a running site, and drive the site end to end from a natural-language goal. Type-check and both self-checks pass; the full happy path has been driven unattended by a small local model.}
-
-\todo{Describe the structured log, the sole data source of Chapter~\ref{sec:results}: per step, the task, condition, model, state, exposed affordance set, selected action, supplied values, resulting state. Fixing this schema is a prerequisite for the experiments.}
-\end{oldtext}
+Check scripts test the site, the client, the two judges and the MCP server; the check of the site covers every reachable state.
+Each run writes a log with one record per step, which is the only data source of \autoref{sec:results}.
+A record holds the state, the action proposed, the values sent, the response of the server and the tokens used.
 
 \subsection{Experimental Variants}\label{sec:eval:method:conditions}
 
-\begin{points}
-    \item 这一节要让读者看懂：六个条件只差一件事，就是动作信息怎么到模型手里。客户端、站点、页面文字、执行路径都一样。
-    \item 分两组讲，不排成一条梯子。P 和 H 读同一份页面：P 自己写请求，H 只能选编号。J、J+、X、X+ 读另一份接口。
-    \item 每个条件一小段，讲模型看到什么、怎么回答、回答怎么变成请求（老师第 2 条要的就是这个）。P：原始页面，自己写方法、地址和字段。J：21 个操作的固定列表。J+：J 加上每个操作什么时候能用的说明。X：真的 MCP server，工具列表固定。X+：同一个 server，按状态过滤，并发出 \texttt{listChanged} 通知。H：当前页面的控件，按编号选。
-    \item 相邻两个只差一处：J+ $\to$ X 只换协议，X $\to$ X+ 只加按状态过滤，所以结果的差别能归到这一处。
-    \item MCP server：21 个工具由同一份操作目录自动生成，保证 J+ 和 X 信息量相同。执行一律走同一条 HTTP 路径；\texttt{tools/call} 也实现了，并检查过和 HTTP 等价。
-    \item 基线不是稻草人：X 是 MCP 的常见用法，X+ 是规范允许的最好做法。
-    \item 公平：都看同样的页面文字；目标、20 步上限、重试规则都一样；提示词全文放附录 A。
-    \item 表：条件 $\times$（动作从哪来 / 是否按状态过滤 / 是否真的工具协议 / 是否和人用的界面同一份 / 现实中对应什么）。附录 C：同一个状态下六个条件各看到什么。
-    \item 待你定：要不要贴一条 J 的工具描述原文作为例子？
-\end{points}
+The experiments compare six conditions, summarised in \autoref{tab:impl:conditions}.
+They differ in one thing only: how the information about actions reaches the model.
+The client, the site, the page text, the goal and the path by which an action is executed are the same in all of them.
 
-\begin{oldtext}
-\todo{导师反馈第 2 条：把每个变体怎么工作写清楚，这是本节的重点。}
+The conditions fall into two groups.
+P and H read the page itself: under P the model writes its own request, and under H it can only pick one of the controls found on the page.
+J, J+, X and X+ read a separate description of the operations, as a list or as tools.
+Every condition except P also receives the visible text of the current page, so that all of them know the state equally well.
 
-\todo{Same client, same site, same prompt scaffold throughout. Only the way the action information reaches the model varies. Six conditions:
-P \emph{perception} --- the raw page, the model constructs its own request.
-J \emph{catalogue} --- a static list of all 21 operations.
-J+ \emph{catalogue with preconditions} --- J plus a prose note on when each operation is allowed.
-X \emph{MCP, static} --- a real MCP server, tool list fixed.
-X+ \emph{MCP, filtered} --- the same server, tool list narrowed to the current state and \texttt{listChanged} emitted.
-H \emph{hypermedia} --- the controls rendered in the current page, selected by index.}
+\begin{table}[ht]
+\centering
+\caption{The six conditions. All of them run the same client, site, page text, goal and HTTP execution path; only the way the action information reaches the model differs. $^{*}$ The page itself is state-dependent, but P is not bound to it. \emph{Human page}: the model reads the same page a person would see.}
+\label{tab:impl:conditions}
+\renewcommand{\arraystretch}{1.3}
+\small
+\begin{tabularx}{\textwidth}{lLLcccL}
+\hline
+ & Model sees & Model answers with & \rotatebox{90}{State-filtered} & \rotatebox{90}{Tool calls} & \rotatebox{90}{Human page} & Corresponds to \\
+\hline
+P & the current page's HTML & method, address and values & no$^{*}$ & no & yes & agents that read the page \\
+\hline
+J & a fixed list of the 21 operations & index and values & no & no & no & a fixed tool list \\
+\hline
+J+ & J plus a note on when each operation is allowed & index and values & no & no & no & tool descriptions that state preconditions \\
+\hline
+X & the 21 operations as MCP tools & a tool call & no & yes & no & MCP as typically deployed \\
+\hline
+X+ & the MCP tools valid now; \texttt{listChanged} after each change & a tool call & yes & yes & no & MCP with \texttt{listChanged} used on every change of state \\
+\hline
+H & the controls parsed from the current page & index and values & yes & no & yes & this framework \\
+\hline
+\end{tabularx}
+\end{table}
 
-\todo{MCP server 的描述：stdio server，21 个 tool 由操作目录自动生成，保证 J+ 和 X 信息量相同；X+ 用同一个 server 打开按状态过滤，并真的发 \texttt{notifications/tools/list\_changed}。执行一律走同一条 HTTP 路径，不走 tools/call，但 tools/call 已实现并检查过与 HTTP 等价（M1）。}
+\begin{description}
+    \item[P, the raw page.]
+    The model receives the HTML of the current page and no list of actions.
+    It answers with a method, an address and values, and the client sends that request as written.
+    \item[J, a fixed list.]
+    The model receives all 21 operations of the site, each with a one-line description and its parameters.
+    It answers with the number of an operation and values for its parameters.
+    \item[J+, a fixed list with preconditions.]
+    The same list as J, where each description adds a sentence on when the operation is allowed.
+    The list itself does not change with the state.
+    \item[X, an MCP server with a fixed tool list.]
+    The same 21 operations, served as tools by a real MCP server and called through the model's native tool calls.
+    The tool list is the same in every state; the MCP specification lets a server change its tool list, but does not tie the list to the state of the application \cite{mcpSpec2025}.
+    \item[X+, an MCP server that filters by state.]
+    The same server, which now returns only the tools valid in the current state, lists the free time slots as the allowed values of the slot parameter, and sends a \texttt{listChanged} notification whenever the state changes.
+    A server that declares the \texttt{listChanged} capability is expected to send this notification when its tools change \cite{mcpSpec2025}, so X+ uses what the specification offers to its full extent.
+    \item[H, the controls on the page.]
+    The model receives the controls parsed from the current page as a numbered list and answers with a number and values.
+\end{description}
 
-\todo{Two families, not one ladder: P and H read the same representation (P may deviate, H cannot); J, J+, X, X+ read a separate contract. Each neighbouring pair changes one thing: J+$\rightarrow$X only the protocol, X$\rightarrow$X+ only the state filtering.}
-
-\todo{Baselines are steelmanned: enums for static domains in J/J+/X, state-dependent domains in X+, preconditions in J+, a real MCP server with native tool calls rather than a list pasted into the prompt. Why both X and X+: X is MCP as typically deployed, X+ is the best the specification allows.}
-
-\todo{Fairness controls: every condition sees the same page text; execution always goes through the same HTTP path, so judging and logging are identical; same goal text, step budget (20) and retry policy. Prompts in an appendix.}
-
-\todo{table: conditions $\times$ (declared action set / filtered by state / real tool protocol / same artifact as the human interface / real-world analogue).}
-
-\todo{figure: experiment design --- one site, six surfaces, one client loop, five chooser backends, one log schema.}
-\end{oldtext}
+Neighbouring conditions differ in one respect each.
+From J+ to X only the protocol changes: the 21 tools are generated from the same list of operations, so they carry the same descriptions and parameters (\autoref{app:surfaces}).
+From X to X+ only the filtering by state is added.
+A difference between two neighbours can therefore be traced to that one change.
+In all conditions the chosen action is executed through the same HTTP request, so judging and logging are identical; the MCP server can also execute a tool call itself, and a check script confirms that this has the same effect as the HTTP request.
+All conditions get the same goal, the same limit of 20 steps and the same rule of one retry when a reply cannot be read.
+The full prompts are in \autoref{app:prompts}.
 
 \subsection{Tasks, Models and Runs}\label{sec:methods:setup}
 
-\begin{points}
-    \item 开头说清楚：两个实验共用标准答案、24 个任务和模型，然后分别讲两个实验怎么跑。实验 1 回答 RQ3 (a)，实验 2 回答 RQ3 (b)。
-    \item 待你定：两个实验就叫 Experiment 1 / 2，还是起名字（比如 episodes / interface audit）？
-\end{points}
-
-\begin{oldtext}
-\todo{两个实验共用的部分：ground truth、任务、模型，然后是两个实验各自怎么跑。RQ3 (a)：agent 会不会去做当前做不了的操作（episode 实验，结果见 C1、C2、C4）。RQ3 (b)：生成给人看的界面会不会摆出用不了的控件、多问用户已经给过的信息（界面审计，结果见 C3）。}
-\end{oldtext}
+The two experiments share the correct answers, the 24 tasks and the models, which are described first.
+Experiment 1, the agent episodes, answers RQ3 (a); Experiment 2, the interface audit, answers RQ3 (b).
 
 \subsubsection{Ground truth}\label{sec:eval:method:truth}
 
-\begin{points}
-    \item 每一步、每个控件是否合法，都用状态机的 $V(s)$ 自动判定。
-    \item 独立裁判的结果（思路放在 Methods）：$997 \times 21 = 20\,937$ 格，100\% 一致；两个反例（去掉检查、注入拒绝）都能抓出来。
-\end{points}
-
-\begin{oldtext}
-\todo{The state machine's valid-affordance function $V(s)$ (Section~\ref{sec:impl:site:model}) defines what is legal in each state. Every proposed action and every offered control is labelled against it automatically.}
-
-\todo{The independent judge of Section~\ref{sec:methods:judge}, result: 997 states $\times$ 21 operations = 20\,937 cells, 100\% agreement. Two negative controls (guard removed, refusal injected) are caught.}
-\end{oldtext}
+Whether a step or a control is valid is decided automatically by $V(s)$, the function of the state machine (\autoref{sec:impl:site}).
+To check that this does not amount to the site judging itself, the independent judge of \autoref{sec:methods:judge} was run on every reachable state.
+It agrees with $V(s)$ on all 20\,937 pairs of state and operation (997 states $\times$ 21 operations).
 
 \subsubsection{Task set}\label{sec:eval:method:tasks}
 
-\begin{points}
-    \item 任务不是手挑的，是从状态图推出来的。
-    \item 三类，按正确做法分：T1 现在就能做，直接做；T2 现在不能做，但不放弃订位就能走到，先走过去再做；T3 怎么走都做不到，说做不到，什么都不动。分别是 10、8、6 个。
-    \item 推导时去掉``放弃当前订位''的操作，否则绕一圈什么都能走到，T3 就是空的。
-    \item 要写清楚的一点：推导规则只按目标的语义定，没有看过模型结果，用来防``按结果挑题''的质疑。
-    \item 表：编号、类别、目标原文、起始状态。全表放附录 B。
-\end{points}
+The tasks are derived from the state graph of the site.
+A task is a start state together with a goal, and each falls into one of three classes according to what the correct behaviour is (\autoref{tab:impl:tasks}).
+The derivation leaves out two kinds of operations as steps on the way: those that give up the current booking, since with them every goal becomes reachable and T3 would be empty, and those that commit the user to something, such as paying a deposit, since a route like ``pay the deposit in order to see the confirmation'' is not what the user asked for.
+An operation of either kind can still complete a goal that asks for it.
+The rules depend only on what the goal means and were fixed before any model was run.
+This gives 10 T1, 8 T2 and 6 T3 tasks; \autoref{app:tasks} lists all of them.
 
-\begin{oldtext}
-\todo{Tasks are derived from the state machine's reachability graph, not hand-picked. Each (start state, intent) pair falls into exactly one class by what the correct behaviour is. Paths through actions that give up the current booking are excluded, otherwise every goal is trivially reachable. 24 tasks: T1 10 / T2 8 / T3 6.}
-
-\begin{enumerate}
-    \item T1 \emph{exposed} --- an action satisfying the intent is valid in the current state.
-    Correct behaviour: do it.
-    \item T2 \emph{elsewhere} --- not valid here, but valid in a state reachable without giving up the booking.
-    Correct behaviour: get there first, then act.
-    \item T3 \emph{impossible} --- not valid in any such reachable state.
-    Correct behaviour: say so and act on nothing.
-\end{enumerate}
-
-\todo{table: the task set --- identifier, class, goal text, starting state. Full listing in an appendix.}
-\end{oldtext}
+\begin{table}[ht]
+\centering
+\caption{The three task classes. Operations that give up the booking or commit the user (paying, confirming, cancelling, holding a table, joining the queue, submitting the pre-order) may not be used as steps on the way; they still count when the goal itself asks for them. The same goal falls into a different class depending on the start state, as the examples show. All 24 tasks are listed in \autoref{app:tasks}.}
+\label{tab:impl:tasks}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{lrLLL}
+\hline
+Class & $n$ & Definition & Correct behaviour & Example \\
+\hline
+T1 & 10 & An operation that satisfies the goal is valid in the start state. & Do it. & T1-01, \texttt{deposit\_pending}: ``Go ahead and confirm the booking.'' \\
+\hline
+T2 & 8 & No such operation is valid in the start state, but one is valid in a state reachable without giving up the booking or committing the user to anything. & Reach that state, then do it. & T2-02, \texttt{holding}: ``Go ahead and confirm the booking.'' \\
+\hline
+T3 & 6 & No such operation is valid in any state reachable that way. & Say so and change nothing. & T3-03, \texttt{conflict}: ``Go ahead and confirm the booking.'' \\
+\hline
+\end{tabularx}
+\end{table}
 
 \subsubsection{Models and repetition}\label{sec:eval:method:models}
 
-\begin{points}
-    \item 模型：随机选择器；qwen3.5 的 2b、4b、9b（本地）；qwen3.8-27b（托管）。旧稿里的 frontier 模型没做，删掉这项。
-    \item 温度 0，每格跑一次，因为贪心解码重跑结果都一样。
-    \item 随机选择器的作用：在 H 和 X+ 下它只能从给它的列表里选，所以它的成绩全是约束带来的，和模型无关。P 下没有列表，它跑不了，这点要老实写出来。
-\end{points}
-
-\begin{oldtext}
-\todo{Chooser backends: a uniform random chooser; qwen3.5 at 2b, 4b and 9b run locally; qwen3.8-27b hosted. [frontier model: pending decision]. Temperature 0, one run per task and condition, because greedy decoding makes repeats copy the same trajectory.}
-
-\todo{界面审计只用 9b 和 27b：4b / 2b 在 Ollama 默认 4096 上下文下思考被截断，输出为空（见 research-notes/genui-audit.md）。}
-
-\todo{Why the random chooser: under H and X+ it can only pick from the offered set, so whatever it achieves is achieved by the constraint, not the model. It cannot run under P, which has no set to pick from; this is reported, not hidden.}
-\end{oldtext}
+The experiments use a random chooser, three local models (qwen3.5 with 2, 4 and 9 billion parameters, run through Ollama \cite{ollama}), and one larger model, qwen3.8-27b, run through a hosted provider \todo{cite: Qwen 模型的技术报告，见下面说明}.
+The temperature is 0, so the same input gives the same output, and each cell is run once.
+The random chooser picks uniformly from the list it is given, with a fixed seed.
+Under H and X+ that list is already filtered, so whatever the random chooser achieves there is due to the constraint alone.
+Under P there is no list, so the random chooser cannot run in that condition.
 
 \subsubsection{Experiment 1: agent episodes}\label{sec:methods:episodes}
 
-\begin{points}
-    \item 每个（任务、条件、模型）跑一个 episode：读页面 $\to$ 按条件给动作信息 $\to$ 模型选一个或停下 $\to$ 缺的必填字段用固定样例值补上，并记下这个值是谁给的 $\to$ 发请求 $\to$ 读下一页。
-    \item 补字段那一步要点明：在真实界面里，这正是要问用户的地方。
-    \item 什么时候停：模型说停、达到目标、20 步上限、同一个被拒的请求重复 8 次、工具调用条件下两次都没调用也没说停、输出读不出来。
-    \item 怎么算成功：T1、T2 是执行了满足目标的动作，且中途没走放弃订位的弯路；T3 是停下来，并且没做过 GET 以外的动作。每一步合不合法单独记，和成功分开。
-\end{points}
+Each combination of task, condition and model is run as one episode.
+An episode starts in the start state of the task and repeats one step: the client reads the page, gives the model the action information of its condition, and the model chooses an action or stops.
+Required fields that the model leaves empty are filled with a fixed sample value, and the log records which value came from where; in a real interface, this is where the user would be asked.
+The client then sends the request and reads the next page.
 
-\begin{oldtext}
-\todo{RQ3 (a)。每个（任务 $\times$ 条件 $\times$ 模型）跑一个 episode：从起始状态冷启动 → 读当前页面（所有条件都给同样的页面文字） → 按条件给出动作信息 → 模型选一个动作或停下 → 缺的必填字段用固定样例值补上，并记录这个值是谁给的（这在真实界面里就是要问用户的地方） → 发同一种 HTTP 请求 → 读下一个页面。}
+An episode ends when the model stops, when the goal is reached, after 20 steps, when the same refused request has been repeated 8 times, under X and X+ when the model twice answers with neither a tool call nor a stop, or when the reply cannot be read.
+Success is defined in \autoref{sec:eval:method:metrics}; whether each step was valid is recorded separately from success.
 
-\todo{停止：模型说停（agent\_stop）、达到目标、20 步上限、同一状态下同一个被拒请求重复 8 次（stuck）、工具调用条件下两次都没给出工具调用也没说停（no\_tool\_call）、输出无法解析（chooser\_error）。}
+\subsubsection{Experiment 2: interface audit}\label{sec:eval:method:audit}
 
-\todo{判定：T1 / T2 成功 = 执行了满足目标的动作（服务器接受，status < 400），且中途没有走放弃当前订位的弯路；T3 成功 = 停下，且没执行过任何改变状态的动作（GET 以外）。每一步是否合法由 ground truth 判定，和成功分开记。}
-\end{oldtext}
+The interface audit uses the same 24 tasks, but executes nothing.
+For each task, condition and model, the model is called once in the start state and designs the interface for that step: a short message to the user and a set of controls.
+Each control refers to an operation, and each of its fields is marked as fixed, prefilled or asked of the user.
+Under H the model only picks controls by number; the renderer draws their fields, so the model cannot change them.
 
-\subsubsection{Experiment 2: generated-interface audit}\label{sec:eval:method:audit}
-
-\begin{points}
-    \item 同样 24 个任务的起始状态和目标，但每格只调用一次模型，不执行任何动作。
-    \item 模型输出一段给用户的话和一组控件；每个控件指向一个操作，字段标成固定、预填或要问。
-    \item 条件是 P、J、J+、X+、H。X 不单列：生成界面时不发生工具调用，X 拿到的信息和 J+ 一样。H 下模型只选编号，控件由渲染器画，模型碰不到字段。
-    \item 只用 9b 和 27b：两个小模型在默认上下文下大多被截断。
-    \item 提示词在 3 题试跑后改过一次：原来的写法让模型每屏只给 1 个控件，界面退化成``推荐下一步''，和实验 1 测的是同一件事。预测在正式跑之前写下了。限制放在 Discussion。
-\end{points}
-
-\begin{oldtext}
-\todo{第二个实验（RQ3 (b)）。同样 24 个任务的起始状态和目标；每个（任务 $\times$ 条件 $\times$ 模型）只调用一次模型，不执行动作，t=0。模型输出一段给用户的话，加一组控件；每个控件引用一个操作，字段标为 fixed / prefill / ask。条件 P / J / J+ / X+ / H（X 不单独设：生成界面时不发生工具调用，X 拿到的信息和 J+ 相同）。H 下模型只选下标，字段由渲染器画，模型不碰。}
-
-\todo{审计只用两个模型：qwen3.5:9b（本地）和 qwen3.8-27b（托管）。4b / 2b 在默认上下文下大多被截断，没有采用（见 Section~\ref{sec:disc:threats}）。}
-
-\todo{逐控件检查：死控件（不在当前合法集合）、不存在的操作、按下去被拒、编造字段、漏掉必填字段、多问（当前状态已确定的值）、编造个人信息；每个界面：T1 / T2 是否给了推进目标的控件，T3 是否出现能改变状态的控件。H 下前几项结构上为 0。}
-
-\todo{预测在跑之前写下（research-notes/genui-audit.md）。prompt 在 3 题试跑后改过一次：原写法让模型每屏只给 1 个控件，界面退化成「推荐下一步」，和 agent 实验测同一件事。见 Discussion 的 Limitations 一节（Section~\ref{sec:disc:threats}）。}
-\end{oldtext}
+The conditions are P, J, J+, X+ and H.
+X is left out because generating an interface involves no tool call, so X would give the model the same information as J+.
+The audit uses qwen3.5:9b and qwen3.8-27b; with the default context of the local runtime, the two smaller models were mostly cut off before they produced an answer.
 
 \subsection{An Example Run}\label{sec:eval:results:trace}
 
-\begin{points}
-    \item 目的：在看数字之前，先让读者看到同一个任务在两种条件下长什么样。
-    \item 任务 T1-01：八人大桌在等定金，目标是``确认订位''。这时站点不允许直接确认，付定金就等于确认（G1）。当前能用的只有付定金、修改信息、放弃三个。
-    \item J 下：先要确认页，再调 \texttt{confirm\_booking}，两次都被拒，第三步才付定金成功。H 下：页面上三个控件，直接选``付 €80 定金''，一步完成。
-    \item 落点：两条都成功，差别在路径。J 靠被拒来摸清状态，H 的状态已经在给它的选项里了。Results 把这个差别在所有任务和模型上数一遍。
-    \item 和 Introduction 的大桌例子是同一个场景，可以前后呼应。
-    \item 图：同一状态下 J 和 H 的界面对比。
-\end{points}
-
-\begin{oldtext}
-To show how the conditions differ in practice, I follow one task under two of them.
-Task T1-01 starts with a booking for a party of eight that waits for a deposit.
+Before the numbers, it helps to see what one task looks like under two of the conditions.
+Task T1-01 starts with a booking for a party of eight that is waiting for a deposit.
 The goal text is ``Go ahead and confirm the booking.''
-For a large party the site does not allow a plain confirmation.
-Paying the deposit is what confirms the booking (gate G1).
+For a party of this size the site does not allow a plain confirmation: paying the deposit is what confirms the booking (G1 in \autoref{tab:impl:gates}).
 In this state three operations are valid: \texttt{pay\_deposit}, \texttt{edit\_details} and \texttt{discard\_draft}.
+\todo{如果 Introduction 用大桌的例子开头，这里加半句前后呼应。}
 
 \begin{enumerate}
     \item Under J, qwen3.5:9b sees all 21 operations.
@@ -549,62 +616,81 @@ In this state three operations are valid: \texttt{pay\_deposit}, \texttt{edit\_d
     The server refuses both.
     On the third step it calls \texttt{pay\_deposit}, which succeeds.
     Two of its three decisions are invalid.
-    \item Under H, the same model sees the three controls of the current page, one of them ``Pay €80 deposit'', and returns that control's index.
+    \item Under H, the same model sees the three controls on the current page, one of them ``Pay €80 deposit'', and returns that control's number.
     The task is done in one step, with no invalid decision.
 \end{enumerate}
 
 Both runs succeed.
-What differs is the path: under J the model finds out the state from the server's refusals; under H the state is already in what it is offered.
-\autoref{sec:results} counts this difference over all tasks and models.
-
-\todo{figure: deposit-pending-surfaces.html}
-
-\todo{"gate G1" ref in implements... 5 gates}
-\end{oldtext}
+What differs is the path: under J the model learns the state from the server's refusals, while under H the state is already contained in what the model is offered.
+\autoref{app:surfaces} shows the inputs of all six conditions in this state, and \autoref{sec:results} counts the difference over all tasks and models.
 
 \subsection{What Is Measured}\label{sec:eval:method:metrics}
 
-\begin{points}
-    \item 每个指标都写清三件事：定义、从日志的哪些字段算出来、它的 0 是结构上不可能出现，还是测出来的。
-    \item 实验 1：越界率（按每次决策算；AgentBoard 其实没有定义这个指标，它报告的是 grounding accuracy，即合法动作的比例，所以只能说本文的指标是它的补数，见 research-notes/citation-gaps.md §4）；越界分三类：不存在的操作、状态不对、过期的工具（只有 X+ 会有）；成功率（次要，样本小，和 H 逐题配对做符号检验）；每个 episode 怎么结束的；T3 的三种结局；步数和 token；编造个人信息（只作观察）。
-    \item 不用模型、覆盖整个状态空间的两项：把完整列表画成界面时的死控件率；每个字段的值从哪来。
-    \item 实验 2：逐个控件查（死控件、不存在的操作、按下去被拒、编造字段、漏掉必填、重复问已知的值、编造个人信息）；逐个界面查（T1、T2 有没有推进目标的控件，T3 有没有会改变订位的控件）。
-    \item 表：指标、定义、日志字段、服务哪个结论。
-    \item 最后一句过渡到 Results（老师第 1 条说的``nice transition''）。
-\end{points}
+\autoref{tab:impl:metrics} lists the measures, the log fields each is computed from, and the claim each serves.
+All of them are computed from the logs after the runs, so no model and no person takes part in the measuring.
 
-\begin{oldtext}
-\todo{每个指标都要写清楚：用日志里哪些字段算出来；哪些 0 是结构上的（构造上不可能出现），哪些是测出来的。下面括号里是它在 Results 的位置。}
+\paragraph{Invalid actions.}
+The main measure is the invalid action rate: the share of decisions whose action is not valid in the current state, judged as described in \autoref{sec:eval:method:truth}.
+It is the complement of the grounding accuracy that AgentBoard reports, the share of valid actions \cite{ma2024agentboard}.
+Here it is computed per decision, and also over distinct (state, request) attempts, so that one refused request repeated many times does not dominate the rate.
+An invalid action is one of two kinds:
+\begin{description}
+    \item[Invented] The action names nothing the site has: a path that no route serves under P, or a tool that was never offered under X and X+.
+    A condition that answers with the number of an entry in a list cannot express this kind.
+    \item[Wrong state] The action is a real operation of the site, issued in a state that does not allow it.
+    Under X+ a wrong-state action can also be a \emph{stale tool}: an operation that the current tool list no longer offers, usually one that was offered at an earlier step.
+    Under X the list never changes, so no tool can become stale.
+\end{description}
+A valid action that the server refuses because of its values, such as an empty card number, is not counted as invalid; it is a wrong value and is counted separately.
 
-\paragraph{Experiment 1 (agent episodes).}
+\paragraph{Structural and measured zeros.}
+Under H the agent answers with the number of a control on the current page.
+As long as the site meets S1, every such control is valid, so the invalid action rate under H is zero by construction.
+The same holds for the per-control checks of the interface audit under H, because the renderer draws exactly the fields each control declares.
+Every other zero in \autoref{sec:results} is measured.
 
-\begin{enumerate}
-    \item invalid action rate --- per decision, following AgentBoard; plus the same rate over distinct (state, request) attempts (Tables~\ref{tab:eval:invalid}, \ref{tab:eval:invalid-kind})
-    \item invalid breakdown --- invented operation (does not exist) / wrong state / stale tool (offered earlier, withdrawn since; X+ only) (Table~\ref{tab:eval:invalid-kind})
-    \item task success --- secondary, small $n$; compared with H task by task with a sign test (Tables~\ref{tab:eval:success}, \ref{tab:eval:paired})
-    \item how each episode ended --- goal reached / stopped / stuck / detour / step limit / unreadable output / no tool call reported in the Discussion (Table~\ref{tab:eval:endings})
-    \item T3 outcome --- stopped without changing anything / stopped after changing state / did not stop (Table~\ref{tab:eval:t3})
-    \item steps and tokens per episode (Table~\ref{tab:eval:tokens})
-    \item personal data made up by the agent --- observation only, reported in the Discussion (Table~\ref{tab:eval:fabricated})
-\end{enumerate}
-
-\paragraph{Whole state space, no model.}
-
-\begin{enumerate}
-    \item dead-control rate --- the full operation list drawn as an interface, in every reachable state (Section~\ref{sec:results:interface}, in the text)
-    \item value provenance --- per declared field: fixed by the control / prefilled / left for the model or the user (Section~\ref{sec:results:interface}, in the text)
-\end{enumerate}
-
-\paragraph{Experiment 2 (generated-interface audit).}
-
-\begin{enumerate}
-    \item per control: dead / names nothing the site has / refused when pressed / invented field / missing required field / asks for a value the state already determines / made-up personal data (Table~\ref{tab:eval:audit})
-    \item per interface: T1 and T2 --- a working control towards the goal is on screen; T3 --- a control that would change the booking is on screen (Table~\ref{tab:eval:audit})
-\end{enumerate}
-
-\todo{table: metric, definition, log fields, which claim it serves.}
-
-\todo{三类越界（invented / wrong state / stale tool）要写成完整定义：Results 表 \ref{tab:eval:invalid-kind} 的 caption 指到这里。T3 成功判定（停下且没执行 GET 以外的动作）也在这里写清楚。}
+\paragraph{Task outcome.}
+A T1 or T2 task succeeds when the goal is reached without giving up the booking.
+A T3 task succeeds when the agent stops and the server has accepted no action of it other than GET; looking things up on the way is allowed, but paying, cancelling or holding a table is not.
 
 \autoref{sec:results} reports these measures, condition by condition.
-\end{oldtext}
+
+\begin{table}[ht]
+\centering
+\caption{The measures, the log fields they are computed from, and the claim each serves. Field names are those of the episode log (\texttt{steps[]} is one record per decision) and of the audit log.}
+\label{tab:impl:metrics}
+\renewcommand{\arraystretch}{1.15}
+\footnotesize
+\begin{tabularx}{\textwidth}{P{0.15\textwidth}LP{0.2\textwidth}P{0.15\textwidth}}
+\hline
+Measure & Definition & Log fields & Serves \\
+\hline
+\multicolumn{4}{l}{\emph{Experiment 1 (agent episodes)}} \\
+Invalid action rate & share of decisions whose action is not valid in the current state; also over distinct (state, request) attempts & \texttt{inValidSet}, \texttt{duplicate} & RQ3 (a), main measure \\
+\hline
+Kind of invalid action & invented: names nothing the site has; wrong state: a real operation the state does not allow; stale tool: a real operation the current tool list no longer offers (X+ only) & \texttt{proposedId}, \texttt{toolName} & where the invalid actions come from \\
+\hline
+Wrong value & a valid action refused because of its values & \texttt{inValidSet}, \texttt{executed} & separates action from value errors \\
+\hline
+Task success & the goal is reached without giving up the booking & \texttt{succeeded}, \texttt{abandoned} & the constraint does not make tasks harder (secondary) \\
+\hline
+Ending & goal reached, stopped, stuck, step limit, unreadable output, no tool call & \texttt{stopReason} & how episodes fail \\
+\hline
+T3 outcome & stopped with no action other than GET executed / stopped after changing state / did not stop & \texttt{stopReason}, \texttt{sideEffects} & RQ3 (a), impossible tasks \\
+\hline
+Steps and tokens & per episode & \texttt{steps}, \texttt{tokens} & cost \\
+\hline
+Made-up personal data & a personal field filled with a value found in neither the goal nor the page & \texttt{provenance}, \texttt{values} & observation only \\
+\hline
+\multicolumn{4}{l}{\emph{Whole state space, no model}} \\
+Dead-control rate & share of controls whose operation is not valid, when the full operation list is drawn as an interface in every reachable state & -- & RQ3 (b), structural \\
+\hline
+Value provenance & per declared field: fixed by the control, prefilled, or left for the model or the user & -- & what an interface must ask \\
+\hline
+\multicolumn{4}{l}{\emph{Experiment 2 (interface audit)}} \\
+Per control & dead; names nothing the site has; refused when pressed; invented field; missing required field; asks for a value the state already fixes; made-up personal data & \texttt{dead}, \texttt{actionId}, \texttt{works}, \texttt{invented}, \texttt{missing}, \texttt{needlessAsk}, \texttt{fabricated} & RQ3 (b) \\
+\hline
+Per interface & T1, T2: a working control towards the goal is on screen; T3: a working control that would change the booking (any method but GET) is on screen & \texttt{covers}; \texttt{works} and method of each control & RQ3 (b) \\
+\hline
+\end{tabularx}
+\end{table}

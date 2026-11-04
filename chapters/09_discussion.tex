@@ -17,11 +17,11 @@ A capable model can read the valid actions straight off such a page, so for it t
 
 Many real sites are not built this way.
 In a single-page application, the HTML the server returns holds little more than a script, and which controls exist is only known after the JavaScript has run.
+A large study of real pages found that only 43\% of them do not strictly depend on JavaScript \cite{fouquet2023breaking}.
 A model that reads such a page cannot see the actions, however capable it is.
 H reads the same page and would not see them either; this is why the site contract requires the controls to be in the page (Section~\ref{sec:design:site-contract}).
 The good result under P therefore depends on the page as much as on the model, and it is one reason we argue that pages should follow the hypermedia principle.
 
-\todo{cite: we need js so much...}
 
 The more important role of H is the guarantee.
 Under P the agent writes its request as free text, so nothing stops it from writing one the page does not offer.
@@ -54,6 +54,7 @@ A server with all of this describes the page a second time, and every change to 
 We did not measure this cost.
 Our server was written from the same rules as the site and stayed consistent with it throughout.
 That a separate server falls out of step in practice is an argument from the structure, not a result of this study.
+It matches what is known about descriptions kept apart from code: API documentation often becomes obsolete and differs from the implementation \cite{uddin2015how}.
 
 For the authors of applications, this suggests that if the pages already follow the hypermedia principle, nothing has to be added for agents; otherwise a filtered server such as X+ reaches the same result, at the cost of keeping it in step with the site.
 For the authors of agents, it suggests letting the model choose from the current list by position instead of writing a name, since only this removed invalid actions for every model.
@@ -155,10 +156,10 @@ It asks for all required arguments at once, in a shape the schema accepts, and g
 Some models tried to say this anyway, inside the value: qwen3.5:9b under X sent the name ``[Please provide your name]''.
 
 We draw no conclusion from this. qwen3.8-27b almost never fills in such values, so the effect may disappear with more capable models.
-MCP also lets a server ask the user for a value directly, a feature called elicitation, which might remove the problem.
+MCP also lets a server ask the user for a value directly, a feature called elicitation \cite{mcpSpec2025}, which might remove the problem for names and phone numbers.
+The specification forbids using it for sensitive information, however, so it would not cover the card number.
 We did not test it.
 
-\todo{cite: MCP elicitation。注意：规范写明「Servers MUST NOT use elicitation to request sensitive information」，card 这类字段不能靠 elicitation 解决，上面「might remove the problem」要改。见 research-notes/citation-quotes.md 开头。}
 
 \subsection{Limitations and Threats to Validity}\label{sec:disc:threats}
 
@@ -178,5 +179,8 @@ The study has the following limits.
     \item \textbf{Our X+ server.}
     It publishes the allowed values of a parameter, but not the values the state has already fixed.
     The values asked again are therefore measured against this server, not against MCP in general (Section~\ref{sec:disc:restate}).
+    \item \textbf{The interface audit.}
+    The audit uses only qwen3.5:9b and qwen3.8-27b, because under the default context of 4096 tokens of the local runtime the two smaller models were cut off while still thinking.
+    The same limit may explain part of the unreadable outputs of qwen3.5:2b in the episodes.
 \end{itemize}
 Two further limits were discussed above: H is not more accurate than reading the page (Section~\ref{sec:disc:guarantee}), and the constraint does not keep the agent from valid but wrong actions (Section~\ref{sec:disc:possible}).

@@ -1,0 +1,20 @@
+% The general procedure of the thesis: five steps, each with its RQ and section.
+\begin{tikzpicture}[
+    stage/.style={draw, rounded corners=2pt, minimum height=9mm, text width=20mm, align=center, font=\footnotesize},
+    where/.style={font=\scriptsize, align=center, text width=22mm},
+    go/.style={-{Stealth[length=2mm]}},
+    node distance=5mm,
+]
+\node[stage] (lit) {Literature comparison};
+\node[stage, right=of lit] (fw) {Framework definition};
+\node[stage, right=of fw] (pt) {Prototype};
+\node[stage, right=of pt] (ex) {Two experiments};
+\node[stage, right=of ex] (di) {Discussion};
+\foreach \a/\b in {lit/fw, fw/pt, pt/ex, ex/di} \draw[go] (\a) -- (\b);
+
+\node[where, below=2mm of lit] {RQ1\\Section~\ref{sec:background}};
+\node[where, below=2mm of fw] {RQ2\\Section~\ref{sec:design}};
+\node[where, below=2mm of pt] {RQ2\\Section~\ref{sec:impl:prototype}};
+\node[where, below=2mm of ex] {RQ3\\setup Section~\ref{sec:eval:method:conditions}--\ref{sec:eval:method:metrics}, results Section~\ref{sec:results}};
+\node[where, below=2mm of di] {limits and meaning\\Section~\ref{sec:discussion}};
+\end{tikzpicture}
