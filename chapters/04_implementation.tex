@@ -1,4 +1,4 @@
-\autoref{sec:background} ended with a gap: no existing system binds a human-facing generated interface to an action set that changes with the state and is decided by the server.
+\autoref{sec:background} ended with a gap: no existing system binds a human-facing generated interface to an action set that the application itself produces for its current state.
 This chapter describes a system that closes this gap: a framework that does not depend on any particular site, a prototype that implements it, and the setup used to test it.
 \autoref{sec:design} defines the framework, and \autoref{sec:impl:prototype} describes the prototype that implements it.
 \autoref{sec:eval:method:conditions} introduces the six conditions compared in the experiments, and \autoref{sec:methods:setup} the tasks, models and the two experiments.
@@ -65,14 +65,14 @@ A(s) = ...
 但是, 服务器真正能够接受的操作集合 V(s) 不一定满足 A(s) = V(s) 的契约, 这正是我们接下来要讨论的.
 \end{oldtext}
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
-\input{figures/fig_pipeline}
-\caption{The framework. A parser reduces the representation of the current state to the affordance set, and both consumers draw on that set only: execution selects one element and sends it, presentation draws one control per element.}
+\resizebox{\textwidth}{!}{\input{figures/fig_pipeline}}
+\caption{The framework. A parser reduces the page of the current state to the affordance set, and both consumers draw only on that set.}
 \label{fig:design:pipeline}
 \end{figure}
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
 \caption{What one control leaves in the affordance set. Every item is read from the markup; attributes that only steer presentation, such as \texttt{hx-target}, are ignored.}
 \label{tab:design:affordance}
@@ -150,9 +150,9 @@ If a site meets the contract, the following can be derived from it.
     \item Anything a consumer executes or presents is an element of $A(s)$: consumers select from the set and do not author elements of their own.
     \item If the site meets S1, then $A(s) = V(s)$, so whatever is executed or presented is valid in $s$.
 \end{itemize}
-What is fixed is therefore the set of actions that can be chosen, and this set depends on the server's state alone.
+The set of actions that can be chosen is therefore fixed by the state of the server alone.
 The choice within it is still made by the agent.
-This is the sense in which the title of this thesis calls the framework deterministic.
+This is what the title of this thesis means by calling the framework deterministic.
 
 \paragraph{What is not guaranteed.}
 \begin{itemize}
@@ -184,10 +184,10 @@ It fills in the declared fields whose values it can derive from the intent; valu
 
 \paragraph{Presentation.}
 The interface between the agent and the user takes its controls from $A(s)$: each control is drawn from the fields its element declares, with no model in between (\autoref{tab:design:widgets}).
-What the interface asks the user is decided in the same way, by the fields that are required but have no value.
+The questions the interface puts to the user follow in the same way, from the fields that are required but have no value.
 The text around the controls, such as explanations and grouping, is written by the agent and lies outside the framework.
 
-In short, the content is narrated by the agent, and the controls are authorised by the server.
+The content is narrated by the agent, and the controls are authorised by the server.
 
 \begin{oldtext}
 在我们提取到 A(s) 之后, 有两个消费者: 执行和展示.
@@ -200,9 +200,9 @@ In short, the content is narrated by the agent, and the controls are authorised 
 （旧稿里的）：内容由 agent 讲，控件由服务器授权。
 \end{oldtext}
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{How a declared field becomes part of a control. Top: the declared type selects the widget; an unknown type falls back to a text box and is marked as such. Bottom: whether the field is prefilled, asked or optional follows from its declaration alone.}
+\caption{How a declared field becomes part of a control: the widget for each declared type (top), and what the interface does with the field (bottom).}
 \label{tab:design:widgets}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabularx}{\textwidth}{LLL}
@@ -244,6 +244,8 @@ not required, no value & \emph{optional}: nothing is asked and nothing is sent \
 \end{tabularx}
 \end{table}
 
+\FloatBarrier
+
 \subsection{The Prototype}\label{sec:impl:prototype}
 
 From here on, what is described is the concrete implementation, and it holds for this prototype only.
@@ -260,26 +262,29 @@ As \autoref{fig:impl:architecture} shows, the user completes tasks through the c
 (signpost 一下)
 \end{oldtext}
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \input{figures/fig_architecture}
 \caption{Architecture of the prototype. The client knows nothing about the site: it parses the page, and the model is used only in the choose step. The site derives its pages and its guard from the same state machine.}
 \label{fig:impl:architecture}
 \end{figure}
 
-\subsubsection{The Site Side}\label{sec:impl:site}
+\subsubsection{The site side}\label{sec:impl:site}
 
 Booking a table is a classic case of an application in which the actions available differ from state to state, and which has special rules such as deposits and cancellation periods.
 I chose it for the prototype site mainly because it is complex enough, yet a reader needs no domain knowledge to judge whether a task was done correctly.
 
 \autoref{fig:impl:states} shows all nine statuses of the site and the transitions between them.
+To keep the graph readable, it leaves out \texttt{edit\_details}, which returns both review states to \texttt{holding}, and the pre-order operations, which do not change the status.
+After a conflict, and from \texttt{waitlisted} once the guest details are known, \texttt{hold\_slot} leads straight back to a review state.
 \autoref{tab:impl:states} lists, for each status, the controls on the page and those that are deliberately absent: after confirmation there is no control to change the time, and in a conflict there is none to confirm anyway.
 Such controls never appear on the page at all.
+With the date, party size, slot and pre-order, the nine statuses expand to 997 reachable states, and on average 2.87 of the 21 operations are valid in a state.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
-\input{figures/fig_states}
-\caption{The status graph of the booking site. Dashed edges give the booking up and return to \texttt{browsing}. Not drawn: \texttt{edit\_details}, which returns both review states to \texttt{holding}, and the pre-order operations, which do not change the status. After a conflict the guest details are known, so \texttt{hold\_slot} leads straight back to a review state; from \texttt{waitlisted} it does the same when the details are known.}
+\resizebox{\textwidth}{!}{\input{figures/fig_states}}
+\caption{The status graph of the booking site. Dashed edges give up the booking and return to \texttt{browsing}.}
 \label{fig:impl:states}
 \end{figure}
 
@@ -313,7 +318,7 @@ Both are attributes in the returned HTML and can be read without running any Jav
 大桌子需要付定金, 24小时的取消窗口, 预点菜窗口等, 我们的问题设计很大程度上依托这些规则.
 \end{oldtext}
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
 \caption{The five gates of the booking site. Each rule is held only by the server, and each breaks one assumption a fixed list of operations makes.}
 \label{tab:impl:gates}
@@ -335,9 +340,9 @@ G5 same word & ``Cancel'' is \texttt{discard\_draft} before confirmation, and \t
 \end{tabularx}
 \end{table}
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{The controls on the page in each status. With the date, party size, slot and pre-order, the nine statuses expand to 997 reachable states and 3\,950 transitions. Of the 21 operations, 2.87 are valid in a state on average. The right column lists controls that are never drawn at all.}
+\caption{The controls on the page in each status, and the controls that are never drawn (right).}
 \label{tab:impl:states}
 \renewcommand{\arraystretch}{1.15}
 \small
@@ -395,7 +400,7 @@ The identity of a control includes its address and the value of each of its fiel
 On a page with five free time slots there are five forms that post to the same address and differ only in a hidden field; they are five different operations, and ignoring the values would merge them into one.
 The resulting list is $A(s)$, and it is complete before any consumer sees it.
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \begin{Verbatim}
 <form method="POST" action="/deposit">
@@ -411,7 +416,7 @@ The resulting list is $A(s)$, and it is complete before any consumer sees it.
   { "method": "DELETE", "url": "/draft", "fields": [],
     "label": "Discard draft", "source": "htmx" } ]
 \end{Verbatim}
-\caption{Two controls from the page of a booking that waits for a deposit (top), and the affordances the parsers extract from them (bottom). The form is read by the HTML parser, the button by the htmx parser; \texttt{hx-target} and \texttt{hx-swap} do not appear in the result.}
+\caption{Two controls from the page of a booking that waits for a deposit (top), and the affordances the two parsers extract from them (bottom).}
 \label{fig:impl:discovery}
 \end{figure}
 
@@ -420,10 +425,10 @@ The resulting list is $A(s)$, and it is complete before any consumer sees it.
 Execution turns a choice into a request.
 It has three parts: choosing, replaying, and the loop that connects them (\autoref{fig:impl:loop}).
 
-\begin{figure}[ht]
+\begin{figure}[htbp]
 \centering
 \input{figures/fig_loop}
-\caption{One iteration of the client loop under H. The client starts from the entry address and learns each state only by reading its page. In the experiments no person is present: a required field that neither the control nor the goal fills is given a sample value, and the log records it as a question a real interface would have asked.}
+\caption{One iteration of the client loop when the agent chooses among the controls on the page (condition H).}
 \label{fig:impl:loop}
 \end{figure}
 
@@ -443,7 +448,7 @@ The client therefore always reads a complete page, with no fragments and no scri
 \paragraph{The loop.}
 The client starts from the entry address of the site and repeats the same step: read the page, discover the controls, choose, fill the missing fields, replay.
 It carries no map of the states or addresses of the site; each state is known only once its page has been read.
-This is the literal sense in which the agent is constrained by hypermedia.
+In this sense the agent is constrained by hypermedia.
 
 \subsubsection{Presentation}\label{sec:impl:ui}
 
@@ -458,7 +463,14 @@ That choice is a model decision, and making it inside the renderer would put a m
 A click by a person and a step by the agent go through the same replay, so both act on one set of actions.
 The person can therefore take over at any step, and if the agent fails, the site itself remains directly usable, which is the graceful fallback of \autoref{sec:bg:hypermedia}.
 
-\todo{figure: 两个状态下生成界面的截图并排，旁边列出对应的 $A(s)$。可以和 Results 里界面截图那张合成一张，这里引用过去。}
+\autoref{fig:impl:consumers} shows both consumers of one page side by side: the page a person sees, and the interface the renderer draws from the controls parsed from it.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth, trim=0 75 0 0, clip]{figures/shots/consumers-deposit.png}
+\caption{One page, two consumers: the page a person sees (left, cut off below the second button) and the interface drawn from its three controls without a model (right).}
+\label{fig:impl:consumers}
+\end{figure}
 
 \subsubsection{Technology stack and reproducibility}\label{sec:impl:stack}
 
@@ -469,6 +481,8 @@ The code is available at \url{https://github.com/lvris/msc-prototype}.
 Check scripts test the site, the client, the two judges and the MCP server; the check of the site covers every reachable state.
 Each run writes a log with one record per step, which is the only data source of \autoref{sec:results}.
 A record holds the state, the action proposed, the values sent, the response of the server and the tokens used.
+
+\FloatBarrier
 
 \subsection{Experimental Variants}\label{sec:eval:method:conditions}
 
@@ -481,9 +495,9 @@ P and H read the page itself: under P the model writes its own request, and unde
 J, J+, X and X+ read a separate description of the operations, as a list or as tools.
 Every condition except P also receives the visible text of the current page, so that all of them know the state equally well.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{The six conditions. All of them run the same client, site, page text, goal and HTTP execution path; only the way the action information reaches the model differs. $^{*}$ The page itself is state-dependent, but P is not bound to it. \emph{Human page}: the model reads the same page a person would see.}
+\caption{The six conditions. $^{*}$ The page is state-dependent, but P is not bound to it. \emph{Human page}: the model reads the page a person sees.}
 \label{tab:impl:conditions}
 \renewcommand{\arraystretch}{1.3}
 \small
@@ -497,7 +511,7 @@ J & a fixed list of the 21 operations & index and values & no & no & no & a fixe
 \hline
 J+ & J plus a note on when each operation is allowed & index and values & no & no & no & tool descriptions that state preconditions \\
 \hline
-X & the 21 operations as MCP tools & a tool call & no & yes & no & MCP as typically deployed \\
+X & the 21 operations as MCP tools & a tool call & no & yes & no & MCP with a fixed tool list \\
 \hline
 X+ & the MCP tools valid now; \texttt{listChanged} after each change & a tool call & yes & yes & no & MCP with \texttt{listChanged} used on every change of state \\
 \hline
@@ -534,6 +548,8 @@ In all conditions the chosen action is executed through the same HTTP request, s
 All conditions get the same goal, the same limit of 20 steps and the same rule of one retry when a reply cannot be read.
 The full prompts are in \autoref{app:prompts}.
 
+\FloatBarrier
+
 \subsection{Tasks, Models and Runs}\label{sec:methods:setup}
 
 The two experiments share the correct answers, the 24 tasks and the models, which are described first.
@@ -549,14 +565,15 @@ It agrees with $V(s)$ on all 20\,937 pairs of state and operation (997 states $\
 
 The tasks are derived from the state graph of the site.
 A task is a start state together with a goal, and each falls into one of three classes according to what the correct behaviour is (\autoref{tab:impl:tasks}).
-The derivation leaves out two kinds of operations as steps on the way: those that give up the current booking, since with them every goal becomes reachable and T3 would be empty, and those that commit the user to something, such as paying a deposit, since a route like ``pay the deposit in order to see the confirmation'' is not what the user asked for.
+The derivation leaves out two kinds of operations as steps on the way: those that give up the current booking, since with them every goal becomes reachable and T3 would be empty, and those that commit the user to something, such as paying, confirming, cancelling, holding a table, joining the queue or submitting the pre-order, since a route like ``pay the deposit in order to see the confirmation'' is not what the user asked for.
 An operation of either kind can still complete a goal that asks for it.
-The rules depend only on what the goal means and were fixed before any model was run.
+The rules depend only on what the goal means; no model results were used to set them.
 This gives 10 T1, 8 T2 and 6 T3 tasks; \autoref{app:tasks} lists all of them.
+The same goal can fall into different classes depending on the start state, as the examples in \autoref{tab:impl:tasks} show.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{The three task classes. Operations that give up the booking or commit the user (paying, confirming, cancelling, holding a table, joining the queue, submitting the pre-order) may not be used as steps on the way; they still count when the goal itself asks for them. The same goal falls into a different class depending on the start state, as the examples show. All 24 tasks are listed in \autoref{app:tasks}.}
+\caption{The three task classes, with one example each. All 24 tasks are listed in \autoref{app:tasks}.}
 \label{tab:impl:tasks}
 \renewcommand{\arraystretch}{1.3}
 \begin{tabularx}{\textwidth}{lrLLL}
@@ -574,7 +591,7 @@ T3 & 6 & No such operation is valid in any state reachable that way. & Say so an
 
 \subsubsection{Models and repetition}\label{sec:eval:method:models}
 
-The experiments use a random chooser, three local models (qwen3.5 with 2, 4 and 9 billion parameters, run through Ollama \cite{ollama}), and one larger model, qwen3.8-27b, run through a hosted provider \todo{cite: Qwen 模型的技术报告，见下面说明}.
+The experiments use a random chooser, three local models (qwen3.5 with 2, 4 and 9 billion parameters, run through Ollama \cite{ollama}), and one larger model, qwen3.8-27b, run through a hosted provider; all four belong to the Qwen family \cite{yang2025qwen3}.
 All models run at temperature 0, and each cell is run once.
 For the local models this makes a run repeatable; for the hosted model, temperature 0 does not guarantee identical output on every call.
 The random chooser picks uniformly from the list it is given, with a fixed seed.
@@ -602,6 +619,8 @@ The conditions are P, J, J+, X+ and H.
 X is left out because generating an interface involves no tool call, so X would give the model the same information as J+.
 The audit uses qwen3.5:9b and qwen3.8-27b; with the default context of the local runtime, the two smaller models were mostly cut off before they produced an answer.
 
+\FloatBarrier
+
 \subsection{An Example Run}\label{sec:eval:results:trace}
 
 Before the numbers, it helps to see what one task looks like under two of the conditions.
@@ -621,8 +640,10 @@ In this state three operations are valid: \texttt{pay\_deposit}, \texttt{edit\_d
 \end{enumerate}
 
 Both runs succeed.
-What differs is the path: under J the model learns the state from the server's refusals, while under H the state is already contained in what the model is offered.
+The paths differ: under J the model learns the state from the server's refusals, while under H the state is already contained in what the model is offered.
 \autoref{app:surfaces} shows the inputs of all six conditions in this state, and \autoref{sec:results} counts the difference over all tasks and models.
+
+\FloatBarrier
 
 \subsection{What Is Measured}\label{sec:eval:method:metrics}
 
@@ -641,7 +662,7 @@ An invalid action is one of two kinds:
     Under X+ a wrong-state action can also be a \emph{stale tool}: an operation that the current tool list no longer offers, usually one that was offered at an earlier step.
     Under X the list never changes, so no tool can become stale.
 \end{description}
-A valid action that the server refuses because of its values, such as an empty card number, is not counted as invalid; it is a wrong value and is counted separately.
+A valid action that the server refuses because of its values, such as an empty card number, is counted separately, as a wrong value.
 
 \paragraph{Structural and measured zeros.}
 Under H the agent answers with the number of a control on the current page.
@@ -655,9 +676,9 @@ A T3 task succeeds when the agent stops and the server has accepted no action of
 
 \autoref{sec:results} reports these measures, condition by condition.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{The measures, the log fields they are computed from, and the claim each serves. Field names are those of the episode log (\texttt{steps[]} is one record per decision) and of the audit log.}
+\caption{The measures, the log fields they are computed from (\texttt{steps[]}: one record per decision), and the claim each serves.}
 \label{tab:impl:metrics}
 \renewcommand{\arraystretch}{1.15}
 \footnotesize

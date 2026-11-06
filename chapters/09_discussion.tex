@@ -4,13 +4,14 @@ It then looks at how the agent fails and which failures H leaves, and ends with 
 
 \subsection{Comparison with P and X+}\label{sec:disc:compare}
 
-Two conditions come close to H. Under P and under X+ the larger models also make no invalid action.
+Two conditions come close to H.
+Under X+ the three larger models also make no invalid action, and under P two of them do.
 This section asks what H adds over each of them.
 
-\subsubsection{Reading the Page Directly}\label{sec:disc:guarantee}
+\subsubsection{Reading the page directly}\label{sec:disc:guarantee}
 
 Under P the agent reads the same page as H, but it does not get the list of controls that H takes from the page, and it writes each request itself.
-For the larger models this works as well as H: they make no invalid action (\autoref{sec:results:index}).
+For qwen3.5:4b and qwen3.8-27b this works as well as H: they make no invalid action, while qwen3.5:9b is at 15.6\% (\autoref{sec:results:index}).
 One reason is the site used here.
 Its pages follow the hypermedia principle: what a page shows is what can be done, and every control is in the HTML the server returns.
 A capable model can read the valid actions straight off such a page, so for it the extra step of H, turning the page into a list to choose from, is less needed.
@@ -28,14 +29,14 @@ Under P the agent writes its request as free text, so nothing stops it from writ
 Whether it does depends on the model: the smallest model often does, and P is the only condition where models invent operations the site does not have (\autoref{sec:results:index}).
 Under H the agent answers with the index of a control, and no index points outside the page.
 I therefore do not claim that H is more accurate than reading the page.
-What H adds is that, by construction, the result no longer depends on the model being capable enough.
+H adds a result that, by construction, does not depend on how capable the model is.
 
-\subsubsection{Filtering by State}\label{sec:disc:restate}
+\subsubsection{Filtering by state}\label{sec:disc:restate}
 
 The other strong alternative is X+.
 As the results showed, X+ can do nearly everything H does: for the larger models it also makes no invalid action (\autoref{sec:eval:results:c2}).
 It also works on sites that do not follow the hypermedia principle, where H has no page to read.
-Its only problem is the work.
+Its cost is the work on the server.
 The server has to state again what the page already states, and keep it in step with the page.
 
 The differences that remain between X+ and H can each be closed on the server or client side, but each addition states again something the page already states:
@@ -45,7 +46,7 @@ The differences that remain between X+ and H can each be closed on the server or
     A client can let the model answer with the position of a tool in the current list, as H does.
     \item Values asked again.
     The X+ server publishes the allowed values of a parameter as an enum, but not a value the current state has already fixed (\autoref{sec:results:values}).
-    JSON Schema can state such a value with \texttt{const} or \texttt{default}, so this comes from this server, not from MCP.
+    JSON Schema can state such a value with \texttt{const} or \texttt{default}, so this gap comes from the server built here and could be closed within MCP.
     \item Invented fields.
     An interface drawn from the schema by a renderer, as under H, would show only the declared fields.
 \end{enumerate}
@@ -53,23 +54,23 @@ A server with all of this describes the page a second time, and every change to 
 
 I did not measure this cost.
 The X+ server was written from the same rules as the site and stayed consistent with it throughout.
-That a separate server falls out of step in practice is an argument from the structure, not a result of this study.
-It matches what is known about descriptions kept apart from code: API documentation often becomes obsolete and differs from the implementation \cite{uddin2015how}.
+That a separate server falls out of step in practice follows from the structure of the approach and was not measured in this study.
+It matches what is known about descriptions kept apart from code: API documentation often becomes obsolete and differs from the implementation \cite{uddin2015how}, and MCP servers generated from OpenAPI descriptions carry over the errors of those descriptions \cite{mastouri2026rest}.
 
 For the authors of applications, this suggests that if the pages already follow the hypermedia principle, nothing has to be added for agents; otherwise a filtered server such as X+ reaches the same result, at the cost of keeping it in step with the site.
 For the authors of agents, it suggests letting the model choose from the current list by position instead of writing a name, since only this removed invalid actions for every model.
 
 Filtering by state therefore gives the agent the same valid actions as the page.
-The difference lies not in what X+ can reach, but in what it costs: a second description that has to be written and kept up to date.
+X+ can reach the same result, at the cost of a second description that has to be written and kept up to date.
 
 \subsection{How the Agent Failed}\label{sec:disc:endings}
 
 H does not remove failure.
 It only limits failure to two things: the agent stops before it reaches the goal, or it takes a valid action that is wrong for the user.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{How episodes ended, summed over the four models (96 episodes per condition). \emph{Detour}: reached the goal only after giving up the current booking first, scored as a failure. On T3 tasks the goal cannot be reached, so stopping without changing anything is the success, and \emph{Goal reached} means the agent ended with a different booking (T3-03), which is a failure.}
+\caption{How episodes ended, summed over the four models (96 episodes per condition). \emph{Detour}: the goal was reached only after giving up the booking, scored as a failure.}
 \label{tab:eval:endings}
 \begin{tabular}{lrrrrrr}
 \hline
@@ -87,7 +88,8 @@ No tool call, no stop & -- & -- & -- & 1 & 1 & -- \\
 \end{table}
 
 \autoref{tab:eval:endings} shows how the episodes ended.
-The conditions do not only fail at different rates, they fail in different ways.
+On T3 tasks the goal cannot be reached, so stopping without changing anything is the success, and a T3 episode counted as goal reached is one that ended with a different booking (T3-03).
+The conditions fail at different rates and in different ways.
 Under the fixed lists the agent can get stuck: the site refuses a request, and the agent sends the same request again.
 I end the episode when the same request has been refused eight times from the same state.
 In a typical case, qwen3.5:9b under J is asked on T3-01 to add a dish to the pre-order, which is not open yet, and it calls the operation that adds a dish eight times in a row.
@@ -101,7 +103,7 @@ The rest are valid but wrong actions, which \autoref{sec:disc:possible} looks at
 Under X and X+ the models also fill in values the user never gave, which \autoref{sec:disc:fabricated} looks at.
 Output that cannot be read and answers with neither a tool call nor a stop are rare; \autoref{sec:disc:threats} discusses a possible cause of the first.
 
-\subsubsection{Valid but Wrong Actions}\label{sec:disc:possible}
+\subsubsection{Valid but wrong actions}\label{sec:disc:possible}
 
 The constraint keeps the agent away from actions the current state does not allow.
 It cannot keep the agent away from an allowed action that is wrong for the user.
@@ -126,18 +128,18 @@ In a hypermedia application, a first version of such a mark is already in the pa
 
 Neither rule tells the agent what the user meant.
 The constraint makes sure that the agent only does what can be done.
-What matters most is still whether it does what the user needs.
+Whether it does what the user needs remains the most important question.
 
-\subsubsection{Personal Data in Tool Calls}\label{sec:disc:fabricated}
+\subsubsection{Personal data in tool calls}\label{sec:disc:fabricated}
 
 The last point is an observation.
 Every condition got the same instruction: leave the name, phone and card empty, because the user will be asked for them.
 Under X and X+ the models often filled these fields anyway, with values found neither in the goal nor on the page (\autoref{tab:eval:fabricated}).
 Apart from qwen3.5:2b under P, every such value comes from these two conditions, the two where the model acts through native tool calls.
 
-\begin{table}[ht]
+\begin{table}[htbp]
 \centering
-\caption{Observation: personal fields (name, phone, card) that the agent filled with a value found in neither the goal nor the page, out of all personal fields it submitted, in the episode runs. Every condition got the same instruction to leave such fields for the user.}
+\caption{Personal fields (name, phone, card) filled with a value found in neither the goal nor the page, out of all personal fields submitted in the episodes.}
 \label{tab:eval:fabricated}
 \begin{tabular}{lrrrrrr}
 \hline
@@ -168,7 +170,7 @@ The study has the following limits.
     \item \textbf{A synthetic site.}
     The invalid action rate needs a complete and authoritative set of valid actions for every state, and a real site does not provide one.
     The site therefore had to be synthetic.
-    This is what makes the measure exact.
+    In return, the measure is exact.
     \item \textbf{One site.}
     All results come from one booking site.
     That the approach carries over to other sites rests on the site contract (\autoref{sec:design:site-contract}).
@@ -178,9 +180,12 @@ The study has the following limits.
     I therefore treat success only as a secondary result.
     \item \textbf{The X+ server.}
     It publishes the allowed values of a parameter, but not the values the state has already fixed.
-    The values asked again are therefore measured against this server, not against MCP in general (\autoref{sec:disc:restate}).
+    The values asked again are therefore measured against this server, and a server that also publishes fixed values would ask fewer (\autoref{sec:disc:restate}).
     \item \textbf{The interface audit.}
     The audit uses only qwen3.5:9b and qwen3.8-27b, because under the default context of 4096 tokens of the local runtime the two smaller models were cut off while still thinking.
     The same limit may explain part of the unreadable outputs of qwen3.5:2b in the episodes.
+    \item \textbf{One model family.}
+    All four models are Qwen models of different sizes.
+    Models of other families may behave differently, in particular in native tool calls (\autoref{sec:disc:fabricated}).
 \end{itemize}
 Two further limits were discussed above: H is not more accurate than reading the page (\autoref{sec:disc:guarantee}), and the constraint does not keep the agent from valid but wrong actions (\autoref{sec:disc:possible}).

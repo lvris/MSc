@@ -4,21 +4,27 @@ This keeps the design simple, keeps the agent and the user interface consistent 
 
 \subsection{Research Questions}
 
-\paragraph{RQ1} Existing approaches usually either infer the possible actions by reading the page, or maintain a separate machine interface (\autoref{sec:background}).
-Neither can guarantee that the action set is correct and consistent with what the user sees.
+\paragraph{RQ1.} \emph{How do existing systems decide which actions an agent may take and which controls a generated interface shows, and what is missing?}
+
+Existing approaches infer the possible actions by reading the page, register them at build time, or maintain a separate interface for the agent (\autoref{sec:background}).
+None of them can guarantee that the action set is correct and consistent with what the user sees.
 The method proposed here takes the possible operations from the controls on the current page.
 The action set therefore comes from the application itself, contains only what can be done now, and is the same as the interface the user sees.
 
 
-\paragraph{RQ2} For a site that meets the site contract (\autoref{sec:design:site-contract}), the links and forms on the current page are exactly the set of actions the current state allows, $A(s)$ (\autoref{sec:design}).
+\paragraph{RQ2.} \emph{How can the links and forms on the current page be extracted and used as the set of actions to which both an agent and a generated interface are limited?}
+
+For a site that meets the site contract (\autoref{sec:design:site-contract}), the links and forms on the current page are exactly the set of actions the current state allows, $A(s)$ (\autoref{sec:design}).
 A parser turns the page into a list of these controls (\autoref{sec:impl:discovery}).
 The same list serves two consumers: the agent chooses from it, and a renderer draws the interface from it without a model call.
 
-\paragraph{RQ3} With a fixed list of operations, the agent often tries an operation the current state does not allow, however the list is written.
+\paragraph{RQ3.} \emph{In a simulated booking site, when actions are limited to the controls on the current page, how often (a) does the agent try an action it cannot take, and (b) does the generated interface show a control the user cannot use, compared with other ways of giving the model its actions?}
+
+With a fixed list of operations, the agent often tries an operation the current state does not allow, however the list is written.
 Filtering the list by state removes most of these errors.
 Only choosing a control on the current page by its index removes all of them, for every model, and it does not lower task success (\autoref{sec:results:agent}).
-For the larger models, reading the page directly or using a filtered MCP server also avoids invalid actions.
-What the page adds is a result that does not depend on the model, and no second interface to maintain (\autoref{sec:disc:compare}).
+For the three larger models a filtered MCP server also avoids invalid actions, and for two of them so does reading the page directly.
+The page adds a result that does not depend on the model, and it needs no second interface (\autoref{sec:disc:compare}).
 
 The generated interfaces show the same pattern.
 Built from a fixed list, they show controls the user cannot use.
@@ -39,10 +45,10 @@ Several questions remain open:
     The HTTP method of a control could tell the agent when to ask the user first.
     How to ask often enough without asking at every step was not tested.
     \item \textbf{Keeping a second interface in step.}
-    The cost of keeping a separate interface consistent with the page was argued, not measured.
+    The cost of keeping a separate interface consistent with the page was argued but not measured.
 \end{itemize}
 
 The constraint makes sure that an agent only does what can be done.
 It does not make sure that the agent does what the user needs.
-Under the constraint, the failures that remained were no longer about the state of the site, but about what the user meant (\autoref{sec:disc:possible}).
+Under the constraint, the failures that remained concerned what the user meant, and none concerned the state of the site (\autoref{sec:disc:possible}).
 Once the actions are valid, what matters most is still whether they serve the needs of the user.

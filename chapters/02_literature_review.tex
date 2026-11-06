@@ -5,14 +5,13 @@
 Software agents built on large language models can now operate the web on a person's behalf, and the interfaces through which people direct them are being redesigned around that fact.
 This chapter discusses how agents increasingly meet their users through generated interfaces.
 Existing frameworks for such interfaces are reviewed, the question of what grounds the actions they offer is raised, and HTML hypermedia is proposed as a solution.
+In doing so, the chapter answers RQ1 (\autoref{sec:intro:rq}): how existing systems decide which actions an agent may take and which controls a generated interface shows, and what is missing.
+The sources were found by a targeted search for the closest related work, extended by following references backwards and forwards \cite{wohlin2014guidelines}.
+Product documentation and protocol specifications are included alongside papers, because many of the systems are described only there.
 
-\begin{points}
-    \item 从第 3 章挪来（RQ1 的方法放在用到它的地方）：在本章开头用两三句交代材料怎么来、怎么比。
-    \item 怎么找的：只说做了文献检索（targeted literature review），不展开检索过程，也不为不做系统综述辩护。顺着引用往前往后找叫 snowballing，可以引 \citet{wohlin2014guidelines}。
-    \item 可选，最多半句：这个领域的名词还不统一（agentic UI、generative UI、agent-native interface 指的东西有重叠）。
-    \item 来源除了论文，还有产品和协议文档（MCP 规范、AI SDK、AG-UI 等）。要说一句为什么这些也算：很多系统只有文档，没有论文。
-    \item 怎么比：按``动作从哪来''分档（读页面猜、开发时注册、另一份机器接口、agent 专用接口），再用同一组维度逐个比，比如是否随状态变、由谁决定、是否和人用的界面是同一份。比较的结果就是本章的对比表。
-\end{points}
+\autoref{sec:bg:internet} traces how the web came to be read by machines as well as by people, and \autoref{sec:bg:genui} how agents came to meet their users through generated interfaces.
+\autoref{sec:bg:hypermedia} introduces hypermedia and the notions of state and affordance on which the comparison relies.
+\autoref{sec:bg:frameworks} compares existing systems by where their actions come from, \autoref{sec:bg:rendering} covers the frameworks that draw generated interfaces, and \autoref{sec:bg:gap} states what is missing.
 
 \subsection{Internet, Human, and Machine}\label{sec:bg:internet}
 
@@ -20,24 +19,22 @@ Web interaction evolved from pages authored for human reading toward pages that 
 The earliest such clients like web crawlers only read while later ones increasingly act: scripted automation at first, and most recently LLM-based agents that follow links, fill forms, and complete transactions on the user's behalf \cite{mesbah2012crawling, ning2025survey, yang2025agentic}.
 
 
-Because pages are written for humans, a machine client has no direct access to application meaning: it must recover what a page is, and what can currently be done with it, from artifacts intended for human perception --- markup structure, layout, and visible text. 
+Because pages are written for humans, a machine client has no direct access to application meaning: it must recover what a page is, and what can currently be done with it, from artifacts intended for human perception, such as markup structure, layout and visible text.
 This recovery is indirect and brittle, and the difficulty motivated a long line of work on giving the web machine-readable semantics, most prominently the Semantic Web programme and its lighter-weight descendants such as embedded structured annotations \cite{berners-lee2001semantic, guha2016schemaorg}.
 % https://arxiv.org/html/2507.10644v1#bib.bib87 may be useful for the semantic-web citation
 
 The semantic-web approach asked authors to maintain a second, machine-facing representation of their application in parallel with the human-facing page.
 Annotations that are not needed to render the page for people are exercised by nothing the author depends on, and so they are the first thing to fall out of date.
-\todo{cite: find supporting old papers}
+Descriptions maintained apart from the implementation are known to go out of date and to disagree with what they describe \cite{uddin2015how, mastouri2026rest}.
 
 \subsection{From Conversational Agents to Generative UI}\label{sec:bg:genui}
 
-\todo{结构调整：RQ1 不再问 CUI 的局限，这一节压短，只作动机；也可以并进上一节。}
-
-Large language models entered this picture from the opposite direction: rather than making pages more readable to machines, they made machines better readers of artifacts meant for humans.
+Large language models came from the other side: they made machines better readers of pages written for humans.
 Their first and still dominant form is conversational.
-Chat interfaces in the ChatGPT style proved remarkably capable for open-ended language tasks, and they inherit a long lineage of conversational-interface research \cite{mctear2017rise}.
+Chat interfaces in the ChatGPT style proved capable at open-ended language tasks, and they inherit a long lineage of conversational-interface research \cite{mctear2017rise}.
 
 These models were then given the ability to act with scaffolding for planning, tool use, and memory, they can call tools, operate websites, and carry out multi-step tasks against external systems, and an ecosystem of such agents has grown around the web in particular \cite{yang2025agentic, ning2025survey, zhou2024webarena, gur2023realworld, song2025browsing}.
-This turned how a human should interact with a capable agent into a question.
+How a person should work with such an agent then became an open question.
 
 For these richer, structured, stateful tasks, pure conversation shows limits:
 \begin{enumerate}
@@ -45,17 +42,19 @@ For these richer, structured, stateful tasks, pure conversation shows limits:
     \item \textbf{Hidden action space:} narrating actions hides the actual action space from the human, who cannot see what the agent could have done, verify what it actually did, or take over precisely \cite{zhang2025exploring}.
 \end{enumerate}
 
-Hence generative UI: instead of only talking, the agent renders task-specific interaction surfaces --- controls, forms, choices --- fitted to the current step of the task \cite{leviathan2025generative, aisdkGUI}.
-The industry is already moving this way: mainstream assistants increasingly wrap their responses in generated widgets and forms even outside web-operation tasks, which corroborates that pure text is insufficient as an interaction surface.
-\todo{cite: Gemini / GPT generative-UI product direction, maybe webpage} 
+Generative UI responds to these limits: besides text, the agent renders controls, forms and choices fitted to the current step of the task \cite{leviathan2025generative, aisdkGUI}.
+The industry is already moving this way: mainstream assistants increasingly wrap their responses in generated widgets and forms even outside web-operation tasks, as Gemini does with its generated interfaces and ChatGPT with interactive apps inside the conversation \cite{googleGenUI2025, openaiApps2025}, which corroborates that pure text is insufficient as an interaction surface.
 
-This thesis narrows to the demanding end of that: generated controls that correspond to real actions on an external, stateful application.
-Namely the correctness of the surface --- does this control exist, and is it valid now?
+This thesis looks at one case of this: generated controls that correspond to real actions on an external application with state.
+For such controls the main question is whether each one exists and can be used now.
+The rest of this chapter is organized around that problem.
+Because the surface is produced by a model, and models are known to generate content that is not supported by their input \cite{ji2023survey}, a generated surface can present controls that are invalid, stale, or outright hallucinated relative to what the application can actually do at this moment.
+
+\begin{oldtext}
 The rest of this chapter is organized around that problem: a generated surface can present controls that are invalid, stale, or outright hallucinated relative to what the application can actually do at this moment \cite{ji2023survey}.
+\end{oldtext}
 
 \subsection{HTML Hypermedia, State, and Affordances}\label{sec:bg:hypermedia}
-
-\todo{结构调整：这一节提前到系统比较之前，先给出比较要用的概念（状态、affordance、同一份 artifact）。下面「Read against \autoref{sec:bg:frameworks}, this identifies the pattern that MCP repeats」和 Consequences 里提到 MCP 的句子，现在变成了在 MCP 介绍之前提它：改成前向引用，或者把和 MCP 的对比挪到下一节。}
 
 \subsubsection{REST and the hypermedia constraint}
 
@@ -64,32 +63,49 @@ In HTML those controls are links, forms, and buttons, and in server-driven varia
 Hypermedia formats aimed only at machines also exist, such as the JSON-based HAL and Siren, but HTML is the one that matters here, for a reason this section builds toward: it is the only widely deployed hypermedia format whose representations are at the same time a human interface.
 
 This is not a new idea but the original architecture of the web.
-Fielding's REST names the principle hypermedia as the engine of application state: transitions should be driven by controls that the server places in the current representation, not by out-of-band contracts the client holds separately \cite{hypermediaBook}.
-Read against \autoref{sec:bg:frameworks}, this identifies the pattern that MCP repeats.
-WSDL and OpenAPI were the out-of-band contracts of their eras \cite{wsdl2001, openapi2021}; a tool catalog obtained at connection time is the same client-held description, separate from the representation the application actually serves.
-\todo{cite: Fielding 2000 博士论文（REST 的原始出处），还没导入 Zotero}
+Fielding's REST names the principle hypermedia as the engine of application state: transitions should be driven by controls that the server places in the current representation, not by out-of-band contracts the client holds separately \cite{fielding2000architectural, hypermediaBook}.
+WSDL and OpenAPI were the out-of-band contracts of their eras \cite{wsdl2001, openapi2021}.
 
 The controls in a representation can be read as its affordances: the state-dependent set of actions the application currently makes available \cite{gidey2025affordance}.
-The term is used here in the hypermedia community's sense \cite{hypermediaBook}. 
+The term is used here in the hypermedia community's sense \cite{hypermediaBook}.
+
+\begin{oldtext}
+Read against \autoref{sec:bg:frameworks}, this identifies the pattern that MCP repeats.
+WSDL and OpenAPI were the out-of-band contracts of their eras \cite{wsdl2001, openapi2021}; a tool catalog obtained at connection time is the same client-held description, separate from the representation the application actually serves.
+\end{oldtext}
 
 \subsubsection{Consequences}
 
-The observation this thesis is built on follows.
+This thesis builds on one observation.
 In a hypermedia application, the HTML the server returns is one artifact playing three roles at once: the interface the human sees, the action space an agent can parse, and the set of controls through which the application is actually operated.
-These three cannot drift apart, because they are not three things.
-An agent that takes those controls as its source of valid actions is not guessing from arbitrary DOM structure, and not trusting a separately maintained description; it is reading the same contract the human user is given.
-A separate contract such as MCP cannot offer this property, however well specified, because separateness is exactly what the property excludes.
+Because one document fills all three roles, they cannot drift apart.
+An agent that takes those controls as its source of valid actions reads the same controls the person is given, without guessing from the DOM or relying on a separately maintained description.
+A separately maintained contract, however well specified, lacks this property by definition.
 
 \begin{enumerate}
-    \item \textbf{No drift:} the affordance description is a byproduct of building the application, not a second artifact to maintain, so the incentive failure of \autoref{sec:bg:internet} does not arise.
-    \item \textbf{Native state-dependence:} the unit of description is the current state and its exits, not a catalog of everything the server could ever do.
+    \item \textbf{No drift:} the affordance description comes with building the application and needs no second artifact, so the problem of \autoref{sec:bg:internet}, a description that nothing depends on, does not arise.
+    \item \textbf{Native state-dependence:} the page describes the current state and the ways out of it, and nothing more.
     \item \textbf{Graceful fallback:} when the agent fails, the human can operate the same page directly.
     Early evidence that machine-legible interfaces improve agent reliability is consistent with this picture \cite{schultze2025building}.
 \end{enumerate}
 
+\begin{oldtext}
+A separate contract such as MCP cannot offer this property, however well specified, because separateness is exactly what the property excludes.
+\end{oldtext}
+
 \subsection{How Existing Systems Decide What Can Be Done}\label{sec:bg:frameworks}
 
-\todo{本节开头一两句：这一节按什么来比较现有系统（RQ1），以及最后的对比表。}
+
+
+This section compares how existing systems guide an agent in choosing its actions, and so answers RQ1.
+I group and compare the systems by the source of their action set, and ask four questions of each: who produces the action set, whether it follows the current state, what has to be maintained in addition to the application, and whether it is the same artifact as the interface people use.
+\autoref{tab:bg:comparison} at the end of the section summarises the answer to RQ1.
+
+\begin{oldtext}
+这一节比较现有的系统如何指引 agent 选择动作，回答 RQ1。
+我按照动作集的来源进行分类和比较, 关心的问题是: 动作集由谁产出、是否随当前状态变、要额外维护什么、和人用的界面是不是同一份。
+RQ1(引用一下) 的回答整体可以用一张表总结，见 \autoref{tab:bg:comparison}。
+\end{oldtext}
 
 \subsubsection{Rendering-side vs. Source-side}
 
@@ -98,39 +114,113 @@ The rendering side concerns how agent output is drawn for the human.
 The action-source side concerns where the set of actions the agent may take, and may offer, comes from.
 The two are independent; the rest of this section groups systems by the second, and \autoref{sec:bg:rendering} covers the first.
 
-\subsubsection{Action Grounding Approaches}
+\subsubsection{Inference from the page}\label{sec:bg:inference}
 
 The weakest grounding is inference from the live page.
-Browser and computer-use agents recover their action set from the DOM, the accessibility tree, or screenshots, and realistic web tasks remain difficult and brittle when the agent must guess in this way what a page affords \cite{zhou2024webarena, song2025browsing}. 
-% This is the indirect-recovery problem of \autoref{sec:bg:internet} replayed with a stronger model. 
-Magentic-UI is the generative-UI exemplar ... \cite{mozannar2025magenticui}.
+Browser and computer-use agents recover their action set from the DOM, the accessibility tree, or screenshots, and realistic web tasks remain difficult and brittle when the agent must guess in this way what a page affords \cite{zhou2024webarena, song2025browsing}.
+% This is the indirect-recovery problem of \autoref{sec:bg:internet} replayed with a stronger model.
+Magentic-UI keeps a human in the loop through co-planning and approval of actions, but the actions it proposes are still inferred from the page the browser shows \cite{mozannar2025magenticui}.
+Even picking out the right element from a whole page is hard: on Mind2Web, first narrowing the raw HTML down with a small model clearly improved the choices of a larger one \cite{deng2023mind2web}.
+
+\subsubsection{Registration at build time}\label{sec:bg:registry}
 
 A stronger answer registers the actions on the client at build time: the developer declares a set of tools or components that the model may invoke, explicit and typed \cite{aisdkGUI}.
 This grounds the vocabulary but not the state.
 The registry is static and application-specific, and nothing prevents it from drifting away from what the backend currently allows.
 
+\subsubsection{A separate machine interface}\label{sec:bg:mcp}
+
 The strongest existing answer is a server-declared contract, and its current form is the Model Context Protocol (MCP).
-MCP deserves full credit on this axis: the contract is machine-readable, owned by the server rather than assumed by the client, gives every tool a typed input schema, and can update the tool list at runtime \cite{mcpSpec2025}.
+MCP goes far in this direction: the contract is machine-readable, owned by the server rather than assumed by the client, gives every tool a typed input schema, and can update the tool list at runtime \cite{mcpSpec2025}.
+Read against \autoref{sec:bg:hypermedia}, however, a tool catalog obtained at connection time is the same kind of client-held description as WSDL and OpenAPI, separate from the representation the application actually serves.
 
-\todo{第四档（新增）：agent 专用接口 agent-native interfaces —— ASIL、AXIS、Beyond Browsing (Song et al., ACL 2025)、CLI-Anything、OpenCLI、DynaSaur、UFO2、OS-Copilot；必读 Wang et al. 2026 (arXiv 2510.04607)。对 ASIL 的三条划界：(1) 动作集由 adapter 产出，不是应用自身产出（其 Table 6 自认四项需手工）；(2) 不是人用的界面，要可视化还得另做 GUI 同步；(3) 只测 task success，没有 validity 指标。}
+Two limits remain.
+First, the specification lets a server announce that its tool list has changed, through the \texttt{listChanged} capability, but says nothing about tools appearing or disappearing with the state of the application \cite{mcpSpec2025}.
+A tool list that follows the state is therefore allowed but not expected, and a server that does not filter offers every tool in every state.
+Second, the contract is a second description, maintained beside the interface people use, and so it can drift from the application in the way described in \autoref{sec:bg:internet}.
+When MCP servers are generated from existing OpenAPI descriptions, every fault found in the generated tools traces back to an inconsistency or omission in those descriptions \cite{mastouri2026rest}.
 
-\todo{table: five-dimension framework comparison; rows: DOM-inference agents, build-time registries, MCP, agent-native interfaces, hypermedia affordances (this thesis, forward reference to \autoref{sec:design}); cite each row's primary system; the dimensions must include: is the action set state-dependent, and is it the same artifact as the human interface (原 Design 章的对比表并入这里)}
+\citet{jiang2026web} argue in the same direction for the web as a whole: instead of clicking through pages, an agent should call typed \emph{verbs}, functions with structured inputs and outputs that may carry preconditions, backed by a server-side API or by a maintained client-side workflow.
+The verbs are exposed by the website or written by third parties, and the agent interacts only with the verb interface, never with the page.
+Such verbs are again a layer beside the page, and the authors place the cost of keeping them working on the site developer or another maintainer.
+
+\paragraph{The closest comparison.}
+The work closest to this comparison is that of \citet{steiner2025mcp}, who give the same set of shops four interfaces, HTML, retrieval (RAG), MCP and NLWeb, and run the same agent tasks against each.
+The HTML agent did worst: averaged over all tasks, its F1 score was 0.67 against 0.75--0.77 for the others, and it used about 241k tokens per task against 47k--140k.
+Their HTML agent, however, observes the accessibility tree of each page and infers what to click and fill, so it belongs to the first group above.
+The study measures effectiveness and cost, and does not check whether a proposed action was valid in the current state.
+
+\subsubsection{Agent-native interfaces}\label{sec:bg:agent-native}
+
+A fourth group, agent-native interfaces, gives up on the human interface and builds a separate one for the agent.
+AXIS lets an agent call application APIs where they exist and falls back to the GUI, exploring the application to build those APIs \cite{lu2025axis}.
+UFO2 combines GUI actions with native APIs on Windows \cite{zhang2025ufo2}, and OS-Copilot operates the whole operating system through one unified interface \cite{wu2024oscopilot}.
+GOI takes navigation and interaction off the model and leaves it only the semantic decisions \cite{wang2026imperative}, and CLI-Anything generates command-line interfaces for existing software \cite{cliAnything}.
+DynaSaur goes the opposite way: instead of choosing from a fixed set, the agent writes its own actions as code \cite{nguyen2025dynasaur}.
+Early evidence suggests that interfaces built to be legible to machines do make agents more reliable \cite{schultze2025building}, and this group is the most direct answer to the guessing of the first.
+
+\paragraph{ASIL.}
+ASIL is the most complete of these systems \cite{xie2026asil}.
+It starts from the observation that screenshots are state-incomplete and GUI actions brittle, and gives the agent a structured observation of the application together with actions that are checked for validity before they run.
+It differs from the approach of this thesis in three ways.
+First, the action set is produced by an adapter written for each application, and the authors list access-path discovery, application-specific bridges, GUI synchronisation and task design as manual work.
+Second, the interface is for the agent only, and showing the person what the agent sees requires a separate synchronisation with the GUI.
+Third, its evaluation measures task success and does not check whether the actions offered or attempted were valid.
+
+\subsubsection{Summary}\label{sec:bg:comparison-summary}
+
+Read across \autoref{tab:bg:comparison}, the approaches fall into two kinds.
+Page inference works on the same artifact as the person, but its actions are guessed.
+The other three do not guess, but each relies on a description kept beside the interface people use.
+No row except the last has both properties.
+
+\begin{table}[htbp]
+\centering
+\caption{How existing approaches decide what an agent can do, compared with the approach of this thesis.}
+\label{tab:bg:comparison}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\textwidth}{P{0.2\textwidth}LLLP{0.13\textwidth}}
+\hline
+Approach & Who produces the action set & Follows the current state & Extra maintenance & Same artifact as the human interface \\
+\hline
+Page inference \cite{zhou2024webarena, mozannar2025magenticui} & the agent, by inference from the page & yes, but guessed & none & yes \\
+\hline
+Build-time registry \cite{aisdkGUI, leviathan2025generative} & the developer & no & the registry changes with the application & no \\
+\hline
+Separate machine interface \cite{mcpSpec2025, jiang2026web} & the server or a third party, as a second description & allowed, not the default & a second description & no \\
+\hline
+Agent-native interface \cite{xie2026asil, lu2025axis} & an adapter, or automatic exploration & in some systems (ASIL), not in others (AXIS) & the adapter, partly manual & no \\
+\hline
+Hypermedia affordances (this thesis, \autoref{sec:design}) & the application's own page & yes & none & yes \\
+\hline
+\end{tabularx}
+\end{table}
 
 \subsection{Generative-UI Rendering Frameworks}\label{sec:bg:rendering}
 
 AG-UI defines an event and transport protocol between agents and front ends \cite{aguiOverview}, Vercel's AI SDK maps model output to registered interface components \cite{aisdkGUI}, and CopilotKit embeds agent interaction into existing applications \cite{copilotkitDocs}.
-These systems are complementary to this thesis: they answer how a generated surface is drawn, not what it may legitimately contain, and they could sit on top of the framework developed here.
+These systems are complementary to this thesis: they deal with how a generated surface is drawn and leave open which controls it may contain, and they could sit on top of the framework developed here.
 
 \subsection{Research Gap}\label{sec:bg:gap}
 
-\todo{第一句「they infer their actions from artifacts made for human perception」已被 ASIL 这一类工作否掉（agent 专用接口不靠推断）。gap 改成三点合在一起：动作集由应用自己产出（不是 adapter）、只含当前状态合法的、和人用的界面是同一份。}
+\autoref{tab:bg:comparison} shows what is missing.
+For the controls of a generated interface to be trusted, three things must hold at once.
+The application itself produces the action set, with no guessing by the agent, no adapter and no second description.
+It contains only the actions that are valid in the current state.
+It is the same artifact as the interface the person uses.
+Page inference has the third property but guesses its actions.
+An MCP server that filters its tools by state, or an agent-native interface such as ASIL, can have the second, but neither has the first or the third.
+No existing system therefore binds a human-facing generated interface to an action set that the application itself produces for its current state.
+The evaluations reviewed here also measure task success and cost; none checks whether a generated interface offers controls that cannot be used.
 
+\begin{oldtext}
 Web agents can operate human-facing sites, but they infer their actions from artifacts made for human perception, and the inference is brittle.
 Generative-UI frameworks can render dynamic surfaces, but they ground the actions those surfaces expose weakly: inferred from the page, fixed at build time, or delegated to a machine-only contract that runs parallel to the human interface and can drift from it.
 No existing framework binds a human-facing generated surface to a state-dependent, server-authoritative action set.
+\end{oldtext}
 
 This thesis responds by using HTML hypermedia affordances as that binding layer: the generated interface is constrained to the controls the server placed in the current representation, so every action it offers is currently valid.
-This is also the precise sense in which the title claims determinism.
-What is deterministic is the action space, not the agent: the set of offerable actions is a function of server state alone rather than of model sampling; every offered control exists and is executable at the moment it is shown; every refusal is structural.
+This is also what the title means by deterministic.
+The determinism concerns the action space: the set of actions that can be offered depends only on the state of the server, and model sampling does not change it; every offered control exists and is executable at the moment it is shown; every refusal is structural.
 The agent's selection among valid actions remains stochastic, and no stronger claim is made.
-\autoref{sec:implementation} defines this property precisely and builds the framework that realizes it.
+\autoref{sec:implementation} defines this property and builds the framework that realizes it.

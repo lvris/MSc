@@ -87,3 +87,21 @@
 %\uselogo{aalto'}
 %\uselogo{}
 %%
+
+%% Thesis keywords, separated with \spc
+\keywords{generative user interfaces\spc web agents\spc hypermedia\spc
+large language models\spc Model Context Protocol\spc affordances}
+
+%% Abstract text: stored in the pdf metadata and printed on the abstract page
+%% (via \abstracttext in _abstract.tex). No special characters, no paragraphs.
+\thesisabstract{%
+Agents built on large language models increasingly act on websites for people, and assistants increasingly show generated buttons and forms instead of text.
+Both need to know which actions the current state of an application allows.
+Existing systems infer these actions from the page, register them at build time, or describe them in a second, machine-facing interface such as the Model Context Protocol (MCP), which is maintained beside the interface people use and does not by default follow the state.
+This thesis proposes taking the action set directly from the links and forms on the current page of a server-rendered hypermedia site, so that the same set limits both what the agent may execute and which controls a generated interface may show.
+Following design science, I define the framework and the contract a site must meet, build a prototype with a generic client, a restaurant booking site and a renderer that needs no model, and compare six ways of giving four language models their actions, including a real MCP server.
+With a fixed list of operations, the agent chose an action the current state did not allow in 32 to 82 percent of its decisions, and interfaces drawn from such lists showed controls that did nothing.
+Filtering the list by state removed most of these errors.
+Choosing from the controls on the page removed all of them for every model, without lowering task success and without a second interface to maintain.
+The constraint does not, however, make the agent choose the action the user wants.
+}

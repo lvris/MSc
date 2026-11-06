@@ -1,0 +1,44 @@
+% Motivating example: a party of eight must pay a deposit before the booking can be confirmed.
+% (a) an agent with a fixed tool list, (b) an interface drawn from that list, (c) the site's own page.
+\begin{tikzpicture}[
+    panel/.style={draw, rounded corners=3pt, minimum width=42mm, minimum height=58mm, inner sep=0pt},
+    ptitle/.style={font=\footnotesize\bfseries, anchor=north, align=center, text width=38mm},
+    tool/.style={font=\scriptsize\ttfamily, anchor=west, inner sep=1pt},
+    btn/.style={draw, rounded corners=1.5pt, font=\scriptsize, minimum width=34mm, minimum height=5mm, inner sep=1pt},
+    dead/.style={btn, dashed, text=gray},
+    note/.style={font=\scriptsize, align=center, text width=38mm},
+    go/.style={-{Stealth[length=2mm]}},
+]
+% (a) fixed tool list
+\node[panel] (pa) at (0,0) {};
+\node[ptitle] at ([yshift=-1.5mm]pa.north) {(a) Agent with a fixed\\tool list};
+\node[tool] (t1) at ([xshift=4mm,yshift=-12mm]pa.north west) {confirm\_booking};
+\node[tool, below=0.5mm of t1.south west, anchor=north west] (t2) {pay\_deposit};
+\node[tool, below=0.5mm of t2.south west, anchor=north west] (t3) {edit\_details};
+\node[tool, below=0.5mm of t3.south west, anchor=north west] (t4) {discard\_draft};
+\node[tool, below=0.5mm of t4.south west, anchor=north west] (t5) {\ldots{} 21 tools in all};
+\node[draw, rounded corners=1.5pt, font=\scriptsize, anchor=north] (call) at ([yshift=-31mm]pa.north) {call \texttt{confirm\_booking}};
+\node[note, below=2mm of call] (ref) {refused by the site:\\a deposit is required};
+\draw[go] (t1.east) to[out=0,in=90] ([xshift=8mm]call.north);
+\draw[go] (call) -- (ref);
+
+% (b) interface drawn from the list
+\node[panel] (pb) at (4.6,0) {};
+\node[ptitle] at ([yshift=-1.5mm]pb.north) {(b) Interface drawn\\from the list};
+\node[dead, anchor=north] (b1) at ([yshift=-12mm]pb.north) {Confirm booking};
+\node[btn, below=1.2mm of b1] (b2) {Pay deposit};
+\node[btn, below=1.2mm of b2] (b3) {Edit details};
+\node[btn, below=1.2mm of b3] (b4) {Discard draft};
+\node[dead, below=1.2mm of b4] (b5) {\ldots{} 17 more};
+\node[note, below=1.5mm of b5] {dashed: shown, but does\\nothing in this state};
+
+% (c) the site's own page
+\node[panel] (pc) at (9.2,0) {};
+\node[ptitle] at ([yshift=-1.5mm]pc.north) {(c) The site's own page};
+\node[note, anchor=north] (msg) at ([yshift=-8mm]pc.north) {Deposit required: parties of\\more than 6 pay \texteuro{}80 first};
+\node[draw, font=\scriptsize, minimum width=34mm, minimum height=5mm, anchor=north, text=gray] (card) at ([yshift=-3mm]msg.south) {Card number};
+\node[btn, below=1.2mm of card] (c1) {Pay \texteuro{}80 deposit};
+\node[btn, below=1.2mm of c1] (c2) {Edit details};
+\node[btn, below=1.2mm of c2] (c3) {Discard draft};
+\node[note, below=1.5mm of c3] {only the three controls\\that work now};
+\end{tikzpicture}
