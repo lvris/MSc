@@ -50,10 +50,6 @@ For such controls the main question is whether each one exists and can be used n
 The rest of this chapter is organized around that problem.
 Because the surface is produced by a model, and models are known to generate content that is not supported by their input \cite{ji2023survey}, a generated surface can present controls that are invalid, stale, or outright hallucinated relative to what the application can actually do at this moment.
 
-\begin{oldtext}
-The rest of this chapter is organized around that problem: a generated surface can present controls that are invalid, stale, or outright hallucinated relative to what the application can actually do at this moment \cite{ji2023survey}.
-\end{oldtext}
-
 \subsection{HTML Hypermedia, State, and Affordances}\label{sec:bg:hypermedia}
 
 \subsubsection{REST and the hypermedia constraint}
@@ -68,11 +64,6 @@ WSDL and OpenAPI were the out-of-band contracts of their eras \cite{wsdl2001, op
 
 The controls in a representation can be read as its affordances: the state-dependent set of actions the application currently makes available \cite{gidey2025affordance}.
 The term is used here in the hypermedia community's sense \cite{hypermediaBook}.
-
-\begin{oldtext}
-Read against \autoref{sec:bg:frameworks}, this identifies the pattern that MCP repeats.
-WSDL and OpenAPI were the out-of-band contracts of their eras \cite{wsdl2001, openapi2021}; a tool catalog obtained at connection time is the same client-held description, separate from the representation the application actually serves.
-\end{oldtext}
 
 \subsubsection{Consequences}
 
@@ -89,10 +80,6 @@ A separately maintained contract, however well specified, lacks this property by
     Early evidence that machine-legible interfaces improve agent reliability is consistent with this picture \cite{schultze2025building}.
 \end{enumerate}
 
-\begin{oldtext}
-A separate contract such as MCP cannot offer this property, however well specified, because separateness is exactly what the property excludes.
-\end{oldtext}
-
 \subsection{How Existing Systems Decide What Can Be Done}\label{sec:bg:frameworks}
 
 
@@ -100,12 +87,6 @@ A separate contract such as MCP cannot offer this property, however well specifi
 This section compares how existing systems guide an agent in choosing its actions, and so answers RQ1.
 I group and compare the systems by the source of their action set, and ask four questions of each: who produces the action set, whether it follows the current state, what has to be maintained in addition to the application, and whether it is the same artifact as the interface people use.
 \autoref{tab:bg:comparison} at the end of the section summarises the answer to RQ1.
-
-\begin{oldtext}
-这一节比较现有的系统如何指引 agent 选择动作，回答 RQ1。
-我按照动作集的来源进行分类和比较, 关心的问题是: 动作集由谁产出、是否随当前状态变、要额外维护什么、和人用的界面是不是同一份。
-RQ1(引用一下) 的回答整体可以用一张表总结，见 \autoref{tab:bg:comparison}。
-\end{oldtext}
 
 \subsubsection{Rendering-side vs. Source-side}
 
@@ -212,12 +193,6 @@ Page inference has the third property but guesses its actions.
 An MCP server that filters its tools by state, or an agent-native interface such as ASIL, can have the second, but neither has the first or the third.
 No existing system therefore binds a human-facing generated interface to an action set that the application itself produces for its current state.
 The evaluations reviewed here also measure task success and cost; none checks whether a generated interface offers controls that cannot be used.
-
-\begin{oldtext}
-Web agents can operate human-facing sites, but they infer their actions from artifacts made for human perception, and the inference is brittle.
-Generative-UI frameworks can render dynamic surfaces, but they ground the actions those surfaces expose weakly: inferred from the page, fixed at build time, or delegated to a machine-only contract that runs parallel to the human interface and can drift from it.
-No existing framework binds a human-facing generated surface to a state-dependent, server-authoritative action set.
-\end{oldtext}
 
 This thesis responds by using HTML hypermedia affordances as that binding layer: the generated interface is constrained to the controls the server placed in the current representation, so every action it offers is currently valid.
 This is also what the title means by deterministic.

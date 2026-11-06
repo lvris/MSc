@@ -2,11 +2,6 @@ To address the problem raised in \autoref{sec:background}, this thesis builds a 
 This chapter describes the methods I used and why I chose them; \autoref{sec:implementation} describes how the system works and how the experiments were set up.
 \autoref{sec:methods:approach} sets out the research approach, \autoref{sec:eval:aim} how the artifact is evaluated, \autoref{sec:methods:validity} why the measurements can be trusted, and \autoref{sec:methods:ethics} ethics and reproducibility.
 
-\begin{oldtext}
-为了解决我们在之前提出的问题, 我在这篇文章中主要构建了一个原型, 并通过受控实验来验证其有效性。
-在这个章节中, 我将介绍我使用的方法, 并将在下一章中详细描述工作原理和实验细节。
-\end{oldtext}
-
 \subsection{Research Approach}\label{sec:methods:approach}\label{sec:methods:procedure}\label{sec:methods:design}
 
 The research follows the steps of design science, in the form of the design science research methodology (DSRM) of \citet{peffers2007design}.
@@ -42,17 +37,6 @@ Communication & Discussion of what the results mean and where they stop & -- \\
 \end{tabularx}
 \end{table}
 
-\begin{oldtext}
-整体上我们按照 design science 的步骤进行研究, 步骤参考了 \citet{peffers2007design} 的 DSRM.
-这是因为我们的 RQ 主要关注的是如何做到, 而 design science 的研究方法就是通过构建一个 artifact 来回答这个问题.
-
-在上一章(ref)中, 我们通过文献比较分析了现状.
-对于解析 affordance 的问题, 我分别构建了一个框架(ref)和一个原型(ref)来验证其有效性.
-最后, 我使用受控实验来验证我的方法的有效性, 并分析了实验结果(ref).
-
-在表格(ref)中, 我们总结了 DSRM 的每一步在本文中对应的部分和问题.
-\end{oldtext}
-
 \subsection{Evaluation}\label{sec:eval:aim}
 
 I evaluate the artifact against three criteria, each with one of the evaluation methods that \citet{hevner2004design} distinguish:
@@ -65,15 +49,6 @@ I evaluate the artifact against three criteria, each with one of the evaluation 
 The first two criteria can be checked by reading the framework and the prototype.
 Whether the constraint changes what a model actually does can only be observed, which is what the third criterion requires.
 The rest of this section concerns the third.
-
-\begin{oldtext}
-我希望能够满足:
-- 约束能够被清楚地定义, 并且在满足约束的情况下, 系统能够保证正确性.
-- 原型能够满足约束, 并且有检查脚本来验证.
-- 通过实验来验证约束的有效性.
-
-(这稍微论证一下, 前两条看框架和原型就知道, 然后我们需要第三条实验来验证约束的作用)
-\end{oldtext}
 
 \subsubsection{Experimental design}\label{sec:methods:experiment}
 
@@ -91,19 +66,6 @@ All ways share the same site, the same client, the same page text, the same task
 There are two experiments, one for each half of RQ3.
 In the first, the agent episodes, the agent acts on its own, and the question is whether it attempts actions that cannot be taken now.
 In the second, the interface audit, the model generates the interface a person would see, and the question is whether that interface shows controls the person cannot use.
-
-\begin{oldtext}
-小标题: 改什么?
-变量是模型怎么知道现在能做什么, 我们在第 4 章逐个定义了几种做法, 从``自己读页面''、``一份固定的操作列表''、``按状态过滤过的列表''，到``从页面的控件里选''..
-这些方法之间的差别正是约束的作用
-
-小标题: 固定什么?
-固定不变的：同一个站点、同一个客户端、同样的页面文字、同样的任务和目标、同一条执行路径。
-
-此外, 我们做了两个实验, 对应 RQ3 的两半:
-一个让 agent 自己执行, 看它会不会去做现在做不了的事;
-另外一个让模型生成给人看的界面, 看界面上会不会出现用不了的控件。
-\end{oldtext}
 
 \subsubsection{What is measured, and what is not}\label{sec:methods:measures}
 
@@ -127,20 +89,6 @@ The rate of invalid actions is computed over all decisions and, separately, over
 Task success is compared task by task with the condition that chooses among the controls on the page: only tasks that succeed under exactly one of the two are counted, and a two-sided sign test asks how likely the observed split would be if both were equally good.
 With 24 tasks per cell, no further statistics are used, and success remains a secondary measure.
 
-\begin{oldtext}
-实验最重要的就是测试, 我们设计的实验中主要测试的是合法性, 具体的指标见第四章.
-
-小标题: 我们测什么?
-我们主要关心的问题是: 做了或摆出了现在做不了的操作，占多少。
-次要的是成功率, 可以知道约束有没有让任务变的难以解决.
-之所以不测成功率为主, 是因为一个任务可以最后成功, 但中途被拒好几次, 只看成功率就看不到.
-
-小标题: 我们不关心的
-而有关 UI 的好用, 好看, 速度等问题.
-这些需要一个用户研究来调查, 本论文不主张这些.
-合法性可以机械地检查, 所以不需要人参与.
-\end{oldtext}
-
 \subsection{Validity of the Measurement}\label{sec:methods:validity}
 
 With the design and the measures fixed, one question remains: whether the measurements can be trusted.
@@ -148,10 +96,6 @@ The three subsections below address three kinds of validity \cite{wohlin2012expe
 Construct validity asks whether the experiments measure what they claim to measure; this needs a complete set of correct answers (\autoref{sec:methods:synthetic}) and a judge that is independent of what it judges (\autoref{sec:methods:judge}).
 Internal validity asks whether a result can be attributed to the constraint rather than to the model (\autoref{sec:methods:models}).
 External validity, whether the results carry over to other sites, is limited by the single site and is discussed with the limitations in \autoref{sec:disc:threats}.
-
-\begin{oldtext}
-在确定了实验设计和指标之后, 还有一个问题是: 测量的结果是否可信? 下面三小节分别回答三个顾虑: 标准答案从哪来、判对错的是不是自己、结果归功于约束还是模型。
-\end{oldtext}
 
 \subsubsection{Why a synthetic site}\label{sec:methods:synthetic}
 
@@ -161,13 +105,6 @@ A real site does not provide it, and existing benchmarks such as WebArena \cite{
 I therefore built a site of my own, whose state machine defines explicitly what can be done in each state.
 Building the site is a precondition of the measurement. Its cost, a single site, is discussed in \autoref{sec:disc:threats}.
 
-\begin{oldtext}
-标准答案是指, 在每个状态下, 哪些操作是可行的, 哪些操作是不可行的. 我们需要知道状态下合法的操作来计算``做了做不了的事''的比例.
-
-真实的网站没有这个答案, 现有的 benchmark（如 WebArena）一般只检查最后的状态, 也没有这个答案.
-因此我们选择一个受控的站点, 用状态机明确定义每个状态下能做什么. 这是测量的前提.
-\end{oldtext}
-
 \subsubsection{An independent judge}\label{sec:methods:judge}
 
 This raises another problem.
@@ -176,13 +113,6 @@ I therefore added a separate judge that never reads the state machine and checks
 An action counts as valid in a state if and only if some set of parameter values exists that the server does not refuse.
 \autoref{sec:eval:method:truth} compares this judge with the state machine across all states.
 ASIL checks its results in a similar way, with a validator that does not use its own observation builder \cite{xie2026asil}.
-
-\begin{oldtext}
-但是这引发了另外一个问题, 如果这个状态机就是定义站点的那个状态机, 那么我们测的结果就是自己判自己, 这显然不可信.
-因此我们另外设置一个裁判, 这个裁判不能和状态机相互沟通, 作为一个相对独立的第三方来检查.
-具体的检查方法是: 一个操作合法, 当且仅当存在一组参数让服务器不拒绝.
-第四章(具体多少节?)中有裁判和状态机的对照结果, ASIL 也使用了类似的独立校验.
-\end{oldtext}
 
 \subsubsection{Separating the constraint from the model}\label{sec:methods:models}
 
@@ -194,25 +124,10 @@ Two parts of the design separate the two:
 \end{itemize}
 \autoref{sec:eval:method:models} gives the models and settings, and \autoref{sec:results} reports both comparisons.
 
-\begin{oldtext}
-此外, 我还有一个顾虑: 如果实验结果好，是因为约束，还是因为模型够聪明？为此，我设计了两种办法来分离约束和模型的作用。
-
-- 用多种大小不同的模型，看看结论是否随模型能力变化。
-- 一个随机选择器，它完全不理解任务，所以它在约束下做到的任何事，都只能归功于约束。
-
-这部分的结果可以参考(多少多少节)
-\end{oldtext}
-
 \subsection{Ethics and Reproducibility}\label{sec:methods:ethics}
 
 The study has no human participants and collects no personal data; the names and phone numbers in the tasks are invented sample values.
 
 All models used are open-weight models, and the code and all logs are public (\autoref{sec:impl:stack}).
 The full prompts are in \autoref{app:prompts}, the complete task set in \autoref{app:tasks}, and what each condition sees in \autoref{app:surfaces}.
-
-\begin{oldtext}
-本任务中没有人类参与者，也不收集个人数据。任务里的姓名、电话都是虚构的样例值。
-
-使用的模型均为开源的, 代码和全部日志公开（仓库链接见第 4 章技术栈一节）；提示词全文在 \autoref{app:prompts}，任务全表在 \autoref{app:tasks}，各条件看到的内容在 \autoref{app:surfaces}。
-\end{oldtext}
 

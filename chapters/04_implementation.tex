@@ -4,11 +4,6 @@ This chapter describes a system that closes this gap: a framework that does not 
 \autoref{sec:eval:method:conditions} introduces the six conditions compared in the experiments, and \autoref{sec:methods:setup} the tasks, models and the two experiments.
 \autoref{sec:eval:results:trace} follows one task through two of the conditions, and \autoref{sec:eval:method:metrics} closes the chapter with what is measured.
 
-\begin{oldtext}
-接上 Background 的 gap：没有系统把给人看的生成界面绑到一个随状态变、由服务器决定的动作集上. (我感觉这章还是就直接叫 implementation 合适一点)
-最后的时候signpost 一下
-\end{oldtext}
-
 \subsection{The Framework}\label{sec:design}
 
 The framework rests on a simple, intuitive idea: the controls on a page correspond one to one to the actions that are possible now.
@@ -20,16 +15,6 @@ The agent and the person therefore work from the same set of valid actions: what
 
 Nothing in this section depends on a particular site; the prototype appears only in \autoref{sec:impl:prototype}.
 The rest of the section states the idea formally (\autoref{sec:design:formal}), gives the contract a site must meet (\autoref{sec:design:site-contract}), the guarantees and limits that follow from it (\autoref{sec:design:soundness}), and the two consumers of the set (\autoref{sec:design:consumers}).
-
-\begin{oldtext}
-一个非常符合直觉的想法是: 页面上的控件必须和当前可行的操作一一对应.
-建立在这个基础上, 我们自然可以把页面上的控件抽象成一个集合, 这个集合就是当前状态下的 ``affordance set''.
-
-everything downstream is confined to that set: the agent may only execute actions drawn from it, and the interface presented to the user may only offer controls drawn from it.
-由于这个集合是从服务器选择的表示中导出的, 并且一个行为良好的服务器会渲染当前状态下有效的控件, 因此集合之外的操作对 agent 和界面都是不可用的.
-
-接下来我们将这个想法形式化, 并说明它的保证和限制, 以及谁来使用这个集合.
-\end{oldtext}
 
 \subsubsection{The affordance set}\label{sec:design:formal}\label{sec:design:defs}
 
@@ -48,22 +33,6 @@ $A$ therefore describes what can be done now. A tool catalogue, by contrast, lis
 
 The set of actions the server actually accepts in $s$, written $V(s)$, is a different thing: $A(s)$ is read from the page, while $V(s)$ is decided by the server.
 Nothing makes the two equal by itself; the site contract in the next subsection states when $A(s) = V(s)$.
-
-\begin{oldtext}
-我们令 $s$ 表示服务器持有的应用状态，$r(s)$ 表示服务器为该状态返回的表示.
-如果我们使用一个解析器来分析界面中的控件, 对 HTML 来说就是连接, 表单等, 以及拓展 如htmx 这这些.
-就可以得到一个解析出的 affordance 集合:
-
-A(s) = ...
-
-集合中的元素应该像表 2 所说的一样留下能够可以重建这个请求的信息.
-
-如图一所示, 这个集合应该不仅仅是呈现出所有的控件, 而且应该是一个封闭的集合, 也就是说, 这个集合中不应该有任何元素是无法执行的.
-而一旦选择执行, 不论是用户点击了控件还是 Agent 发送了请求(这两者应该是本质上相同的), 都会将应用状态从 s 转换到 s'.
-并且服务器会返回一个新的表示 r(s') , 这个表示又会被解析成一个新的 affordance 集合 A(s'), 以此类推.
-
-但是, 服务器真正能够接受的操作集合 V(s) 不一定满足 A(s) = V(s) 的契约, 这正是我们接下来要讨论的.
-\end{oldtext}
 
 \begin{figure}[htbp]
 \centering
@@ -125,22 +94,6 @@ The framework gives its guarantee only for a site that meets the following contr
 The framework applies only to sites that meet this contract.
 It is therefore as much a proposal to site authors as a design for a client.
 
-\begin{oldtext}
-为了满足 $A(s) = V(s)$, 需要网站的配合:
-
-S1: 页面上存在且包含现在能用的所有控件.
-这要求网站诚实的反应现在能做的操作, 很多网站现在就是这样的, 因为人在使用网站的时候也需要这个条件.
-但是像 SPA 这样重度依赖 JavaScript 的应用就很难实现, 我们在 discussion 里展开.
-
-S2: 请求本身能从控件重建, 不依赖 Javascript 脚本的临时计算.
-这是非常严格的要求, 现代的 Web 应用通常使用 JavaScript 来动态生成和更新页面内容，这使得从静态 HTML 中重建请求变得困难.
-
-S3: 服务器自己会拒绝不合法的请求. 
-(你自己编一点, 这个是非常合理的)
-
-(例子你帮我补上)
-\end{oldtext}
-
 \subsubsection{Guarantees and limits}\label{sec:design:soundness}
 
 If a site meets the contract, the following can be derived from it.
@@ -161,19 +114,6 @@ This is what the title of this thesis means by calling the framework determinist
     \item The parts of the interaction that are not controls, the text of the interface and the dialogue with the user, are not covered.
 \end{itemize}
 
-\begin{oldtext}
-如果满足了站点协议, 那么我们就可以推出一些有用的内容
-
-(小标题)保证
-照搬两句, 用列表
-
-(小标题)不保证
-用列表
-- 无法访问网站没有放在页面上的操作
-- 挑选操作仍然受限于模型的能力或提示等
-- 模型里和用户交流的部分, 界面和对话无法保证
-\end{oldtext}
-
 \subsubsection{The consumers of \texorpdfstring{$A(s)$}{A(s)}}\label{sec:design:consumers}
 
 Once $A(s)$ has been extracted, it has two consumers: execution and presentation.
@@ -188,17 +128,6 @@ The questions the interface puts to the user follow in the same way, from the fi
 The text around the controls, such as explanations and grouping, is written by the agent and lies outside the framework.
 
 The content is narrated by the agent, and the controls are authorised by the server.
-
-\begin{oldtext}
-在我们提取到 A(s) 之后, 有两个消费者: 执行和展示.
-
-小标题(执行), agent 可以挑选出一个它认为对用户意图最合适的控件, 并从它声明的字段里填入能从意图推出来的值, 不能推出来的就去问用户.
-
-小标题(展示), agent 和用户交互的界面上, 可以从 A(s) 中由声明的字段作为关键要素.
-想问用户的值, 也可以由``必填但没有值''的字段决定.
-
-（旧稿里的）：内容由 agent 讲，控件由服务器授权。
-\end{oldtext}
 
 \begin{table}[htbp]
 \centering
@@ -254,14 +183,6 @@ It consists of two parts that run separately: a generic client and a booking sit
 As \autoref{fig:impl:architecture} shows, the user completes tasks through the client, and the client and the site communicate only through HTTP requests.
 \autoref{sec:impl:site} describes the site, \autoref{sec:design:client-contract} the rules the client keeps, \autoref{sec:impl:discovery} how it reads the controls from a page, \autoref{sec:impl:agent} how it executes them, \autoref{sec:impl:ui} how it draws the interface, and \autoref{sec:impl:stack} the technology used.
 
-\begin{oldtext}
-从这里开始讲的是具体实现，只对这个原型成立.
-这个原型正是为了解决我们在引言中提出的问题, 一个通过 Agent 订餐的场景.
-我们包含两个单独运行的部分, 一个通用的客户端和一个订餐的站点.
-如图2所示, 用户通过客户端来完成各种任务, 而客户端和站点之前只有 HTTP 请求.
-(signpost 一下)
-\end{oldtext}
-
 \begin{figure}[htbp]
 \centering
 \input{figures/fig_architecture}
@@ -305,18 +226,6 @@ A check script walks all 997 reachable states and 3\,950 transitions and confirm
 The site uses the plainest HTML it can: links for navigation and forms for operations.
 htmx \cite{htmxlDocs} is used only where HTML cannot describe the request itself, in two places: methods other than GET and POST, such as DELETE for releasing a table or cancelling a booking, and partial refresh, for the panel of free slots.
 Both are attributes in the returned HTML and can be read without running any JavaScript, so the site also meets S2.
-
-\begin{oldtext}
-订餐是一类经典的场景, 即在不同的状态下能执行的操作不相同, 以及定金和取消期等特殊的规则.
-我选择了这个任务作为原型的站点, 主要是因为它有足够的复杂性, 但又不需要读者有领域知识就能判断任务做对没有.
-
-如图三所示, 这是整个网站所有的 9 种状态和转移.
-在表格中展示了每个状态的详细信息，以及每个状态下页面上有哪些控件，哪些控件刻意不出现.
-
-整体上是一个比较朴素的站点, 顾客需要浏览, 预订等.
-此外, 我们还设计了五条规则(如表):
-大桌子需要付定金, 24小时的取消窗口, 预点菜窗口等, 我们的问题设计很大程度上依托这些规则.
-\end{oldtext}
 
 \begin{table}[htbp]
 \centering
@@ -379,13 +288,6 @@ It stores no addresses of the site and knows no words of its domain, such as ``b
 Supporting another hypermedia format only requires adding a parser, as a plug-in that produces controls of the same shape.
 In the prototype the client carries no session information and keeps no cookies; the site holds a single session in memory, so this causes no problem here.
 A real site with many users would need the client to keep cookies as a browser does, which still requires no knowledge of the site.
-
-\begin{oldtext}
-客户端是一个用户主要和 Agent 沟通的载体.
-为了做到通用, 客户端需要满足的是对站点的 blindness, 也就是只通过页面上声明的东西来理解控件.
-如果需要支持另外的超媒体格式, 只需要将 parser 作为一种插件来理解, 就可以产出相同形状的控件.
-对于我们的原型, 客户端不带任何会话信息, 也不保存 cookie, 所以在原型里不是问题, 但真实多用户网站需要客户端像浏览器一样保存 cookie.
-\end{oldtext}
 
 \subsubsection{Discovery}\label{sec:impl:discovery}
 
